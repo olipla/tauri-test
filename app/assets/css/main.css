@@ -1,9 +1,10 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+@import 'splitpanes/dist/splitpanes.css';
+@import "~/assets/css/splitpanes.css";
 
 
-
-@theme {
+@theme static{
   --font-sans: 'Public Sans', sans-serif;
   --font-title: 'Houschka Rounded Alt';
 

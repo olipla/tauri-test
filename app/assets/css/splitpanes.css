@@ -1,0 +1,48 @@
+.splitpanes__pane {
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+
+.splitpanes--vertical>.splitpanes__splitter {
+  min-width: 3px !important;
+}
+
+.splitpanes--horizontal>.splitpanes__splitter {
+  min-height: 3px !important;
+}
+
+.splitpanes__splitter {
+  position: relative;
+  background: var(--ui-bg-accented);
+  transition: background 150ms ease-in-out 0ms;
+}
+
+.splitpanes__splitter:hover {
+  background: var(--ui-primary);
+  transition: background 250ms ease-in-out 250ms;
+}
+
+.splitpanes__splitter:active {
+  background: var(--ui-primary);
+}
+
+.splitpanes__splitter:before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+}
+
+.splitpanes--vertical>.splitpanes__splitter:before {
+  left: -3px;
+  right: -3px;
+  height: 100%;
+}
+
+.splitpanes--horizontal>.splitpanes__splitter:before {
+  top: -3px;
+  bottom: -3px;
+  width: 100%;
+}
