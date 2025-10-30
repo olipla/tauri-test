@@ -1,0 +1,34 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+@import 'splitpanes/dist/splitpanes.css';
+@import "~/assets/css/splitpanes.css";
+
+
+@theme static{
+  --font-sans: 'Public Sans', sans-serif;
+  --font-title: 'Houschka Rounded Alt';
+
+  --color-everglade-50: #f2f7f4;
+  --color-everglade-100: #deede2;
+  --color-everglade-200: #c0dac9;
+  --color-everglade-300: #96bfa7;
+  --color-everglade-400: #689f81;
+  --color-everglade-500: #478263;
+  --color-everglade-600: #35664e;
+  --color-everglade-700: #284e3c;
+  --color-everglade-800: #234233;
+  --color-everglade-900: #1e362b;
+  --color-everglade-950: #101e18;
+
+  --color-harvest-gold-50: #faf6ec;
+  --color-harvest-gold-100: #f3e8ce;
+  --color-harvest-gold-200: #e7d2a1;
+  --color-harvest-gold-300: #d6ac5c;
+  --color-harvest-gold-400: #cd9742;
+  --color-harvest-gold-500: #be8234;
+  --color-harvest-gold-600: #a4652a;
+  --color-harvest-gold-700: #834c25;
+  --color-harvest-gold-800: #6e3f25;
+  --color-harvest-gold-900: #5f3524;
+  --color-harvest-gold-950: #361b12;
+}
