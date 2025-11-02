@@ -19,7 +19,8 @@
         "resizable": true,
         "fullscreen": false,
         "backgroundColor": "#f00",
-        "preventOverflow": true
+        "preventOverflow": true,
+        "visible": false
       }
     ],
     "security": {
