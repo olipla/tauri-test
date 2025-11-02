@@ -1,21 +1,25 @@
 <script lang="ts" setup>
 import { Pane, Splitpanes } from 'splitpanes'
+import { SerialPort } from 'tauri-plugin-serialplugin-api'
+
+onMounted(async () => {
+  // List available ports
+  if (window.__TAURI__) {
+    const ports = await SerialPort.available_ports()
+    console.log('Available ports:', ports)
+  }
+})
 </script>
 
 <template>
   <div class="w-full h-full">
-    <Splitpanes class="w-full h-full">
-      <Pane min-size="20">
+    <Splitpanes horizontal>
+      <Pane>
         1
       </Pane>
       <Pane>
-        <Splitpanes horizontal>
-          <Pane>2</Pane>
-          <Pane>3</Pane>
-          <Pane>4</Pane>
-        </Splitpanes>
+        2
       </Pane>
-      <Pane>5</Pane>
     </Splitpanes>
   </div>
 </template>
