@@ -18,7 +18,7 @@ onMounted(async () => {
         1
       </Pane>
       <Pane>
-        2
+        <Terminal class="w-full h-full" />
       </Pane>
     </Splitpanes>
   </div>
