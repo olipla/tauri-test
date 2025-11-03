@@ -55,6 +55,7 @@ const lightTheme: ITheme = {
 
 const terminal = new Terminal({
     theme: darkTheme,
+    fontFamily: 'Consolas',
 })
 
 const colourMode = useColorMode()
