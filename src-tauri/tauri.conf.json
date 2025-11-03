@@ -21,8 +21,7 @@
         "fullscreen": false,
         "backgroundColor": "#f00",
         "preventOverflow": true,
-        "visible": false,
-        "scrollBarStyle": "fluentOverlay"
+        "visible": false
       }
     ],
     "security": {
