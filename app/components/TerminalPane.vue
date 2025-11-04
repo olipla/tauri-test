@@ -1,4 +1,9 @@
 <script lang="ts" setup>
+import { SerialSettingsModal } from '#components'
+
+const overlay = useOverlay()
+
+const modal = overlay.create(SerialSettingsModal)
 </script>
 
 <template>
@@ -25,7 +30,7 @@
         </div>
       </div>
       <div class="flex gap-1 p-1">
-        <UButton icon="i-lucide-settings" variant="ghost" />
+        <UButton icon="i-lucide-settings" variant="ghost" @click="() => { modal.open() }" />
         <UButton icon="i-lucide-expand" variant="ghost" />
         <UButton icon="i-lucide-x" variant="ghost" />
       </div>

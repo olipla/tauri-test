@@ -12,29 +12,29 @@ watch(xterm, () => {
   }
 }, { immediate: true })
 
-if (window.__TAURI__) {
-  const port = new SerialPort({
-    path: 'COM4',
-    baudRate: 9600,
-    timeout: 30,
-    size: 1024,
-  })
-  await port.open()
+// if (window.__TAURI__) {
+//   const port = new SerialPort({
+//     path: 'COM4',
+//     baudRate: 9600,
+//     timeout: 30,
+//     size: 1024,
+//   })
+//   await port.open()
 
-  // Write data
-  await port.write('Hello, Serial Port!')
+//   // Write data
+//   await port.write('Hello, Serial Port!')
 
-  // Start port listening
-  await port.startListening()
+//   // Start port listening
+//   await port.startListening()
 
-  // Start port listening
-  const unsubscribe = await port.listen((data) => {
-    console.log('Received:', data)
-    if (data instanceof Uint8Array) {
-      xterm.value?.terminal.write(data)
-    }
-  }, false)
-}
+//   // Start port listening
+//   const unsubscribe = await port.listen((data) => {
+//     console.log('Received:', data)
+//     if (data instanceof Uint8Array) {
+//       xterm.value?.terminal.write(data)
+//     }
+//   }, false)
+// }
 
 // Stop listening when done
 // await port.cancelListen()
