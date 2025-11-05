@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import type { TableColumn, TabsItem } from '@nuxt/ui'
+import type { TableColumn, TableRow, TabsItem } from '@nuxt/ui'
 import type { PortInfo } from 'tauri-plugin-serialplugin-api'
 import { SerialPort } from 'tauri-plugin-serialplugin-api'
 
-const emit = defineEmits<{ close: [boolean] }>()
+const emit = defineEmits<{ close: [undefined | string] }>()
+const table = useTemplateRef('table')
 
 const ports = ref<undefined | {
   [key: string]: PortInfo
@@ -57,6 +58,12 @@ interface NamedPortInfo extends PortInfo {
 //     serial_number: string;
 //     type: string;
 //     vid: string;
+
+const rowSelection = ref<Record<string, boolean>>({})
+
+function onSelect(e: Event, row: TableRow<NamedPortInfo>) {
+  emit('close', String(row.getValue('portName')))
+}
 
 const columns: TableColumn<NamedPortInfo>[] = [
   {
@@ -175,8 +182,6 @@ async function updateAvailablePorts() {
 //   immediateCallback: true,
 // })
 
-const table = useTemplateRef('table')
-
 const tabItems = ref<TabsItem[]>([
   {
     label: 'Simple',
@@ -199,24 +204,46 @@ const columnVisibility = computed(() => {
   }
   return {}
 })
+
+const columnPinningSimple = {
+  left: [],
+  right: [],
+}
+
+const columnPinningDetailed = {
+  left: ['portName'],
+  right: [],
+}
+
+const columnPinning = computed(() => {
+  if (activeTab.value === 'detailed') {
+    return columnPinningDetailed
+  }
+  else if (activeTab.value === 'simple') {
+    return columnPinningSimple
+  }
+  return {}
+})
 </script>
 
 <template>
-  <UModal title="Serial Settings" :close="{ onClick: () => emit('close', false) }" :ui="{ content: 'sm:max-w-5xl' }">
-    <template #body>
-      <div class="flex flex-col flex-1 w-full border border-accented rounded-md">
-        <div class="flex items-center px-4 py-3.5 border-b border-accented">
-          <div class="grow flex items-center">
-            <h1 class="font-bold">
-              Available Ports
-            </h1>
-          </div>
-          <UTabs v-model="activeTab" :content="false" :items="tabItems" />
+  <UModal :ui="{ content: 'sm:max-w-2xl', body: 'p-0 sm:p-0' }">
+    <template #header>
+      <div class="flex items-center grow">
+        <div class="grow flex items-center">
+          <h1 class="font-bold">
+            Choose a serial port
+          </h1>
         </div>
-
-        <UTable ref="table" v-model:column-visibility="columnVisibility" :data="portData" class="flex-1"
-          :columns="columns" :ui="{ th: 'whitespace-nowrap' }" />
+        <UTabs v-model="activeTab" :content="false" :items="tabItems" />
       </div>
+    </template>
+    <template #body>
+      <UTable
+        ref="table" v-model:column-visibility="columnVisibility" v-model:row-selection="rowSelection"
+        v-model:column-pinning="columnPinning" :data="portData" class="flex-1 transition-[height]" :columns="columns"
+        :ui="{ th: 'whitespace-nowrap cursor-auto', tr: 'cursor-pointer' }" @select="onSelect"
+      />
     </template>
   </UModal>
 </template>

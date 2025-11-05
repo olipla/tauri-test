@@ -1,9 +1,15 @@
 <script lang="ts" setup>
-import { SerialSettingsModal } from '#components'
+import { PortChooserModal } from '#components'
 
 const overlay = useOverlay()
 
-const modal = overlay.create(SerialSettingsModal)
+const modal = overlay.create(PortChooserModal)
+
+async function choosePort() {
+  const instance = modal.open()
+  const result = await instance.result
+  console.log(result)
+}
 </script>
 
 <template>
@@ -30,7 +36,7 @@ const modal = overlay.create(SerialSettingsModal)
         </div>
       </div>
       <div class="flex gap-1 p-1">
-        <UButton icon="i-lucide-settings" variant="ghost" @click="() => { modal.open() }" />
+        <UButton icon="i-lucide-settings" variant="ghost" @click="choosePort" />
         <UButton icon="i-lucide-expand" variant="ghost" />
         <UButton icon="i-lucide-x" variant="ghost" />
       </div>
