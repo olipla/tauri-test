@@ -7,8 +7,6 @@
   ],
   "permissions": [
     "core:default",
-    "serialplugin:default",
-    "printer:allow-ping",
-    "printer:allow-get-printers"
+    "serialplugin:default"
   ]
 }
