@@ -10,6 +10,17 @@ async function choosePort() {
   const result = await instance.result
   console.log(result)
 }
+
+const timestamp = useTimestamp({ offset: 0 })
+
+const timestampThrottled = useThrottle(timestamp, 1000)
+
+const currentDayMinutes = computed(() => {
+  const date = new Date(timestampThrottled.value)
+  const hours = date.getUTCHours()
+  const minutes = date.getUTCMinutes()
+  return (hours * 60) + minutes
+})
 </script>
 
 <template>
@@ -40,6 +51,28 @@ async function choosePort() {
         <UButton icon="i-lucide-expand" variant="ghost" />
         <UButton icon="i-lucide-x" variant="ghost" />
       </div>
+    </div>
+    <div class="w-full bg-elevated flex flex-wrap gap-2 px-2 py-1">
+      <UButton>?</UButton>
+      <UButton>Y</UButton>
+      <UButton>N</UButton>
+      <UButton>R=0</UButton>
+      <UButton>R=1</UButton>
+      <UButton>R=2</UButton>
+      <UButton>R=3</UButton>
+      <UButton>R=4</UButton>
+      <UButton>I=1439</UButton>
+      <UButton>I={{ currentDayMinutes }}</UButton>
+      <UButton>T=0</UButton>
+      <UButton>T=1</UButton>
+      <UButton>T=2</UButton>
+      <UButton>T=3</UButton>
+      <UButton>S=60</UButton>
+      <UButton>S=15</UButton>
+      <UButton>C=*</UButton>
+      <UButton color="secondary">
+        Add Meter
+      </UButton>
     </div>
     <div class="w-full grow bg-elevated pl-2 pb-2">
       <SerialTerminal />
