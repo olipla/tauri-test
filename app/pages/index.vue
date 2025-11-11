@@ -19,7 +19,12 @@ onMounted(async () => {
   <div class="w-full h-full">
     <Splitpanes horizontal>
       <Pane>
-        1
+        <div class="flex gap-4">
+          <SerialCard />
+          <PrinterCard />
+          <ConfigurationCard />
+          <StatusCard :issues="[{ title: 'Printer Error', description: 'The selected printer is offline' }, { title: 'Serial Error', description: 'COM 4 does not exist!' }]" />
+        </div>
       </Pane>
       <Pane>
         <TerminalPane class="w-full h-full" />
