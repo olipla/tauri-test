@@ -1,36 +1,70 @@
 <script lang="ts" setup>
+interface SerialDetails {
+  port: string
+  baudRate: string
+  name: string
+  id: string
+}
+
+const props = defineProps<{
+  transmitting?: boolean
+  receiving?: boolean
+  serialDetails?: SerialDetails
+}>()
 </script>
 
 <template>
   <CommonCard status="error" title="Serial">
-    <div class="flex gap-3">
+    <div v-if="serialDetails === undefined" class="flex justify-center items-center">
+      <div class="flex gap-4 items-center p-2">
+        <UIcon name="i-lucide-unplug" class="size-8" />
+        <div class="border-muted border self-stretch" />
+        <div class="text-lg font-bold">
+          Not Configured
+        </div>
+      </div>
+    </div>
+    <div v-else class="flex gap-3">
       <div class="flex gap-2">
         <div class="flex flex-col gap-1 ">
-          <div class="flex items-center justify-center h-full w-4 rounded-sm bg-accented text-xs text-black/65">
-            R
+          <div class="flex items-center justify-center h-full w-4 rounded-sm bg-accented text-xs relative overflow-hidden">
+            <div class="absolute inset-0 bg-primary opacity-0" :class="{ 'animate-[flash_0.2s_steps(1)_infinite]': props.receiving }" />
+            <div class="z-10">
+              R
+            </div>
           </div>
-          <div class="flex items-center justify-center h-full w-4 rounded-sm bg-accented text-xs text-black/65  ">
-            T
+          <div class="flex items-center justify-center h-full w-4 rounded-sm bg-accented text-xs relative overflow-hidden">
+            <div class="absolute inset-0 bg-primary opacity-0" :class="{ 'animate-[flash_0.2s_steps(1)_infinite]': props.transmitting }" />
+            <div class="z-10">
+              T
+            </div>
           </div>
         </div>
         <div class="flex flex-col gap-1 ">
           <div class="font-bold">
-            COM4
+            {{ props.serialDetails?.port }}
           </div>
           <div>
-            9600
+            {{ props.serialDetails?.baudRate }}
           </div>
         </div>
       </div>
       <div class="border-muted border self-stretch" />
       <div class="flex flex-col gap-1">
-        <div>USB Serial Port</div>
-        <div>FTDXQ43XA</div>
+        <div>{{ props.serialDetails?.name }}</div>
+        <div>{{ props.serialDetails?.id }}</div>
       </div>
     </div>
   </CommonCard>
 </template>
 
 <style>
-
+@keyframes flash {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
 </style>

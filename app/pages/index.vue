@@ -20,7 +20,15 @@ onMounted(async () => {
     <Splitpanes horizontal>
       <Pane>
         <div class="flex gap-4">
-          <SerialCard />
+          <SerialCard
+            :serial-details="{
+              baudRate: '9600',
+              id: 'FTDXQ43XA',
+              name: 'USB Serial Port',
+              port: 'COM5',
+            }"
+            :transmitting="true"
+          />
           <PrinterCard />
           <ConfigurationCard />
           <StatusCard :issues="[{ title: 'Printer Error', description: 'The selected printer is offline' }, { title: 'Serial Error', description: 'COM 4 does not exist!' }]" />
