@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 interface SerialDetails {
   port: string
-  baudRate: string
+  baudRate: number
   name: string
   id: string
 }

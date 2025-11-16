@@ -12,6 +12,7 @@
   "dependencies": {
     "@nuxt/eslint": "1.10.0",
     "@nuxt/ui": "4.1.0",
+    "@pinia/nuxt": "^0.11.3",
     "@types/splitpanes": "^2.2.6",
     "@vueuse/components": "^14.0.0",
     "@vueuse/nuxt": "^14.0.0",
@@ -19,6 +20,7 @@
     "@xterm/xterm": "^5.5.0",
     "eslint": "^9.0.0",
     "nuxt": "^4.2.0",
+    "pinia": "^3.0.4",
     "splitpanes": "^4.0.4",
     "tauri-plugin-printer-v2": "^0.2.4",
     "tauri-plugin-serialplugin-api": "^2.21.0",
