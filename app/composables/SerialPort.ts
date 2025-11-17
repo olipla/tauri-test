@@ -136,5 +136,9 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
     }
   }
 
+  onUnmounted(() => {
+    close()
+  })
+
   return { open, write, receiving, transmitting, portInfo, portOptions, isOpen, isConfigured, isConnected, sanitisedManufacturer, sanitisedSerialNumber, sanitisedProduct }
 }
