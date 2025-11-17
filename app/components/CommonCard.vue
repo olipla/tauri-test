@@ -15,7 +15,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <UCard class="w-64 bg-elevated" :ui="{ body: `p-2 sm:p-2 flex ${title === undefined ? 'min-h-full' : ''}`, header: 'p-2 sm:p-2' }">
+  <UCard class="w-64 h-28 shrink-0 bg-elevated" :ui="{ body: `p-2 sm:p-2 !pt-1 h-16 flex ${title === undefined ? 'min-h-full' : ''}`, header: 'p-2 sm:p-2' }">
     <template v-if="props.title !== undefined" #header>
       <div class="flex gap-2 items-center">
         <div class="flex gap-2 items-center grow">
