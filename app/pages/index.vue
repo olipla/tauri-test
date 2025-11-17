@@ -64,6 +64,7 @@ async function openSettings() {
               } : undefined"
               :transmitting="serialTransmitting"
               :receiving="serialReceiving"
+              :is-connected="serialIsConnected"
             />
             <PrinterCard />
             <ConfigurationCard />

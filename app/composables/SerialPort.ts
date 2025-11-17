@@ -58,6 +58,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
   async function disconnectedCallback() {
     console.log('Serial Disconnected!')
     isConnected.value = false
+    portInfo.value = undefined
   }
 
   async function close() {

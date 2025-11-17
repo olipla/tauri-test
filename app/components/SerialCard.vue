@@ -13,17 +13,17 @@ const props = defineProps<{
   receiving?: boolean
   serialDetails?: SerialDetails
   status: Status
+  isConnected?: boolean
 }>()
 </script>
 
 <template>
   <CommonCard :status="props.status" title="Serial">
-    <div v-if="serialDetails === undefined" class="flex justify-center items-center">
-      <div class="flex gap-4 items-center p-2">
-        <UIcon name="i-lucide-unplug" class="size-8" />
-        <div class="border-muted border self-stretch" />
-        <div class="text-lg font-bold">
-          Not Configured
+    <div v-if="!serialDetails?.baudRate || !serialDetails?.port" class="flex justify-center items-center w-full">
+      <div class="flex flex-col grow items-center justify-center gap-1 w-full">
+        <UIcon name="i-lucide-triangle-alert" class="size-6" />
+        <div>
+          Not configured
         </div>
       </div>
     </div>
@@ -53,12 +53,18 @@ const props = defineProps<{
         </div>
       </div>
       <div class="border-muted border self-stretch" />
-      <div class="flex flex-col grow justify-center">
+      <div v-if="isConnected" class="flex flex-col grow justify-center">
         <div class="text-ellipsis overflow-hidden leading-4.5 line-clamp-2">
           {{ props.serialDetails?.name }}
         </div>
         <div class="text-xs text-muted">
           {{ props.serialDetails?.id }}
+        </div>
+      </div>
+      <div v-else class="flex flex-col grow items-center justify-center gap-1 w-full">
+        <UIcon name="i-lucide-unplug" class="size-6" />
+        <div>
+          Disconnected
         </div>
       </div>
     </div>
