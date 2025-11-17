@@ -13,6 +13,8 @@ const {
   serialIsOpen,
   serialIsConfigured,
   serialIsConnected,
+  serialSanitisedProduct,
+  serialSanitisedSerialNumber,
 } = storeToRefs(configuratorStore)
 
 onMounted(async () => {
@@ -56,8 +58,8 @@ async function openSettings() {
               :status="serialIsConnected ? 'ok' : 'error'"
               :serial-details="serialIsOpen ? {
                 baudRate: SerialPortOptions?.baudRate ?? 0,
-                id: serialPortInfo?.serial_number ?? '',
-                name: serialPortInfo?.product ?? '',
+                id: serialSanitisedSerialNumber ?? '',
+                name: serialSanitisedProduct ?? '',
                 port: SerialPortOptions?.path ?? '',
               } : undefined"
               :transmitting="serialTransmitting"

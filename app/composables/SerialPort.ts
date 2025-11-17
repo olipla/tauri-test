@@ -7,6 +7,41 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
   const portInfo = ref<PortInfo | undefined>()
   const portOptions = ref<SerialportOptions | undefined>()
 
+  const sanitisedProduct = computed(() => {
+    const info = portInfo.value
+    const options = portOptions.value
+    if (!info || !options) {
+      return
+    }
+
+    const nullTerminatorIndex = info.product.indexOf('\u0000')
+    return info.product.substring(0, nullTerminatorIndex < 0 ? undefined : nullTerminatorIndex).replace(` (${options.path})`, '')
+  })
+
+  const sanitisedManufacturer = computed(() => {
+    const info = portInfo.value
+    if (!info) {
+      return
+    }
+
+    const nullTerminatorIndex = info.manufacturer.indexOf('\u0000')
+    return info.product.substring(0, nullTerminatorIndex < 0 ? undefined : nullTerminatorIndex)
+  })
+
+  const sanitisedSerialNumber = computed(() => {
+    const info = portInfo.value
+    if (!info) {
+      return
+    }
+
+    const nullTerminatorIndex = info.serial_number.indexOf('\u0000')
+    const serialNumber = info.serial_number.substring(0, nullTerminatorIndex < 0 ? undefined : nullTerminatorIndex)
+    if (['', 'undefined', 'noserial', 'unknown'].includes(serialNumber.toLowerCase())) {
+      return
+    }
+    return serialNumber
+  })
+
   const isOpen = computed(() => {
     return portInfo !== undefined
   })
@@ -100,5 +135,5 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
     }
   }
 
-  return { open, write, receiving, transmitting, portInfo, portOptions, isOpen, isConfigured, isConnected }
+  return { open, write, receiving, transmitting, portInfo, portOptions, isOpen, isConfigured, isConnected, sanitisedManufacturer, sanitisedSerialNumber, sanitisedProduct }
 }
