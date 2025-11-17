@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { Status } from '~/types/common'
+
 interface SerialDetails {
   port: string
   baudRate: number
@@ -10,11 +12,12 @@ const props = defineProps<{
   transmitting?: boolean
   receiving?: boolean
   serialDetails?: SerialDetails
+  status: Status
 }>()
 </script>
 
 <template>
-  <CommonCard status="error" title="Serial">
+  <CommonCard :status="props.status" title="Serial">
     <div v-if="serialDetails === undefined" class="flex justify-center items-center">
       <div class="flex gap-4 items-center p-2">
         <UIcon name="i-lucide-unplug" class="size-8" />

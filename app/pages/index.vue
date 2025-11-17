@@ -11,6 +11,8 @@ const {
   serialTransmitting,
   serialReceiving,
   serialIsOpen,
+  serialIsConfigured,
+  serialIsConnected,
 } = storeToRefs(configuratorStore)
 
 onMounted(async () => {
@@ -21,7 +23,7 @@ onMounted(async () => {
 
     invoke('get_printers').then(message => console.log(message))
     configuratorStore.serialOpen({
-      path: 'COM2',
+      path: 'COM15',
       baudRate: 9600,
     })
   }
@@ -51,6 +53,7 @@ async function openSettings() {
           </div>
           <div class="flex gap-4 px-4">
             <SerialCard
+              :status="serialIsConnected ? 'ok' : 'error'"
               :serial-details="serialIsOpen ? {
                 baudRate: SerialPortOptions?.baudRate ?? 0,
                 id: serialPortInfo?.serial_number ?? '',

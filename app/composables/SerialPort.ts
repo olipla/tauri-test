@@ -11,8 +11,19 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
     return portInfo !== undefined
   })
 
+  const isConfigured = computed(() => {
+    return portOptions !== undefined
+  })
+
+  const isConnected = ref(false)
+
   const transmitting = refAutoReset(false, 250)
   const receiving = refAutoReset(false, 250)
+
+  async function disconnectedCallback() {
+    console.log('Serial Disconnected!')
+    isConnected.value = false
+  }
 
   async function close() {
     try {
@@ -38,6 +49,8 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
       if (port) {
         await port.startListening()
         await port.listen(serialCallbackWrapper)
+        await port.disconnected(disconnectedCallback)
+        isConnected.value = true
       }
       else {
         console.error('Not open!')
@@ -59,9 +72,9 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
     try {
       await close()
       port = new SerialPort(options)
-      await port.enableAutoReconnect({
-        interval: 2500,
-      })
+      // await port.enableAutoReconnect({
+      //   interval: 2500,
+      // })
       portInfo.value = await getPortInfo(options.path)
       portOptions.value = options
       await port.open()
@@ -87,5 +100,5 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
     }
   }
 
-  return { open, write, receiving, transmitting, portInfo, portOptions, isOpen }
+  return { open, write, receiving, transmitting, portInfo, portOptions, isOpen, isConfigured, isConnected }
 }

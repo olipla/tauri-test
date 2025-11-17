@@ -25,8 +25,8 @@ const emit = defineEmits<{
             :class="{
               'dark:bg-red-400': props.status === 'error',
               'bg-red-500': props.status === 'error',
-              'dark:bg-green-400': props.status === 'error',
-              'bg-green-500': props.status === 'error',
+              'dark:bg-green-400': props.status === 'ok',
+              'bg-green-500': props.status === 'ok',
             }"
           />
           <h1 class="text-lg">

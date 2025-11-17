@@ -13,7 +13,19 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     portOptions: SerialPortOptions,
     receiving: serialReceiving,
     transmitting: serialTransmitting,
+    isConfigured: serialIsConfigured,
+    isConnected: serialIsConnected,
   } = useSerialPort(serialCallback)
 
-  return { serialOpen, serialWrite, serialIsOpen, serialPortInfo, SerialPortOptions, serialReceiving, serialTransmitting }
+  return {
+    serialOpen,
+    serialWrite,
+    serialIsOpen,
+    serialPortInfo,
+    SerialPortOptions,
+    serialReceiving,
+    serialTransmitting,
+    serialIsConfigured,
+    serialIsConnected,
+  }
 })
