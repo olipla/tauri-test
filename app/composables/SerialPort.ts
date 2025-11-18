@@ -6,6 +6,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
 
   const portInfo = ref<PortInfo | undefined>()
   const portOptions = ref<SerialportOptions | undefined>()
+  const autoReconnect = ref(true)
 
   const sanitisedProduct = computed(() => {
     const info = portInfo.value
@@ -55,19 +56,36 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
   const transmitting = refAutoReset(false, 250)
   const receiving = refAutoReset(false, 250)
 
+  const { pause: pauseAutoReconnect, resume: resumeAutoReconnect } = useIntervalFn(() => {
+    if (!isConnected.value && portOptions.value !== undefined) {
+      open(portOptions.value, false)
+    }
+  }, 2000)
+
   async function disconnectedCallback() {
     console.log('Serial Disconnected!')
     isConnected.value = false
     portInfo.value = undefined
   }
 
-  async function close() {
+  watchEffect(() => {
+    if (autoReconnect.value && !isConnected.value && portOptions.value !== undefined) {
+      resumeAutoReconnect()
+    }
+    else {
+      pauseAutoReconnect()
+    }
+  })
+
+  async function close(resetRefs = true) {
     try {
       if (port) {
         await port.cancelAllListeners()
         await port.close()
-        portInfo.value = undefined
-        portOptions.value = undefined
+        if (resetRefs) {
+          portInfo.value = undefined
+          portOptions.value = undefined
+        }
       }
     }
     catch (error) {
@@ -104,9 +122,9 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
     }
   }
 
-  async function open(options: SerialportOptions) {
+  async function open(options: SerialportOptions, resetRefs = true) {
     try {
-      await close()
+      await close(resetRefs)
       port = new SerialPort(options)
       // await port.enableAutoReconnect({
       //   interval: 2500,
@@ -136,9 +154,24 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
     }
   }
 
-  onUnmounted(() => {
+  onScopeDispose(() => {
+    pauseAutoReconnect()
     close()
   })
 
-  return { open, write, receiving, transmitting, portInfo, portOptions, isOpen, isConfigured, isConnected, sanitisedManufacturer, sanitisedSerialNumber, sanitisedProduct }
+  return {
+    open,
+    write,
+    receiving,
+    transmitting,
+    portInfo,
+    portOptions,
+    isOpen,
+    isConfigured,
+    isConnected,
+    sanitisedManufacturer,
+    sanitisedSerialNumber,
+    sanitisedProduct,
+    autoReconnect,
+  }
 }
