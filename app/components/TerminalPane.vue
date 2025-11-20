@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import { PortChooserModal } from '#components'
+import { SettingsModal } from '#components'
 
 const overlay = useOverlay()
-const modal = overlay.create(PortChooserModal)
+const modal = overlay.create(SettingsModal)
 
 const configuratorStore = useConfiguratorStore()
 
@@ -20,9 +20,9 @@ function terminalDataIn(data: string) {
 }
 
 async function choosePort() {
-  const instance = modal.open()
-  const result = await instance.result
-  console.log(result)
+  modal.open({
+    tab: 'serial',
+  })
 }
 
 const timestamp = useTimestamp({ offset: 0 })

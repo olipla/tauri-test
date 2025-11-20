@@ -1,8 +1,13 @@
 <script lang="ts" setup>
-import type { tabs } from '#build/ui'
 import type { TabsItem } from '@nuxt/ui'
 import { PortChooserModal, UModal } from '#components'
 import SettingsTab from './SettingsTab.vue'
+
+const props = withDefaults(defineProps<{
+  tab?: 'general' | 'serial' | 'printer' | 'configuration'
+}>(), {
+  tab: 'general',
+})
 
 const items = [
   {
@@ -35,7 +40,7 @@ const items = [
   },
 ] satisfies TabsItem[]
 
-const active = ref('general')
+const active = ref(props.tab)
 const activeItem = computed(() => {
   return items.find(x => x.value === active.value)
 })
