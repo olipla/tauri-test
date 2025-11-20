@@ -27,6 +27,7 @@ onMounted(async () => {
     configuratorStore.serialOpen({
       path: 'COM15',
       baudRate: 9600,
+      timeout: 32,
     })
   }
 })

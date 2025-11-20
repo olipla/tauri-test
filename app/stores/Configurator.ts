@@ -1,8 +1,18 @@
 import { defineStore } from 'pinia'
 
+type SerialCallback = (data: Uint8Array) => void
+
 export const useConfiguratorStore = defineStore('configurator', () => {
-  function serialCallback(bytes: Uint8Array) {
-    console.log(bytes)
+  const serialListeners = new Set<SerialCallback>()
+
+  function serialSubscribe(callback: SerialCallback) {
+    serialListeners.add(callback)
+    return () => serialListeners.delete(callback)
+  }
+
+  function serialCallbackWrapper(data: Uint8Array) {
+    console.log(data)
+    serialListeners.forEach(callback => callback(data))
   }
 
   const {
@@ -18,11 +28,12 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     sanitisedManufacturer: serialSanitisedManufacturer,
     sanitisedSerialNumber: serialSanitisedSerialNumber,
     sanitisedProduct: serialSanitisedProduct,
-  } = useSerialPort(serialCallback)
+  } = useSerialPort(serialCallbackWrapper)
 
   return {
     serialOpen,
     serialWrite,
+    serialSubscribe,
     serialIsOpen,
     serialPortInfo,
     SerialPortOptions,

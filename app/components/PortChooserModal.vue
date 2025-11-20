@@ -8,44 +8,7 @@ const table = useTemplateRef('table')
 
 const ports = ref<undefined | {
   [key: string]: PortInfo
-}>({
-  COM5: {
-    path: '',
-    vid: '8263',
-    type: 'USB',
-    serial_number: '195D6B5112001A00',
-    product: 'MSP Debug Interface (COM5)',
-    manufacturer: 'Texas Instruments\u0000exas Instruments',
-    pid: '20',
-  },
-  COM8: {
-    path: '',
-    manufacturer: 'Texas Instruments Incorporated\u0000truments Incorporated',
-    product: 'XDS110 Class Auxiliary Data Port (COM8)',
-    serial_number: 'NOSERIAL',
-    type: 'USB',
-    vid: '1105',
-    pid: '48883',
-  },
-  COM6: {
-    path: '',
-    manufacturer: 'Texas Instruments\u0000exas Instruments',
-    vid: '8263',
-    type: 'USB',
-    product: 'MSP Application UART1 (COM6)',
-    pid: '20',
-    serial_number: '195D6B5112001A00',
-  },
-  COM7: {
-    path: '',
-    vid: '1105',
-    serial_number: 'NOSERIAL',
-    type: 'USB',
-    manufacturer: 'Texas Instruments Incorporated\u0000truments Incorporated',
-    pid: '48883',
-    product: 'XDS110 Class Application/User UART (COM7)',
-  },
-})
+}>()
 
 interface NamedPortInfo extends PortInfo {
   portName: string
@@ -166,7 +129,6 @@ const portData = computed<NamedPortInfo[]>(() => {
 })
 
 async function updateAvailablePorts() {
-  console.log('REFRESH')
   if (window.__TAURI__) {
     try {
       ports.value = await SerialPort.available_ports()
@@ -178,9 +140,9 @@ async function updateAvailablePorts() {
   }
 }
 
-// useIntervalFn(updateAvailablePorts, 1000, {
-//   immediateCallback: true,
-// })
+useIntervalFn(updateAvailablePorts, 1000, {
+  immediateCallback: true,
+})
 
 const tabItems = ref<TabsItem[]>([
   {

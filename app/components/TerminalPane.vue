@@ -2,8 +2,22 @@
 import { PortChooserModal } from '#components'
 
 const overlay = useOverlay()
-
 const modal = overlay.create(PortChooserModal)
+
+const configuratorStore = useConfiguratorStore()
+
+const terminal = useTemplateRef('terminal')
+
+configuratorStore.serialSubscribe((data: Uint8Array) => {
+  if (terminal.value) {
+    terminal.value.write(data)
+  }
+})
+
+function terminalDataIn(data: string) {
+  console.log(data)
+  configuratorStore.serialWrite(new TextEncoder().encode(data))
+}
 
 async function choosePort() {
   const instance = modal.open()
@@ -75,7 +89,7 @@ const currentDayMinutes = computed(() => {
       </UButton>
     </div>
     <div class="w-full grow bg-elevated pl-2 pb-2">
-      <SerialTerminal />
+      <SerialTerminal ref="terminal" @data="terminalDataIn" />
     </div>
   </div>
 </template>
