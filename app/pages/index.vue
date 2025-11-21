@@ -80,7 +80,7 @@ const bodyPaneSize = computed(() => {
   }
 })
 
-const terminalPaneVisible = ref(true)
+const terminalPaneVisible = ref(false)
 
 function closeTerminalPane() {
   terminalPaneVisible.value = false
@@ -104,14 +104,18 @@ function toggleMaximisePane() {
   }
 }
 
+function toggleTerminalPane() {
+  if (terminalPaneVisible.value) {
+    closeTerminalPane()
+  }
+  else {
+    openTerminalPane()
+  }
+}
+
 defineShortcuts({
   meta_t: () => {
-    if (terminalPaneVisible.value) {
-      closeTerminalPane()
-    }
-    else {
-      openTerminalPane()
-    }
+    toggleTerminalPane()
   },
 })
 </script>
@@ -121,10 +125,13 @@ defineShortcuts({
     <Splitpanes horizontal @resize="updatePanePercent">
       <Pane :size="bodyPaneSize">
         <div class="w-full h-full flex flex-col gap-2">
-          <div class="w-full flex p-4">
+          <div class="w-full flex p-4 gap-2">
             <h1 class="text-xl grow">
               Jellyfish Bridge Configurator
             </h1>
+            <UButton icon="i-lucide-terminal" variant="outline" @click="toggleTerminalPane">
+              {{ terminalPaneVisible ? 'Close' : 'Open' }} Terminal
+            </UButton>
             <UButton icon="i-lucide-settings" @click="openSettings">
               Settings
             </UButton>
