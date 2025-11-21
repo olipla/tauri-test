@@ -26,7 +26,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
     }
 
     const nullTerminatorIndex = info.manufacturer.indexOf('\u0000')
-    return info.product.substring(0, nullTerminatorIndex < 0 ? undefined : nullTerminatorIndex)
+    return info.manufacturer.substring(0, nullTerminatorIndex < 0 ? undefined : nullTerminatorIndex)
   })
 
   const sanitisedSerialNumber = computed(() => {

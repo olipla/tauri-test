@@ -7,7 +7,7 @@ import SettingsModal from '~/components/SettingsModal.vue'
 const configuratorStore = useConfiguratorStore()
 const {
   serialPortInfo,
-  SerialPortOptions,
+  serialPortOptions,
   serialTransmitting,
   serialReceiving,
   serialIsOpen,
@@ -39,12 +39,87 @@ const settingsModal = overlay.create(SettingsModal)
 async function openSettings() {
   settingsModal.open()
 }
+
+const panePercent = ref(33)
+
+interface PaneEvent {
+  panes: {
+    min: number
+    max: number
+    size: number
+  }[]
+}
+
+function updatePanePercent(event: PaneEvent) {
+  if (event.panes[1]) {
+    panePercent.value = event.panes[1].size
+  }
+}
+
+const terminalPaneSize = computed(() => {
+  if (panePercent.value > 99.9) {
+    return 99.9
+  }
+  else if (panePercent.value < 0.1) {
+    return 0.1
+  }
+  else {
+    return panePercent.value
+  }
+})
+
+const bodyPaneSize = computed(() => {
+  if (panePercent.value > 99.9) {
+    return 0.1
+  }
+  else if (panePercent.value < 0.1) {
+    return 99.9
+  }
+  else {
+    return 100 - panePercent.value
+  }
+})
+
+const terminalPaneVisible = ref(true)
+
+function closeTerminalPane() {
+  terminalPaneVisible.value = false
+}
+
+function openTerminalPane() {
+  panePercent.value = 33
+  terminalPaneVisible.value = true
+}
+
+const isMaximised = computed(() => {
+  return terminalPaneSize.value >= 90
+})
+
+function toggleMaximisePane() {
+  if (isMaximised.value) {
+    openTerminalPane()
+  }
+  else {
+    panePercent.value = 100
+  }
+}
+
+defineShortcuts({
+  meta_t: () => {
+    if (terminalPaneVisible.value) {
+      closeTerminalPane()
+    }
+    else {
+      openTerminalPane()
+    }
+  },
+})
 </script>
 
 <template>
   <div class="w-full h-full">
-    <Splitpanes horizontal>
-      <Pane>
+    <Splitpanes horizontal @resize="updatePanePercent">
+      <Pane :size="bodyPaneSize">
         <div class="w-full h-full flex flex-col gap-2">
           <div class="w-full flex p-4">
             <h1 class="text-xl grow">
@@ -58,10 +133,10 @@ async function openSettings() {
             <SerialCard
               :status="serialIsConnected ? 'ok' : 'error'"
               :serial-details="serialIsOpen ? {
-                baudRate: SerialPortOptions?.baudRate ?? 0,
+                baudRate: serialPortOptions?.baudRate ?? 0,
                 id: serialSanitisedSerialNumber ?? '',
                 name: serialSanitisedProduct ?? '',
-                port: SerialPortOptions?.path ?? '',
+                port: serialPortOptions?.path ?? '',
               } : undefined"
               :transmitting="serialTransmitting"
               :receiving="serialReceiving"
@@ -73,8 +148,8 @@ async function openSettings() {
           </div>
         </div>
       </Pane>
-      <Pane>
-        <TerminalPane class="w-full h-full" />
+      <Pane v-if="terminalPaneVisible" :size="terminalPaneSize">
+        <TerminalPane :maximised="isMaximised" class="w-full h-full" @close="closeTerminalPane" @maximise="toggleMaximisePane" />
       </Pane>
     </Splitpanes>
   </div>

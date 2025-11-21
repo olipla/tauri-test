@@ -1,10 +1,41 @@
 <script lang="ts" setup>
 import { SettingsModal } from '#components'
 
+const props = defineProps<{
+  maximised: boolean
+}>()
+
+const emit = defineEmits<{
+  close: []
+  maximise: []
+}>()
+
 const overlay = useOverlay()
 const modal = overlay.create(SettingsModal)
 
 const configuratorStore = useConfiguratorStore()
+
+const {
+  serialIsConnected,
+  serialSanitisedProduct,
+  serialSanitisedSerialNumber,
+  serialSanitisedManufacturer,
+  serialPortOptions,
+} = storeToRefs(configuratorStore)
+
+const serialDescription = computed(() => {
+  const values = []
+
+  if (serialSanitisedManufacturer.value) {
+    values.push(serialSanitisedManufacturer.value)
+  }
+
+  if (serialSanitisedSerialNumber.value) {
+    values.push(serialSanitisedSerialNumber.value)
+  }
+
+  return values.join(' • ')
+})
 
 const terminal = useTemplateRef('terminal')
 
@@ -41,29 +72,36 @@ const currentDayMinutes = computed(() => {
   <div class="flex flex-col">
     <div class="flex bg-elevated items-center">
       <div class="grow pl-2 p-1 flex items-center gap-3">
-        <div class="rounded-full bg-red-400 w-3 h-3" />
+        <div
+          class="rounded-full w-3 h-3" :class="{
+            'dark:bg-red-400': !serialIsConnected,
+            'bg-red-500': !serialIsConnected,
+            'dark:bg-green-400': serialIsConnected,
+            'bg-green-500': serialIsConnected,
+          }"
+        />
         <div class="flex flex-col">
           <div class="font-bold text-sm">
-            COM5
+            {{ serialPortOptions?.path }}
           </div>
           <div class=" text-sm">
-            9600
+            {{ serialPortOptions?.baudRate }}
           </div>
         </div>
         <div class="border-muted border self-stretch" />
         <div class="flex flex-col">
           <div class="text-muted text-sm">
-            USB Serial Port (COM5)
+            {{ serialSanitisedProduct }}
           </div>
           <div class="text-muted text-sm">
-            FTDI / FTDXQ43XA
+            {{ serialDescription }}
           </div>
         </div>
       </div>
       <div class="flex gap-1 p-1">
-        <UButton icon="i-lucide-settings" variant="ghost" @click="choosePort" />
-        <UButton icon="i-lucide-expand" variant="ghost" />
-        <UButton icon="i-lucide-x" variant="ghost" />
+        <UButton icon="i-lucide-settings" variant="ghost" @click.stop="choosePort" />
+        <UButton :icon="props.maximised ? 'i-lucide-minimize' : 'i-lucide-maximize'" variant="ghost" @click.stop="emit('maximise')" />
+        <UButton icon="i-lucide-x" variant="ghost" @click.stop="emit('close')" />
       </div>
     </div>
     <div class="w-full bg-elevated flex flex-wrap gap-2 px-2 py-1">
