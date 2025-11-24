@@ -17,6 +17,18 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     serialListeners.forEach(callback => callback(data))
   }
 
+  const serialWriteListeners = new Set<SerialCallback>()
+
+  function serialWriteSubscribe(callback: SerialCallback) {
+    serialWriteListeners.add(callback)
+    return () => serialWriteListeners.delete(callback)
+  }
+
+  function serialWriteCallbackWrapper(data: Uint8Array) {
+    console.log(data)
+    serialWriteListeners.forEach(callback => callback(data))
+  }
+
   const {
     open: serialOpen,
     write: serialWrite,
@@ -32,7 +44,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     sanitisedSerialNumber: serialSanitisedSerialNumber,
     sanitisedProduct: serialSanitisedProduct,
     autoReconnect: serialAutoReconnect,
-  } = useSerialPort(serialCallbackWrapper)
+  } = useSerialPort(serialCallbackWrapper, serialWriteCallbackWrapper)
 
   watch(settingsIsOpen, (value) => {
     console.log('SETTINGS IS OPEN CONFIGURATOR', value)
@@ -44,6 +56,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     serialOpen,
     serialWrite,
     serialSubscribe,
+    serialWriteSubscribe,
     serialGetHistory,
     serialIsOpen,
     serialPortInfo,

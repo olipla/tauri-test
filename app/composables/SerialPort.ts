@@ -1,7 +1,7 @@
 import type { PortInfo, SerialportOptions } from 'tauri-plugin-serialplugin-api'
 import { SerialPort } from 'tauri-plugin-serialplugin-api'
 
-export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
+export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, serialSentCallback: (bytes: Uint8Array) => void) {
   let port: SerialPort | undefined
 
   const portInfo = ref<PortInfo | undefined>()
@@ -162,6 +162,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
       if (port) {
         transmitting.value = true
         await port.writeBinary(bytes)
+        serialSentCallback(bytes)
       }
       else {
         console.error('Not open!')

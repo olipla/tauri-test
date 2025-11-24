@@ -56,6 +56,24 @@ configuratorStore.serialSubscribe((data: Uint8Array) => {
   }
 })
 
+const INVERT = new Uint8Array([0x1B, 0x5B, 0x37, 0x6D]) // ESC[7m
+const RESET = new Uint8Array([0x1B, 0x5B, 0x30, 0x6D]) // ESC[0m
+
+function invertText(textBytes: Uint8Array) {
+  const result = new Uint8Array(INVERT.length + textBytes.length + RESET.length)
+  result.set(INVERT, 0)
+  result.set(textBytes, INVERT.length)
+  result.set(RESET, INVERT.length + textBytes.length)
+  return result
+}
+
+configuratorStore.serialWriteSubscribe((data: Uint8Array) => {
+  if (terminal.value) {
+    // Local Echo
+    terminal.value.write(invertText(data))
+  }
+})
+
 function terminalDataIn(data: string) {
   console.log(data)
   configuratorStore.serialWrite(new TextEncoder().encode(data))
