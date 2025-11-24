@@ -134,25 +134,56 @@ const currentDayMinutes = computed(() => {
       </div>
     </div>
     <div class="w-full bg-elevated flex flex-wrap gap-2 px-2 py-1">
-      <UButton>?</UButton>
-      <UButton>Y</UButton>
-      <UButton>N</UButton>
-      <UButton>R=0</UButton>
-      <UButton>R=1</UButton>
-      <UButton>R=2</UButton>
-      <UButton>R=3</UButton>
-      <UButton>R=4</UButton>
-      <UButton>I=1439</UButton>
-      <UButton>I={{ currentDayMinutes }}</UButton>
-      <UButton>T=0</UButton>
-      <UButton>T=1</UButton>
-      <UButton>T=2</UButton>
-      <UButton>T=3</UButton>
-      <UButton>S=60</UButton>
-      <UButton>S=15</UButton>
-      <UButton>C=*</UButton>
-      <UButton color="secondary">
-        Add Meter
+      <UButton @click.stop="terminalDataIn('?\n')">
+        ?
+      </UButton>
+      <UButton @click.stop="terminalDataIn('Y\n')">
+        Y
+      </UButton>
+      <UButton @click.stop="terminalDataIn('N\n')">
+        N
+      </UButton>
+      <UButton @click.stop="terminalDataIn('R=0\n')">
+        R=0
+      </UButton>
+      <UButton @click.stop="terminalDataIn('R=1\n')">
+        R=1
+      </UButton>
+      <UButton @click.stop="terminalDataIn('R=2\n')">
+        R=2
+      </UButton>
+      <UButton @click.stop="terminalDataIn('R=3\n')">
+        R=3
+      </UButton>
+      <UButton @click.stop="terminalDataIn('R=4\n')">
+        R=4
+      </UButton>
+      <UButton @click.stop="terminalDataIn('I=1439\n')">
+        I=1439
+      </UButton>
+      <UButton @click.stop="terminalDataIn(`I=${currentDayMinutes}\n`)">
+        I={{ currentDayMinutes }}
+      </UButton>
+      <UButton @click.stop="terminalDataIn('T=0\n')">
+        T=0
+      </UButton>
+      <UButton @click.stop="terminalDataIn('T=1\n')">
+        T=1
+      </UButton>
+      <UButton @click.stop="terminalDataIn('T=2\n')">
+        T=2
+      </UButton>
+      <UButton @click.stop="terminalDataIn('T=3\n')">
+        T=3
+      </UButton>
+      <UButton @click.stop="terminalDataIn('S=60\n')">
+        S=60
+      </UButton>
+      <UButton @click.stop="terminalDataIn('S=15\n')">
+        S=15
+      </UButton>
+      <UButton @click.stop="terminalDataIn('C=*\n')">
+        C=*
       </UButton>
     </div>
     <div class="w-full grow bg-elevated pl-2 pb-2">
