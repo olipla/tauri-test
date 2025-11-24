@@ -6,7 +6,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
 
   const portInfo = ref<PortInfo | undefined>()
   const portOptions = ref<SerialportOptions | undefined>()
-  const autoReconnect = ref(true)
+  const autoReconnect = ref(false)
 
   const sanitisedProduct = computed(() => {
     const info = portInfo.value
@@ -57,22 +57,26 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
   const receiving = refAutoReset(false, 250)
 
   const { pause: pauseAutoReconnect, resume: resumeAutoReconnect } = useIntervalFn(() => {
+    console.log('AUTO RECONNECT')
     if (!isConnected.value && portOptions.value !== undefined) {
+      console.log('TRYING OPEN')
       open(portOptions.value, false)
     }
   }, 2000)
 
   async function disconnectedCallback() {
-    console.log('Serial Disconnected!')
     isConnected.value = false
     portInfo.value = undefined
   }
 
   watchEffect(() => {
+    console.log('SERIAL WATCH EFFECT', autoReconnect.value, isConnected.value, portOptions.value)
     if (autoReconnect.value && !isConnected.value && portOptions.value !== undefined) {
+      console.log('SERIAL WATCH RESUME')
       resumeAutoReconnect()
     }
     else {
+      console.log('SERIAL WATCH PAUSE')
       pauseAutoReconnect()
     }
   })
@@ -122,15 +126,22 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
     }
   }
 
-  async function open(options: SerialportOptions, resetRefs = true) {
+  async function open(options?: SerialportOptions, resetRefs = true) {
     try {
+      const serialPortOptions = options ?? portOptions.value
+      if (serialPortOptions === undefined) {
+        return
+      }
+
+      serialPortOptions.timeout = 12
+
       await close(resetRefs)
-      port = new SerialPort(options)
+      port = new SerialPort(serialPortOptions)
       // await port.enableAutoReconnect({
       //   interval: 2500,
       // })
-      portInfo.value = await getPortInfo(options.path)
-      portOptions.value = options
+      portInfo.value = await getPortInfo(serialPortOptions.path)
+      portOptions.value = serialPortOptions
       await port.open()
       await listen()
     }

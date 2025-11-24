@@ -22,11 +22,7 @@ onMounted(async () => {
     console.log('Available ports:', ports)
 
     invoke('get_printers').then(message => console.log(message))
-    configuratorStore.serialOpen({
-      path: 'COM15',
-      baudRate: 9600,
-      timeout: 32,
-    })
+    configuratorStore.serialOpen()
   }
 })
 

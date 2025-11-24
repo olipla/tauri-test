@@ -45,6 +45,20 @@ const activeItem = computed(() => {
   return items.find(x => x.value === active.value)
 })
 
+const configuratorStore = useConfiguratorStore()
+
+const { settingsIsOpen } = storeToRefs(configuratorStore)
+
+onMounted(() => {
+  console.log('SETTINGS MODAL MOUNT')
+  settingsIsOpen.value = true
+})
+
+onUnmounted(() => {
+  console.log('SETTINGS MODAL UNMOUNT')
+  settingsIsOpen.value = false
+})
+
 const overlay = useOverlay()
 
 const modal = overlay.create(PortChooserModal)
@@ -52,7 +66,13 @@ const modal = overlay.create(PortChooserModal)
 async function choosePort() {
   const instance = modal.open()
   const result = await instance.result
-  console.log(result)
+  if (result !== undefined) {
+    console.log(result)
+    configuratorStore.serialOpen({
+      baudRate: 9600,
+      path: result,
+    })
+  }
 }
 </script>
 
@@ -71,7 +91,6 @@ async function choosePort() {
         <template #serial>
           <SettingsTab>
             <h2>Serial Port</h2>
-            <div />
             <UButton @click="choosePort">
               Choose
             </UButton>
