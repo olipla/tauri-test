@@ -8,6 +8,12 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
   const portOptions = ref<SerialportOptions | undefined>()
   const autoReconnect = ref(false)
 
+  const history: Uint8Array[] = []
+
+  function getHistory(): Uint8Array[] {
+    return history
+  }
+
   const sanitisedProduct = computed(() => {
     const info = portInfo.value
     const options = portOptions.value
@@ -99,6 +105,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
 
   function serialCallbackWrapper(bytes: Uint8Array) {
     receiving.value = true
+    history.push(bytes)
     serialCallback(bytes)
   }
 
@@ -173,6 +180,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void) {
   return {
     open,
     write,
+    getHistory,
     receiving,
     transmitting,
     portInfo,

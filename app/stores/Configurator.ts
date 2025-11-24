@@ -20,6 +20,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   const {
     open: serialOpen,
     write: serialWrite,
+    getHistory: serialGetHistory,
     isOpen: serialIsOpen,
     portInfo: serialPortInfo,
     portOptions: serialPortOptions,
@@ -43,6 +44,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     serialOpen,
     serialWrite,
     serialSubscribe,
+    serialGetHistory,
     serialIsOpen,
     serialPortInfo,
     serialPortOptions,

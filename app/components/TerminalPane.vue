@@ -39,6 +39,17 @@ const serialDescription = computed(() => {
 
 const terminal = useTemplateRef('terminal')
 
+watch(terminal, (value) => {
+  if (!value) {
+    return
+  }
+
+  const history = configuratorStore.serialGetHistory()
+  history.forEach((bytes) => {
+    value.write(bytes)
+  })
+}, { immediate: true })
+
 configuratorStore.serialSubscribe((data: Uint8Array) => {
   if (terminal.value) {
     terminal.value.write(data)
