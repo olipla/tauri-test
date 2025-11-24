@@ -30,8 +30,10 @@ const overlay = useOverlay()
 
 const settingsModal = overlay.create(SettingsModal)
 
-async function openSettings() {
-  settingsModal.open()
+async function openSettings(tab: 'general' | 'serial' | 'printer' | 'configuration' | undefined = undefined) {
+  settingsModal.open({
+    tab,
+  })
 }
 
 const {
@@ -58,7 +60,7 @@ const {
             <UButton icon="i-lucide-terminal" variant="outline" @click="toggleTerminalPane">
               {{ terminalPaneVisible ? 'Close' : 'Open' }} Terminal
             </UButton>
-            <UButton icon="i-lucide-settings" @click="openSettings">
+            <UButton icon="i-lucide-settings" @click="() => openSettings()">
               Settings
             </UButton>
           </div>
@@ -74,9 +76,10 @@ const {
               :transmitting="serialTransmitting"
               :receiving="serialReceiving"
               :is-connected="serialIsConnected"
+              @click.stop="() => openSettings('serial')"
             />
-            <PrinterCard />
-            <ConfigurationCard />
+            <PrinterCard @click.stop="() => openSettings('printer')" />
+            <ConfigurationCard @click.stop="() => openSettings('configuration')" />
             <StatusCard :issues="[{ title: 'Printer Error', description: 'The selected printer is offline' }, { title: 'Serial Error', description: 'COM 4 does not exist!' }]" />
           </div>
         </div>
