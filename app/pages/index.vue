@@ -22,6 +22,11 @@ onMounted(async () => {
     console.log('Available ports:', ports)
 
     invoke('get_printers').then(message => console.log(message))
+
+    // invoke('print_data', {
+    //   printerName: 'ZDesigner ZD621-300dpi ZPL',
+    //   data: '^XA^CF0,120^FO210,100^FDTest Label^FS^XZ',
+    // })
     configuratorStore.serialOpen()
   }
 })
