@@ -1,5 +1,5 @@
 import type { PrinterShortSummary } from '~/lib/tauriPrint'
-import { getPrinter } from '~/lib/tauriPrint'
+import { getPrinter, printData as printDataTauri } from '~/lib/tauriPrint'
 
 export function usePrinter() {
   const configuredName = ref<string | undefined>()
@@ -37,5 +37,11 @@ export function usePrinter() {
     immediate: true,
   })
 
-  return { configuredName, configuredStatus }
+  async function printData(data: string) {
+    if (configuredName.value) {
+      return await printDataTauri(configuredName.value, data)
+    }
+  }
+
+  return { configuredName, configuredStatus, printData }
 }

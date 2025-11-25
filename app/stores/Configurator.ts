@@ -54,6 +54,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   const {
     configuredName: printerConfiguredName,
     configuredStatus: printerConfiguredStatus,
+    printData: printerPrintData,
   } = usePrinter()
 
   return {
@@ -75,5 +76,6 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     serialSanitisedProduct,
     printerConfiguredName,
     printerConfiguredStatus,
+    printerPrintData,
   }
 })

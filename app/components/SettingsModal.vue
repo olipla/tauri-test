@@ -85,6 +85,10 @@ async function choosePrinter() {
     printerConfiguredName.value = result
   }
 }
+
+async function printTestLabel() {
+  await configuratorStore.printerPrintData('^XA^CF0,120^FO210,100^FDTest Label^FS^XZ')
+}
 </script>
 
 <template>
@@ -112,6 +116,9 @@ async function choosePrinter() {
             <h2>Printer</h2>
             <UButton @click="choosePrinter">
               Choose
+            </UButton>
+            <UButton @click="printTestLabel">
+              Print Test Label
             </UButton>
           </SettingsTab>
         </template>
