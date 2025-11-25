@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { TabsItem } from '@nuxt/ui'
 import { PortChooserModal, UModal } from '#components'
+import PrinterChooserModal from './PrinterChooserModal.vue'
 import SettingsTab from './SettingsTab.vue'
 
 const props = withDefaults(defineProps<{
@@ -61,10 +62,10 @@ onUnmounted(() => {
 
 const overlay = useOverlay()
 
-const modal = overlay.create(PortChooserModal)
+const modalPort = overlay.create(PortChooserModal)
 
 async function choosePort() {
-  const instance = modal.open()
+  const instance = modalPort.open()
   const result = await instance.result
   if (result !== undefined) {
     console.log(result)
@@ -72,6 +73,16 @@ async function choosePort() {
       baudRate: 9600,
       path: result,
     })
+  }
+}
+
+const modalPrinter = overlay.create(PrinterChooserModal)
+
+async function choosePrinter() {
+  const instance = modalPrinter.open()
+  const result = await instance.result
+  if (result !== undefined) {
+    console.log(result)
   }
 }
 </script>
@@ -97,7 +108,12 @@ async function choosePort() {
           </SettingsTab>
         </template>
         <template #printer>
-          <SettingsTab />
+          <SettingsTab>
+            <h2>Printer</h2>
+            <UButton @click="choosePrinter">
+              Choose
+            </UButton>
+          </SettingsTab>
         </template>
         <template #configuration>
           <SettingsTab />

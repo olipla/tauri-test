@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core'
 
-interface PrinterSummary {
+export interface PrinterSummary {
   name: string
   status: string
   state: string
@@ -16,7 +16,7 @@ interface PrinterSummary {
   description: string
 }
 
-interface PrinterShortSummary {
+export interface PrinterShortSummary {
   name: string
   status: string
   state: string
@@ -25,17 +25,17 @@ interface PrinterShortSummary {
   is_default: boolean
 }
 
-export async function get_printers() {
+export async function getPrinters() {
   return await invoke<PrinterSummary[]>('get_printers')
 }
 
-export async function get_printer(printerName: string) {
+export async function getPrinter(printerName: string) {
   return await invoke<PrinterShortSummary>('get_printer', {
     printerName,
   })
 }
 
-export async function print_data(printerName: string, data: string) {
+export async function printData(printerName: string, data: string) {
   return await invoke<number>('print_data', {
     printerName,
     data,
