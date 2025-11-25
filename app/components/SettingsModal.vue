@@ -48,7 +48,7 @@ const activeItem = computed(() => {
 
 const configuratorStore = useConfiguratorStore()
 
-const { settingsIsOpen } = storeToRefs(configuratorStore)
+const { settingsIsOpen, printerConfiguredName } = storeToRefs(configuratorStore)
 
 onMounted(() => {
   console.log('SETTINGS MODAL MOUNT')
@@ -82,7 +82,7 @@ async function choosePrinter() {
   const instance = modalPrinter.open()
   const result = await instance.result
   if (result !== undefined) {
-    console.log(result)
+    printerConfiguredName.value = result
   }
 }
 </script>

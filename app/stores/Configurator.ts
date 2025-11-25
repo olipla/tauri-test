@@ -51,6 +51,11 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     serialAutoReconnect.value = !value
   })
 
+  const {
+    configuredName: printerConfiguredName,
+    configuredStatus: printerConfiguredStatus,
+  } = usePrinter()
+
   return {
     settingsIsOpen,
     serialOpen,
@@ -68,5 +73,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     serialSanitisedManufacturer,
     serialSanitisedSerialNumber,
     serialSanitisedProduct,
+    printerConfiguredName,
+    printerConfiguredStatus,
   }
 })

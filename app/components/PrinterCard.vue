@@ -1,18 +1,32 @@
 <script lang="ts" setup>
+import type { PrinterShortSummary } from '~/lib/tauriPrint'
+import type { Status } from '~/types/common'
+
+const props = defineProps<{
+  status?: PrinterShortSummary
+}>()
+
+const status = computed<Status>(() => {
+  if (props.status && !props.status.is_offline && props.status.error_state === 'No Error') {
+    return 'ok'
+  }
+
+  return 'error'
+})
 </script>
 
 <template>
-  <CommonCard status="error" title="Printer">
+  <CommonCard :status="status" title="Printer">
     <div class="flex flex-col gap-1 pl-1">
       <div class="font-bold">
-        ZTC-ZD621-300dpi
+        {{ props.status?.name }}
       </div>
       <div class="flex gap-2">
         <div class="font-bold">
-          Ready
+          {{ props.status?.state }}
         </div>
         <div class="border-muted border self-stretch" />
-        <div>USB001</div>
+        <div>{{ props.status?.error_state }}</div>
       </div>
     </div>
   </CommonCard>

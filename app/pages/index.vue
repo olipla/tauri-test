@@ -1,7 +1,5 @@
 <script lang="ts" setup>
-import { invoke } from '@tauri-apps/api/core'
 import { Pane, Splitpanes } from 'splitpanes'
-import { SerialPort } from 'tauri-plugin-serialplugin-api'
 import SettingsModal from '~/components/SettingsModal.vue'
 
 const configuratorStore = useConfiguratorStore()
@@ -13,20 +11,11 @@ const {
   serialIsConnected,
   serialSanitisedProduct,
   serialSanitisedSerialNumber,
+  printerConfiguredStatus,
 } = storeToRefs(configuratorStore)
 
 onMounted(async () => {
-  // List available ports
   if (window.__TAURI__) {
-    const ports = await SerialPort.available_ports()
-    console.log('Available ports:', ports)
-
-    invoke('get_printers').then(message => console.log(message))
-
-    // invoke('print_data', {
-    //   printerName: 'ZDesigner ZD621-300dpi ZPL',
-    //   data: '^XA^CF0,120^FO210,100^FDTest Label^FS^XZ',
-    // })
     configuratorStore.serialOpen()
   }
 })
@@ -83,7 +72,7 @@ const {
               :is-connected="serialIsConnected"
               @click.stop="() => openSettings('serial')"
             />
-            <PrinterCard @click.stop="() => openSettings('printer')" />
+            <PrinterCard :status="printerConfiguredStatus" @click.stop="() => openSettings('printer')" />
             <ConfigurationCard @click.stop="() => openSettings('configuration')" />
             <StatusCard :issues="[{ title: 'Printer Error', description: 'The selected printer is offline' }, { title: 'Serial Error', description: 'COM 4 does not exist!' }]" />
           </div>
