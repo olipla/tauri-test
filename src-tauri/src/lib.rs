@@ -12,6 +12,7 @@ pub fn run() {
                 app.handle().plugin(
                     tauri_plugin_log::Builder::default()
                         .level(log::LevelFilter::Info)
+                        .level_for("printer_event_handler", log::LevelFilter::Warn)
                         .build(),
                 )?;
             }
@@ -30,20 +31,6 @@ pub fn run() {
             }
 
             window.show().unwrap();
-
-            for printer in printers::get_printers() {
-                println!("{:?}", printer);
-            }
-
-            let my_printer = printers::get_printer_by_name("ZDesigner ZD621-300dpi ZPL");
-
-            if my_printer.is_some() {
-                println!("PRINTER EXISTS");
-                // let _job_id = my_printer.unwrap().print_file("C:/b4tate/labels/300_dpi_bridge_ses_sigfox.zpl", printers::common::base::job::PrinterJobOptions::none());
-                // let job_id = my_printer.unwrap().print_file("notes.txt", PrinterJobOptions::none());
-                // Err("...") or Ok(())
-            }
-
 
             Ok(())
         })
