@@ -17,13 +17,21 @@ const status = computed<Status>(() => {
 
 <template>
   <CommonCard :status="status" title="Printer">
+    <div v-if="!props.status" class="flex justify-center items-center w-full">
+      <div class="flex flex-col grow items-center justify-center gap-1 w-full">
+        <UIcon name="i-lucide-triangle-alert" class="size-6" />
+        <div>
+          Not configured
+        </div>
+      </div>
+    </div>
     <div class="flex flex-col gap-1 pl-1">
       <div class="font-bold">
         {{ props.status?.name }}
       </div>
       <div class="flex gap-2">
         <div class="font-bold">
-          {{ props.status?.state }}
+          {{ props.status?.status }}
         </div>
         <div class="border-muted border self-stretch" />
         <div>{{ props.status?.error_state }}</div>

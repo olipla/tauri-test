@@ -8,9 +8,7 @@ export function usePrinter() {
   const configuredError = ref<string | undefined>()
 
   async function pollStatus() {
-    console.log('STATUS POLL')
     if (configuredName.value) {
-      console.log('POLLING')
       try {
         configuredStatus.value = await getPrinter(configuredName.value)
         configuredError.value = undefined
