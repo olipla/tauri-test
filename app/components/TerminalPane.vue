@@ -75,7 +75,6 @@ configuratorStore.serialWriteSubscribe((data: Uint8Array) => {
 })
 
 function terminalDataIn(data: string) {
-  console.log(data)
   configuratorStore.serialWrite(new TextEncoder().encode(data))
 }
 

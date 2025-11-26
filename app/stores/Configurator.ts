@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 
 type SerialCallback = (data: Uint8Array) => void
+type SerialLineCallback = (data: string) => void
 
 export const useConfiguratorStore = defineStore('configurator', () => {
   const settingsIsOpen = ref(false)
@@ -13,7 +14,6 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   }
 
   function serialCallbackWrapper(data: Uint8Array) {
-    console.log(data)
     serialListeners.forEach(callback => callback(data))
   }
 
@@ -25,8 +25,29 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   }
 
   function serialWriteCallbackWrapper(data: Uint8Array) {
-    console.log(data)
     serialWriteListeners.forEach(callback => callback(data))
+  }
+
+  const serialLineListeners = new Set<SerialLineCallback>()
+
+  function serialLineSubscribe(callback: SerialLineCallback) {
+    serialLineListeners.add(callback)
+    return () => serialLineListeners.delete(callback)
+  }
+
+  function serialLineCallbackWrapper(line: string) {
+    serialLineListeners.forEach(callback => callback(line))
+  }
+
+  const serialPartialLineListeners = new Set<SerialLineCallback>()
+
+  function serialPartialLineSubscribe(callback: SerialLineCallback) {
+    serialPartialLineListeners.add(callback)
+    return () => serialPartialLineListeners.delete(callback)
+  }
+
+  function serialPartialLineCallbackWrapper(line: string) {
+    serialPartialLineListeners.forEach(callback => callback(line))
   }
 
   const {
@@ -44,10 +65,9 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     sanitisedSerialNumber: serialSanitisedSerialNumber,
     sanitisedProduct: serialSanitisedProduct,
     autoReconnect: serialAutoReconnect,
-  } = useSerialPort(serialCallbackWrapper, serialWriteCallbackWrapper)
+  } = useSerialPort(serialCallbackWrapper, serialWriteCallbackWrapper, serialLineCallbackWrapper, serialPartialLineCallbackWrapper)
 
   watch(settingsIsOpen, (value) => {
-    console.log('SETTINGS IS OPEN CONFIGURATOR', value)
     serialAutoReconnect.value = !value
   })
 
@@ -64,6 +84,8 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     serialSubscribe,
     serialWriteSubscribe,
     serialGetHistory,
+    serialLineSubscribe,
+    serialPartialLineSubscribe,
     serialIsOpen,
     serialPortInfo,
     serialPortOptions,

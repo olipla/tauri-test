@@ -1,7 +1,7 @@
 import type { PortInfo, SerialportOptions } from 'tauri-plugin-serialplugin-api'
 import { SerialPort } from 'tauri-plugin-serialplugin-api'
 
-export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, serialSentCallback: (bytes: Uint8Array) => void) {
+export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, serialSentCallback: (bytes: Uint8Array) => void, serialLineCallback?: (line: string) => void, serialPartialLineCallback?: (partialLine: string) => void) {
   let port: SerialPort | undefined
 
   const portInfo = ref<PortInfo | undefined>()
@@ -63,9 +63,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
   const receiving = refAutoReset(false, 250)
 
   const { pause: pauseAutoReconnect, resume: resumeAutoReconnect } = useIntervalFn(() => {
-    console.log('AUTO RECONNECT')
     if (!isConnected.value && portOptions.value !== undefined) {
-      console.log('TRYING OPEN')
       open(portOptions.value, false)
     }
   }, 2000)
@@ -76,13 +74,10 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
   }
 
   watchEffect(() => {
-    console.log('SERIAL WATCH EFFECT', autoReconnect.value, isConnected.value, portOptions.value)
     if (autoReconnect.value && !isConnected.value && portOptions.value !== undefined) {
-      console.log('SERIAL WATCH RESUME')
       resumeAutoReconnect()
     }
     else {
-      console.log('SERIAL WATCH PAUSE')
       pauseAutoReconnect()
     }
   })
@@ -107,13 +102,14 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
     receiving.value = true
     history.push(bytes)
     serialCallback(bytes)
+    processSerial(bytes)
   }
 
   async function listen() {
     try {
       if (port) {
         await port.startListening()
-        await port.listen(serialCallbackWrapper)
+        await port.listen(serialCallbackWrapper, false)
         await port.disconnected(disconnectedCallback)
         isConnected.value = true
       }
@@ -177,6 +173,42 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
     pauseAutoReconnect()
     close()
   })
+
+  let strBuffer: string = ''
+
+  function serialLineCallbackWrapper(line: string) {
+    console.log('SERIAL LINE:', line)
+    if (serialLineCallback) {
+      serialLineCallback(line)
+    }
+  }
+
+  function serialPartialLineCallbackWrapper(partialLine: string) {
+    console.log('PARTIAL SERIAL LINE:', partialLine)
+    if (serialPartialLineCallback) {
+      serialPartialLineCallback(partialLine)
+    }
+  }
+
+  function processSerial(data: Uint8Array) {
+    const dataStr = new TextDecoder('utf-8', { fatal: false }).decode(data)
+
+    strBuffer += dataStr
+
+    while (strBuffer.includes('\n')) {
+      const newlineIndex = strBuffer.indexOf('\n')
+      const line = strBuffer.slice(0, newlineIndex)
+      strBuffer = strBuffer.slice(newlineIndex + 1)
+
+      if (line) {
+        serialLineCallbackWrapper(line)
+      }
+    }
+
+    if (strBuffer) {
+      serialPartialLineCallbackWrapper(strBuffer)
+    }
+  }
 
   return {
     open,
