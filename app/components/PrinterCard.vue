@@ -25,7 +25,7 @@ const status = computed<Status>(() => {
         </div>
       </div>
     </div>
-    <div class="flex flex-col gap-1 pl-1">
+    <div v-else class="flex flex-col gap-1 pl-1">
       <div class="font-bold">
         {{ props.status?.name }}
       </div>
