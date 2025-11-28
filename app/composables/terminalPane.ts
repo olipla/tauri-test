@@ -78,5 +78,16 @@ export function useTerminalPane() {
     },
   })
 
-  return { updatePanePercent, bodyPaneSize, toggleTerminalPane, terminalPaneVisible, terminalPaneSize, isTerminalMaximised, closeTerminalPane, toggleMaximisePane }
+  const terminalPaneMount = ref<'bottom' | 'right'>('bottom')
+
+  function toggleMountPane() {
+    if (terminalPaneMount.value === 'bottom') {
+      terminalPaneMount.value = 'right'
+    }
+    else {
+      terminalPaneMount.value = 'bottom'
+    }
+  }
+
+  return { updatePanePercent, bodyPaneSize, toggleTerminalPane, terminalPaneVisible, terminalPaneSize, isTerminalMaximised, closeTerminalPane, toggleMaximisePane, toggleMountPane, terminalPaneMount }
 }

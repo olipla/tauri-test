@@ -39,12 +39,14 @@ const {
   isTerminalMaximised,
   closeTerminalPane,
   toggleMaximisePane,
+  toggleMountPane,
+  terminalPaneMount,
 } = useTerminalPane()
 </script>
 
 <template>
   <div class="w-full h-full">
-    <Splitpanes horizontal @resize="updatePanePercent">
+    <Splitpanes :horizontal="terminalPaneMount === 'bottom'" @resize="updatePanePercent">
       <Pane :size="bodyPaneSize">
         <div class="w-full h-full flex flex-col gap-2">
           <div class="w-full flex p-4 gap-2">
@@ -79,7 +81,7 @@ const {
         </div>
       </Pane>
       <Pane v-if="terminalPaneVisible" :size="terminalPaneSize">
-        <TerminalPane :maximised="isTerminalMaximised" class="w-full h-full" @close="closeTerminalPane" @maximise="toggleMaximisePane" />
+        <TerminalPane :mounted="terminalPaneMount" :maximised="isTerminalMaximised" class="w-full h-full" @close="closeTerminalPane" @maximise="toggleMaximisePane" @mount="toggleMountPane" />
       </Pane>
     </Splitpanes>
   </div>

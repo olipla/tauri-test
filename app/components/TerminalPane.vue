@@ -3,11 +3,13 @@ import { SettingsModal } from '#components'
 
 const props = defineProps<{
   maximised: boolean
+  mounted: 'bottom' | 'right'
 }>()
 
 const emit = defineEmits<{
   close: []
   maximise: []
+  mount: []
 }>()
 
 const overlay = useOverlay()
@@ -128,6 +130,7 @@ const currentDayMinutes = computed(() => {
       </div>
       <div class="flex gap-1 p-1">
         <UButton icon="i-lucide-settings" variant="ghost" @click.stop="choosePort" />
+        <UButton :icon="props.mounted === 'bottom' ? 'i-lucide-panel-right' : 'i-lucide-panel-bottom'" variant="ghost" @click.stop="emit('mount')" />
         <UButton :icon="props.maximised ? 'i-lucide-minimize' : 'i-lucide-maximize'" variant="ghost" @click.stop="emit('maximise')" />
         <UButton icon="i-lucide-x" variant="ghost" @click.stop="emit('close')" />
       </div>
