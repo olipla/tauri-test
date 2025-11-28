@@ -52,6 +52,12 @@ export function useJellyfishBridgeSerial() {
         currentDeviceMetadata.value.deviceAltId = groups.altId
       },
     },
+    versionLong: {
+      regex: /[\s\S]*Version: [\s\S]/,
+      onMatch: (str) => {
+        currentDeviceMetadata.value.versionLong = str
+      },
+    },
     versionTag: {
       regex: /(?<modemType>\S+)_FW\S+/,
       onMatch: (str, match) => {
