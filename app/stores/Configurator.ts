@@ -6,6 +6,14 @@ type SerialLineCallback = (data: string) => void
 export const useConfiguratorStore = defineStore('configurator', () => {
   const settingsIsOpen = ref(false)
 
+  const {
+    currentDeviceMetadata: JFBCurrentDeviceMetadata,
+    currentDeviceConfiguration: JFBCurrentDeviceConfiguration,
+    currentDeviceState: JFBCurrentDeviceState,
+    serialLineCallback: JFBSerialLineCallback,
+    serialPartialLineCallback: JFBSerialPartialLineCallback,
+  } = useJellyfishBridgeSerial()
+
   const serialListeners = new Set<SerialCallback>()
 
   function serialSubscribe(callback: SerialCallback) {
@@ -36,6 +44,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   }
 
   function serialLineCallbackWrapper(line: string) {
+    JFBSerialLineCallback(line)
     serialLineListeners.forEach(callback => callback(line))
   }
 
@@ -47,6 +56,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   }
 
   function serialPartialLineCallbackWrapper(line: string) {
+    JFBSerialPartialLineCallback(line)
     serialPartialLineListeners.forEach(callback => callback(line))
   }
 
@@ -99,5 +109,8 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     printerConfiguredName,
     printerConfiguredStatus,
     printerPrintData,
+    JFBCurrentDeviceMetadata,
+    JFBCurrentDeviceConfiguration,
+    JFBCurrentDeviceState,
   }
 })
