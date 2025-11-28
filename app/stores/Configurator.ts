@@ -113,4 +113,8 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     JFBCurrentDeviceConfiguration,
     JFBCurrentDeviceState,
   }
+}, {
+  persist: {
+    pick: ['serialPortOptions', 'printerConfiguredName'],
+  },
 })
