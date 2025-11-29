@@ -116,5 +116,6 @@ export const useConfiguratorStore = defineStore('configurator', () => {
 }, {
   persist: {
     pick: ['serialPortOptions', 'printerConfiguredName'],
+    storage: piniaPluginPersistedstate.localStorage(),
   },
 })
