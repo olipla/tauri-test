@@ -31,7 +31,7 @@ const status = computed<Status>(() => {
       </div>
       <div class="flex gap-2">
         <div class="font-bold">
-          {{ props.status?.status }}
+          {{ props.status.is_offline ? 'Offline' : props.status?.status }}
         </div>
         <div class="border-muted border self-stretch" />
         <div>{{ props.status?.error_state }}</div>
