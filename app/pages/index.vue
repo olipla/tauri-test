@@ -13,6 +13,8 @@ const {
   serialSanitisedProduct,
   serialSanitisedSerialNumber,
   printerConfiguredStatus,
+  JFBCurrentDeviceMetadata,
+  JFBCurrentDeviceState,
 } = storeToRefs(configuratorStore)
 
 onMounted(async () => {
@@ -77,6 +79,57 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
               <ConfigurationCard @click.stop="() => openSettings('configuration')" />
               <StatusCard :issues="statusIssues" />
             </div>
+            <CommonCard title="Current Device" :show-settings="false" status="error" class="w-full h-64">
+              <div class="w-full flex">
+                <div class="flex flex-col gap-4">
+                  <table class="table">
+                    <tbody>
+                      <tr>
+                        <td class="pr-4">
+                          Device ID
+                        </td>
+                        <td>{{ JFBCurrentDeviceMetadata.deviceId }}</td>
+                      </tr>
+                      <tr>
+                        <td class="pr-4">
+                          PAC/SIM ID
+                        </td>
+                        <td>{{ JFBCurrentDeviceMetadata.deviceAltId }}</td>
+                      </tr>
+                      <tr>
+                        <td class="pr-4">
+                          Version Tag
+                        </td>
+                        <td>{{ JFBCurrentDeviceMetadata.versionTag }}</td>
+                      </tr>
+                      <tr>
+                        <td class="pr-4">
+                          Version
+                        </td>
+                        <td>{{ JFBCurrentDeviceMetadata.versionShort }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <table class="table">
+                    <tbody>
+                      <tr>
+                        <td class="pr-4">
+                          Runmode
+                        </td>
+                        <td>{{ JFBCurrentDeviceState.runmode }}</td>
+                      </tr>
+                      <tr>
+                        <td class="pr-4">
+                          MBUS Enabled
+                        </td>
+                        <td>{{ JFBCurrentDeviceState.mbusEnabled }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="flex flex-col gap-4" />
+              </div>
+            </CommonCard>
           </div>
         </div>
       </Pane>
