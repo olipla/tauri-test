@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-interface Issue {
+export interface Issue {
   title: string
   description: string
 }
@@ -31,6 +31,7 @@ function decreaseIndex() {
 }
 
 watch(() => props.issues, () => {
+  console.log('props issue change')
   issueIndex.value = 0
 })
 

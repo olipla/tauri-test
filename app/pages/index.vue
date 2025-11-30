@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import type { Issue } from '~/components/StatusCard.vue'
 import { Pane, Splitpanes } from 'splitpanes'
 import SettingsModal from '~/components/SettingsModal.vue'
 
@@ -42,6 +43,8 @@ const {
   toggleMountPane,
   terminalPaneMount,
 } = useTerminalPane()
+
+const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The selected printer is offline' }, { title: 'Serial Error', description: 'COM 4 does not exist!' }])
 </script>
 
 <template>
@@ -76,7 +79,7 @@ const {
             />
             <PrinterCard :status="printerConfiguredStatus" @click.stop="() => openSettings('printer')" />
             <ConfigurationCard @click.stop="() => openSettings('configuration')" />
-            <StatusCard :issues="[{ title: 'Printer Error', description: 'The selected printer is offline' }, { title: 'Serial Error', description: 'COM 4 does not exist!' }]" />
+            <StatusCard :issues="statusIssues" />
           </div>
         </div>
       </Pane>
