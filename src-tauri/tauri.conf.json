@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "nuxt-tauri-test",
+  "productName": "jellyfish-configurator",
   "version": "0.1.0",
-  "identifier": "uk.oplatt.tauritest",
+  "identifier": "com.barter4things.jellyfish-configurator",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:3000",
@@ -14,7 +14,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "nuxt-tauri-test",
+        "title": "Jellyfish Configurator",
         "width": 800,
         "height": 600,
         "resizable": true,
