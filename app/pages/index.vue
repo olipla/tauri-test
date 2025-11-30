@@ -51,35 +51,32 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
   <div class="w-full h-full">
     <Splitpanes :horizontal="terminalPaneMount === 'bottom'" @resize="updatePanePercent">
       <Pane :size="bodyPaneSize">
-        <div class="w-full h-full flex flex-col gap-2">
-          <div class="w-full flex p-4 gap-2">
-            <h1 class="text-xl grow">
-              Jellyfish Bridge Configurator
-            </h1>
-            <UButton icon="i-lucide-terminal" variant="outline" @click="toggleTerminalPane">
-              {{ terminalPaneVisible ? 'Close' : 'Open' }} Terminal
-            </UButton>
-            <UButton icon="i-lucide-settings" @click="() => openSettings()">
-              Settings
-            </UButton>
-          </div>
-          <div class="flex gap-4 px-4">
-            <SerialCard
-              :status="serialIsConnected ? 'ok' : 'error'"
-              :serial-details="serialIsOpen ? {
-                baudRate: serialPortOptions?.baudRate ?? 0,
-                id: serialSanitisedSerialNumber ?? '',
-                name: serialSanitisedProduct ?? '',
-                port: serialPortOptions?.path ?? '',
-              } : undefined"
-              :transmitting="serialTransmitting"
-              :receiving="serialReceiving"
-              :is-connected="serialIsConnected"
-              @click.stop="() => openSettings('serial')"
-            />
-            <PrinterCard :status="printerConfiguredStatus" @click.stop="() => openSettings('printer')" />
-            <ConfigurationCard @click.stop="() => openSettings('configuration')" />
-            <StatusCard :issues="statusIssues" />
+        <div class="w-full h-full flex gap-8 p-4">
+          <div class="flex flex-col gap-8 w-132">
+            <div class="grid grid-cols-2 gap-4 w-full">
+              <UButton icon="i-lucide-settings" @click="() => openSettings()">
+                Settings
+              </UButton>
+              <UButton icon="i-lucide-terminal" variant="outline" @click="toggleTerminalPane">
+                {{ terminalPaneVisible ? 'Close' : 'Open' }} Terminal
+              </UButton>
+              <SerialCard
+                :status="serialIsConnected ? 'ok' : 'error'"
+                :serial-details="serialIsOpen ? {
+                  baudRate: serialPortOptions?.baudRate ?? 0,
+                  id: serialSanitisedSerialNumber ?? '',
+                  name: serialSanitisedProduct ?? '',
+                  port: serialPortOptions?.path ?? '',
+                } : undefined"
+                :transmitting="serialTransmitting"
+                :receiving="serialReceiving"
+                :is-connected="serialIsConnected"
+                @click.stop="() => openSettings('serial')"
+              />
+              <PrinterCard :status="printerConfiguredStatus" @click.stop="() => openSettings('printer')" />
+              <ConfigurationCard @click.stop="() => openSettings('configuration')" />
+              <StatusCard :issues="statusIssues" />
+            </div>
           </div>
         </div>
       </Pane>
