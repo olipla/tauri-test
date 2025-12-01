@@ -16,6 +16,8 @@ const {
   JFBCurrentDeviceMetadata,
   JFBCurrentDeviceState,
   JFBCurrentDeviceConfiguration,
+  configAvailable,
+  configFilename,
 } = storeToRefs(configuratorStore)
 
 onMounted(async () => {
@@ -47,10 +49,6 @@ const {
   terminalPaneMount,
 } = useTerminalPane()
 
-const {
-  openFile: configurationOpenFile,
-} = useConfigurationImport()
-
 const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The selected printer is offline' }, { title: 'Serial Error', description: 'COM 4 does not exist!' }])
 </script>
 
@@ -81,7 +79,7 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
                 @click.stop="() => openSettings('serial')"
               />
               <PrinterCard :status="printerConfiguredStatus" @click.stop="() => openSettings('printer')" />
-              <ConfigurationCard @click.stop="() => openSettings('configuration')" />
+              <ConfigurationCard :size="configAvailable.length" :filter="configFilename" source="SHEET" @click.stop="() => openSettings('configuration')" />
               <StatusCard :issues="statusIssues" />
             </div>
             <CommonCard title="Current Device" :show-settings="false" status="error" class="w-full grow">

@@ -9,6 +9,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   const {
     availableConfigurations: configAvailable,
     openFile: configImport,
+    filename: configFilename,
   } = useConfigurationImport()
 
   const {
@@ -119,10 +120,11 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     JFBCurrentDeviceState,
     configAvailable,
     configImport,
+    configFilename,
   }
 }, {
   persist: {
-    pick: ['serialPortOptions', 'printerConfiguredName', 'configAvailable'],
+    pick: ['serialPortOptions', 'printerConfiguredName', 'configAvailable', 'configFilename'],
     storage: piniaPluginPersistedstate.localStorage(),
   },
 })
