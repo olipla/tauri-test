@@ -87,7 +87,7 @@ async function choosePrinter() {
 }
 
 async function printTestLabel() {
-  await configuratorStore.printerPrintData('^XA^CF0,120^FO210,100^FDTest Label^FS^XZ')
+  await configuratorStore.printerPrintData('^XA^PON^LH0,0^FWN^CF0,120^FO210,100^FDTest Label^FS^XZ')
 }
 </script>
 
