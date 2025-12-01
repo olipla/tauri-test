@@ -6,7 +6,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
 
   const portInfo = ref<PortInfo | undefined>()
   const portOptions = ref<SerialportOptions | undefined>()
-  const autoReconnect = ref(false)
+  const autoReconnect = ref(true)
 
   const history: Uint8Array[] = []
 
@@ -63,6 +63,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
   const receiving = refAutoReset(false, 250)
 
   const { pause: pauseAutoReconnect, resume: resumeAutoReconnect } = useIntervalFn(() => {
+    console.log('SERIAL INTERVAL')
     if (!isConnected.value && portOptions.value !== undefined) {
       open(portOptions.value, false)
     }
@@ -74,6 +75,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
   }
 
   watchEffect(() => {
+    console.log('SERIAL WE', autoReconnect.value, !isConnected.value, portOptions.value !== undefined)
     if (autoReconnect.value && !isConnected.value && portOptions.value !== undefined) {
       resumeAutoReconnect()
     }
