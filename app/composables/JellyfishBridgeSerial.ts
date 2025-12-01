@@ -213,12 +213,17 @@ export function useJellyfishBridgeSerial() {
           return
         }
         const groups = match.groups as { messageType: string }
+        // message type
+        // "Status"
+        // "Meter Data"
+        // "Discovered Meter"
+
         currentDeviceState.value.transmitting = groups.messageType
       },
     },
 
     transmitEnd: {
-      regex: /Finished (?<messageType>.+) Transmission/,
+      regex: /(?:Finished|Completed) (?<messageType>.+) Transmission/,
       onMatch: () => {
         currentDeviceState.value.transmitting = null
       },
