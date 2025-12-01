@@ -67,9 +67,6 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
               <UButton icon="i-lucide-terminal" variant="outline" @click="toggleTerminalPane">
                 {{ terminalPaneVisible ? 'Close' : 'Open' }} Terminal
               </UButton>
-              <UButton icon="i-lucide-settings" @click="() => configurationOpenFile()">
-                Open Config
-              </UButton>
               <SerialCard
                 :status="serialIsConnected ? 'ok' : 'error'"
                 :serial-details="serialIsOpen ? {
