@@ -47,6 +47,10 @@ const {
   terminalPaneMount,
 } = useTerminalPane()
 
+const {
+  openFile: configurationOpenFile,
+} = useConfigurationImport()
+
 const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The selected printer is offline' }, { title: 'Serial Error', description: 'COM 4 does not exist!' }])
 </script>
 
@@ -62,6 +66,9 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
               </UButton>
               <UButton icon="i-lucide-terminal" variant="outline" @click="toggleTerminalPane">
                 {{ terminalPaneVisible ? 'Close' : 'Open' }} Terminal
+              </UButton>
+              <UButton icon="i-lucide-settings" @click="() => configurationOpenFile()">
+                Open Config
               </UButton>
               <SerialCard
                 :status="serialIsConnected ? 'ok' : 'error'"
