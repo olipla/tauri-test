@@ -10,6 +10,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     availableConfigurations: configAvailable,
     openFile: configImport,
     filename: configFilename,
+    clearConfig: configClear,
   } = useConfigurationImport()
 
   const {
@@ -121,6 +122,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     configAvailable,
     configImport,
     configFilename,
+    configClear,
   }
 }, {
   persist: {

@@ -124,9 +124,12 @@ async function printTestLabel() {
         </template>
         <template #configuration>
           <SettingsTab>
-            <h2>Configuratino</h2>
+            <h2>Configuration</h2>
             <UButton @click="configuratorStore.configImport()">
               Import from spreadsheet
+            </UButton>
+            <UButton color="error" @click="configuratorStore.configClear()">
+              Clear configurations
             </UButton>
           </SettingsTab>
         </template>

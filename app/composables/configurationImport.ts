@@ -29,6 +29,11 @@ export function useConfigurationImport() {
   const availableConfigurations = ref<Configuration[]>([])
   const filename = ref<string | undefined>()
 
+  function clearConfig() {
+    filename.value = undefined
+    availableConfigurations.value = []
+  }
+
   onChange(async (files) => {
     if (!files) {
       return
@@ -135,5 +140,5 @@ export function useConfigurationImport() {
     filename.value = file.name
   })
 
-  return { openFile, availableConfigurations, filename }
+  return { openFile, availableConfigurations, filename, clearConfig }
 }
