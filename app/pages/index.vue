@@ -15,6 +15,7 @@ const {
   printerConfiguredStatus,
   JFBCurrentDeviceMetadata,
   JFBCurrentDeviceState,
+  JFBCurrentDeviceConfiguration,
 } = storeToRefs(configuratorStore)
 
 onMounted(async () => {
@@ -79,7 +80,7 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
               <ConfigurationCard @click.stop="() => openSettings('configuration')" />
               <StatusCard :issues="statusIssues" />
             </div>
-            <CommonCard title="Current Device" :show-settings="false" status="error" class="w-full h-64">
+            <CommonCard title="Current Device" :show-settings="false" status="error" class="w-full grow">
               <div class="w-full flex">
                 <div class="flex flex-col gap-4">
                   <table class="table">
@@ -123,6 +124,56 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
                           MBUS Enabled
                         </td>
                         <td>{{ JFBCurrentDeviceState.mbusEnabled }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <table class="table">
+                    <tbody>
+                      <tr>
+                        <td class="pr-4">
+                          Stack Mode
+                        </td>
+                        <td>{{ JFBCurrentDeviceConfiguration.stackMode }}</td>
+                      </tr>
+                      <tr>
+                        <td class="pr-4">
+                          Meter Type
+                        </td>
+                        <td>{{ JFBCurrentDeviceConfiguration.meterType }}</td>
+                      </tr>
+                      <tr>
+                        <td class="pr-4">
+                          Time
+                        </td>
+                        <td>{{ JFBCurrentDeviceConfiguration.time }}</td>
+                      </tr>
+                      <tr>
+                        <td class="pr-4">
+                          Listening Start
+                        </td>
+                        <td>{{ JFBCurrentDeviceConfiguration.listeningStart }}</td>
+                      </tr>
+                      <tr>
+                        <td class="pr-4">
+                          Listening Cycle
+                        </td>
+                        <td>{{ JFBCurrentDeviceConfiguration.listeningCycle }}</td>
+                      </tr>
+                      <tr>
+                        <td class="pr-4">
+                          Listening Duration
+                        </td>
+                        <td>{{ JFBCurrentDeviceConfiguration.listeningDuration }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <table class="table">
+                    <tbody>
+                      <tr v-for="([key, meter]) in JFBCurrentDeviceConfiguration.meters" :key="key">
+                        <td class="pr-4">
+                          Meter {{ key }}
+                        </td>
+                        <td>{{ meter.id }}</td>
                       </tr>
                     </tbody>
                   </table>
