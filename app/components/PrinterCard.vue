@@ -16,28 +16,33 @@ const status = computed<Status>(() => {
 </script>
 
 <template>
-  <CommonCard :status="status" title="Printer">
-    <div v-if="!props.status" class="flex justify-center items-center w-full">
-      <div class="flex flex-col grow items-center justify-center gap-1 w-full">
-        <UIcon name="i-lucide-triangle-alert" class="size-6" />
-        <div>
-          Not configured
+  <ClientOnly>
+    <template #fallback>
+      <CommonCard title="Printer" status="error" />
+    </template>
+    <CommonCard :status="status" title="Printer">
+      <div v-if="!props.status" class="flex justify-center items-center w-full">
+        <div class="flex flex-col grow items-center justify-center gap-1 w-full">
+          <UIcon name="i-lucide-triangle-alert" class="size-6" />
+          <div>
+            Not configured
+          </div>
         </div>
       </div>
-    </div>
-    <div v-else class="flex flex-col gap-1 pl-1">
-      <div class="font-bold">
-        {{ props.status?.name }}
-      </div>
-      <div class="flex gap-2">
+      <div v-else class="flex flex-col gap-1 pl-1">
         <div class="font-bold">
-          {{ props.status.is_offline ? 'Offline' : props.status?.status }}
+          {{ props.status?.name }}
         </div>
-        <div class="border-muted border self-stretch" />
-        <div>{{ props.status?.error_state }}</div>
+        <div class="flex gap-2">
+          <div class="font-bold">
+            {{ props.status.is_offline ? 'Offline' : props.status?.status }}
+          </div>
+          <div class="border-muted border self-stretch" />
+          <div>{{ props.status?.error_state }}</div>
+        </div>
       </div>
-    </div>
-  </CommonCard>
+    </CommonCard>
+  </ClientOnly>
 </template>
 
 <style>
