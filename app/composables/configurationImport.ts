@@ -2,12 +2,31 @@ import { useFileDialog,
 } from '@vueuse/core'
 import { read, utils } from 'xlsx'
 
+interface ConfigurationAsset {
+  assetInfoId: string
+  coAssetId: string
+  radioId: string
+  radioIdFull: string
+  wmbusKey: string
+}
+
+interface Configuration {
+  sFurnitureId: string
+  sFurnitureAddress: string
+  sFurnitureLatitude: number
+  sFurnitureLongitude: number
+  sFurnitureW3W: string
+  assets: ConfigurationAsset[]
+}
+
 export function useConfigurationImport() {
   const { open: openFile, onChange } = useFileDialog({
     accept: '.csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel', // Set to accept only image files
     directory: false,
     multiple: false,
   })
+
+  const availableConfigurations = ref<Configuration[]>([])
 
   onChange(async (files) => {
     if (!files) {
@@ -36,23 +55,6 @@ export function useConfigurationImport() {
     interface Row { [key: string]: string | number | Date }
 
     const json = utils.sheet_to_json(sheet) as Row[]
-
-    interface ConfigurationAsset {
-      assetInfoId: string
-      coAssetId: string
-      radioId: string
-      radioIdFull: string
-      wmbusKey: string
-    }
-
-    interface Configuration {
-      sFurnitureId: string
-      sFurnitureAddress: string
-      sFurnitureLatitude: number
-      sFurnitureLongitude: number
-      sFurnitureW3W: string
-      assets: ConfigurationAsset[]
-    }
 
     const parsedJson: Configuration[] = []
 
@@ -128,8 +130,8 @@ export function useConfigurationImport() {
       }
     }
 
-    console.log(parsedJson)
+    availableConfigurations.value = parsedJson
   })
 
-  return { openFile }
+  return { openFile, availableConfigurations }
 }

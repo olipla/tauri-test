@@ -7,6 +7,11 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   const settingsIsOpen = ref(false)
 
   const {
+    availableConfigurations: configAvailable,
+    openFile: configImport,
+  } = useConfigurationImport()
+
+  const {
     currentDeviceMetadata: JFBCurrentDeviceMetadata,
     currentDeviceConfiguration: JFBCurrentDeviceConfiguration,
     currentDeviceState: JFBCurrentDeviceState,
@@ -112,10 +117,12 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     JFBCurrentDeviceMetadata,
     JFBCurrentDeviceConfiguration,
     JFBCurrentDeviceState,
+    configAvailable,
+    configImport,
   }
 }, {
   persist: {
-    pick: ['serialPortOptions', 'printerConfiguredName'],
+    pick: ['serialPortOptions', 'printerConfiguredName', 'configAvailable'],
     storage: piniaPluginPersistedstate.localStorage(),
   },
 })
