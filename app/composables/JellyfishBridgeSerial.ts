@@ -223,6 +223,17 @@ export function useJellyfishBridgeSerial() {
         currentDeviceState.value.transmitting = null
       },
     },
+
+    emptyLine: {
+      regex: / /,
+      onMatch: () => {
+        if (recentLineHistory[1]?.includes('Configured Meter List:')) {
+          // Configured meter list is blank!
+          console.log('Clearing meter list!')
+          currentDeviceConfiguration.value.meters.clear()
+        }
+      },
+    },
   }
 
   const partialLineRegexs: DeviceRegexs = {
