@@ -29,6 +29,7 @@ function newDeviceState(): DeviceState {
   return {
     runmode: undefined,
     mbusEnabled: false,
+    transmitting: null,
   }
 }
 
@@ -53,9 +54,22 @@ export function useJellyfishBridgeSerial() {
       },
     },
     versionLong: {
-      regex: /[\s\S]*Version: [\s\S]/,
-      onMatch: (str) => {
+      regex: /.*Version: .+ - (?<meterType>.+)/,
+      onMatch: (str, match) => {
+        if (!match.groups) {
+          return
+        }
+        const groups = match.groups as { meterType: string }
+        // meter type
+        // 0 SENSUS
+        // 1 ITRON
+        // 2 DIEHL_G4
+        // 3 ELECTRIC
+        // 4 GAS
+        // 7 _NONE_
+
         currentDeviceMetadata.value.versionLong = str
+        currentDeviceConfiguration.value.meterType = groups.meterType
       },
     },
     versionTag: {
@@ -77,27 +91,27 @@ export function useJellyfishBridgeSerial() {
       },
     },
     stackMode: {
-      regex: /K=(?<stackMode>\d+)/,
+      regex: / - STACK MODE \((?<stackMode>.+)\)/,
       onMatch: (str, match) => {
         if (!match.groups) {
           return
         }
         const groups = match.groups as { stackMode: string }
 
-        currentDeviceConfiguration.value.stackMode = Number(groups.stackMode)
+        currentDeviceConfiguration.value.stackMode = groups.stackMode
       },
     },
-    meterType: {
-      regex: /T=(?<meterType>\d+)/,
-      onMatch: (str, match) => {
-        if (!match.groups) {
-          return
-        }
-        const groups = match.groups as { meterType: string }
+    // meterType: {
+    //   regex: /T=(?<meterType>\d+)/,
+    //   onMatch: (str, match) => {
+    //     if (!match.groups) {
+    //       return
+    //     }
+    //     const groups = match.groups as { meterType: string }
 
-        currentDeviceConfiguration.value.meterType = Number(groups.meterType)
-      },
-    },
+    //     currentDeviceConfiguration.value.meterType = Number(groups.meterType)
+    //   },
+    // },
     configuredMeter: {
       regex: /M(?<index>\d+)=(?<id>[A-F0-9]+),(?<key>[A-F0-9]+)/,
       onMatch: (str, match) => {
@@ -142,14 +156,20 @@ export function useJellyfishBridgeSerial() {
       },
     },
     runmode: {
-      regex: /R=(?<runmode>\d+)/,
+      regex: / - OPM_(?<runmode>\w+)/,
       onMatch: (str, match) => {
         if (!match.groups) {
           return
         }
         const groups = match.groups as { runmode: string }
+        // runmode
+        // 0 HIBERNATE
+        // 1 CONFIG
+        // 2 HIBERNATE_PRERUN
+        // 3 NORMAL
+        // 4
 
-        currentDeviceState.value.runmode = Number(groups.runmode)
+        currentDeviceState.value.runmode = groups.runmode
       },
     },
     mbusEnabled: {
@@ -162,6 +182,45 @@ export function useJellyfishBridgeSerial() {
       regex: /MBUS disabled/,
       onMatch: () => {
         currentDeviceState.value.mbusEnabled = false
+      },
+    },
+
+    // @08>>MORMAL RUN MODE
+    runmodeNormal: {
+      regex: /@08>>/,
+      onMatch: () => {
+        currentDeviceState.value.runmode = 'NORMAL'
+      },
+    },
+    runmodeConfig: {
+      regex: /@07>>/,
+      onMatch: () => {
+        currentDeviceState.value.runmode = 'CONFIG'
+        // Ready to accept commands
+      },
+    },
+    runmodeHibernate: {
+      regex: /@04>>/,
+      onMatch: () => {
+        // Fires whenever the device goes into low power
+      },
+    },
+
+    transmitStart: {
+      regex: /Sending.. (?<messageType>.+) Message/,
+      onMatch: (str, match) => {
+        if (!match.groups) {
+          return
+        }
+        const groups = match.groups as { messageType: string }
+        currentDeviceState.value.transmitting = groups.messageType
+      },
+    },
+
+    transmitEnd: {
+      regex: /Finished (?<messageType>.+) Transmission/,
+      onMatch: () => {
+        currentDeviceState.value.transmitting = null
       },
     },
   }

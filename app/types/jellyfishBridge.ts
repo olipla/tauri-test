@@ -22,8 +22,8 @@ export interface DeviceMetadata {
 }
 
 export interface DeviceConfiguration {
-  stackMode: number | undefined
-  meterType: number | undefined
+  stackMode: string | undefined
+  meterType: string | undefined
   meters: Map<number, MeterConfig>
   time: number | undefined
   listeningStart: number | undefined
@@ -32,8 +32,9 @@ export interface DeviceConfiguration {
 }
 
 export interface DeviceState {
-  runmode: number | undefined
+  runmode: string | undefined
   mbusEnabled: boolean
+  transmitting: null | string
 }
 
 export interface DeviceRegexs {
