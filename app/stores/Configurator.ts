@@ -88,6 +88,8 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     serialAutoReconnect.value = !value
   })
 
+  const serialLocalEcho = ref(false)
+
   const {
     configuredName: printerConfiguredName,
     configuredStatus: printerConfiguredStatus,
@@ -113,6 +115,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     serialSanitisedManufacturer,
     serialSanitisedSerialNumber,
     serialSanitisedProduct,
+    serialLocalEcho,
     printerConfiguredName,
     printerConfiguredStatus,
     printerPrintData,

@@ -12,6 +12,7 @@ const {
   serialIsConnected,
   serialSanitisedProduct,
   serialSanitisedSerialNumber,
+  serialLocalEcho,
   printerConfiguredStatus,
   JFBCurrentDeviceMetadata,
   JFBCurrentDeviceState,
@@ -193,7 +194,7 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
         </div>
       </Pane>
       <Pane v-if="terminalPaneVisible" :size="terminalPaneSize">
-        <TerminalPane :mounted="terminalPaneMount" :maximised="isTerminalMaximised" class="w-full h-full" @close="closeTerminalPane" @maximise="toggleMaximisePane" @mount="toggleMountPane" />
+        <TerminalPane :mounted="terminalPaneMount" :maximised="isTerminalMaximised" class="w-full h-full" :local-echo="serialLocalEcho" @close="closeTerminalPane" @maximise="toggleMaximisePane" @mount="toggleMountPane" />
       </Pane>
     </Splitpanes>
   </div>

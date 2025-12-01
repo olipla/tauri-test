@@ -4,6 +4,7 @@ import { SettingsModal } from '#components'
 const props = defineProps<{
   maximised: boolean
   mounted: 'bottom' | 'right'
+  localEcho?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -72,7 +73,9 @@ function invertText(textBytes: Uint8Array) {
 configuratorStore.serialWriteSubscribe((data: Uint8Array) => {
   if (terminal.value) {
     // Local Echo
-    terminal.value.write(invertText(data))
+    if (props.localEcho) {
+      terminal.value.write(invertText(data))
+    }
   }
 })
 

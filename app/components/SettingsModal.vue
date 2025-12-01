@@ -48,7 +48,7 @@ const activeItem = computed(() => {
 
 const configuratorStore = useConfiguratorStore()
 
-const { settingsIsOpen, printerConfiguredName } = storeToRefs(configuratorStore)
+const { settingsIsOpen, printerConfiguredName, serialLocalEcho } = storeToRefs(configuratorStore)
 
 onMounted(() => {
   console.log('SETTINGS MODAL MOUNT')
@@ -89,6 +89,12 @@ async function choosePrinter() {
 async function printTestLabel() {
   await configuratorStore.printerPrintData('^XA^PON^LH0,0^FWN^CF0,120^FO210,100^FDTest Label^FS^XZ')
 }
+
+const localEcho = ref<boolean>(serialLocalEcho.value)
+
+watch(localEcho, (newValue) => {
+  serialLocalEcho.value = newValue
+})
 </script>
 
 <template>
@@ -109,6 +115,7 @@ async function printTestLabel() {
             <UButton @click="choosePort">
               Choose
             </UButton>
+            <USwitch v-model="localEcho" label="Local Echo" />
           </SettingsTab>
         </template>
         <template #printer>
