@@ -167,7 +167,8 @@ export function useJellyfishBridgeSerial() {
         // 1 CONFIG
         // 2 HIBERNATE_PRERUN
         // 3 NORMAL
-        // 4
+        // 4 TEST
+        // 5 TEST_CONTINUOUS
 
         currentDeviceState.value.runmode = groups.runmode
       },

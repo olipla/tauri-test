@@ -125,6 +125,12 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
                         </td>
                         <td>{{ JFBCurrentDeviceState.mbusEnabled }}</td>
                       </tr>
+                      <tr>
+                        <td class="pr-4">
+                          Transmitting
+                        </td>
+                        <td>{{ JFBCurrentDeviceState.transmitting }}</td>
+                      </tr>
                     </tbody>
                   </table>
                   <table class="table">
