@@ -21,13 +21,25 @@ interface Configuration {
 
 export function useConfigurationImport() {
   const { open: openFile, onChange } = useFileDialog({
-    accept: '.csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel', // Set to accept only image files
+    accept: '.csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel',
     directory: false,
     multiple: false,
   })
 
   const availableConfigurations = ref<Configuration[]>([])
   const filename = ref<string | undefined>()
+  const appliedConfigurations = ref<Configuration[]>([])
+
+  function applyConfiguration(configuration: Configuration) {
+    const availableIndex = availableConfigurations.value.findIndex(x => x.sFurnitureId === configuration.sFurnitureId)
+    const availableConfiguration = availableConfigurations.value[availableIndex]
+    if (!availableConfiguration) {
+      return
+    }
+
+    appliedConfigurations.value.push(availableConfiguration)
+    availableConfigurations.value.splice(availableIndex, 1)
+  }
 
   function clearConfig() {
     filename.value = undefined
@@ -140,5 +152,5 @@ export function useConfigurationImport() {
     filename.value = file.name
   })
 
-  return { openFile, availableConfigurations, filename, clearConfig }
+  return { openFile, availableConfigurations, filename, clearConfig, applyConfiguration, appliedConfigurations }
 }
