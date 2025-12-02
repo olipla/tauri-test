@@ -17,12 +17,34 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   } = useConfigurationImport()
 
   const {
+    open: serialOpen,
+    write: serialWrite,
+    getHistory: serialGetHistory,
+    isOpen: serialIsOpen,
+    portInfo: serialPortInfo,
+    portOptions: serialPortOptions,
+    receiving: serialReceiving,
+    transmitting: serialTransmitting,
+    isConfigured: serialIsConfigured,
+    isConnected: serialIsConnected,
+    sanitisedManufacturer: serialSanitisedManufacturer,
+    sanitisedSerialNumber: serialSanitisedSerialNumber,
+    sanitisedProduct: serialSanitisedProduct,
+    autoReconnect: serialAutoReconnect,
+  } = useSerialPort(serialCallbackWrapper, serialWriteCallbackWrapper, serialLineCallbackWrapper, serialPartialLineCallbackWrapper)
+
+  async function stringToSerial(data: string) {
+    const bytes = new TextEncoder().encode(data)
+    await serialWrite(bytes)
+  }
+
+  const {
     currentDeviceMetadata: JFBCurrentDeviceMetadata,
     currentDeviceConfiguration: JFBCurrentDeviceConfiguration,
     currentDeviceState: JFBCurrentDeviceState,
     serialLineCallback: JFBSerialLineCallback,
     serialPartialLineCallback: JFBSerialPartialLineCallback,
-  } = useJellyfishBridgeSerial()
+  } = useJellyfishBridgeSerial(stringToSerial, configAvailable, configApply)
 
   const serialListeners = new Set<SerialCallback>()
 
@@ -69,23 +91,6 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     JFBSerialPartialLineCallback(line)
     serialPartialLineListeners.forEach(callback => callback(line))
   }
-
-  const {
-    open: serialOpen,
-    write: serialWrite,
-    getHistory: serialGetHistory,
-    isOpen: serialIsOpen,
-    portInfo: serialPortInfo,
-    portOptions: serialPortOptions,
-    receiving: serialReceiving,
-    transmitting: serialTransmitting,
-    isConfigured: serialIsConfigured,
-    isConnected: serialIsConnected,
-    sanitisedManufacturer: serialSanitisedManufacturer,
-    sanitisedSerialNumber: serialSanitisedSerialNumber,
-    sanitisedProduct: serialSanitisedProduct,
-    autoReconnect: serialAutoReconnect,
-  } = useSerialPort(serialCallbackWrapper, serialWriteCallbackWrapper, serialLineCallbackWrapper, serialPartialLineCallbackWrapper)
 
   watch(settingsIsOpen, (value) => {
     serialAutoReconnect.value = !value

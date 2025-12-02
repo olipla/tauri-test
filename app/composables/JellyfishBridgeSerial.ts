@@ -33,12 +33,49 @@ function newDeviceState(): DeviceState {
   }
 }
 
-export function useJellyfishBridgeSerial() {
+export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<void>, availableConfigurations: Ref<Configuration[]>, applyConfiguration: (configuration: Configuration, deviceId: string) => void) {
   const currentDeviceMetadata = ref<DeviceMetadata>(newDeviceMetadata())
   const currentDeviceConfiguration = ref<DeviceConfiguration>(newDeviceConfiguration())
   const currentDeviceState = ref<DeviceState>(newDeviceState())
 
   const recentLineHistory: string[] = []
+
+  async function applyNextConfig() {
+    if (!currentDeviceMetadata.value.deviceId) {
+      return
+    }
+    if (!currentDeviceMetadata.value.deviceAltId) {
+      return
+    }
+    const nextConfig = availableConfigurations.value[0]
+
+    if (!nextConfig) {
+      return
+    }
+
+    const date = new Date()
+    const hours = date.getUTCHours()
+    const minutes = date.getUTCMinutes()
+    const minutesOfDay = (hours * 60) + minutes
+
+    const commands = [
+      `O=${currentDeviceMetadata.value.deviceAltId}`,
+      'S=60',
+      'T=7',
+      'C=*',
+      `I=${minutesOfDay}`,
+    ]
+
+    for (const asset of nextConfig.assets) {
+      commands.push(`M=${asset.radioIdFull},${asset.wmbusKey}`)
+    }
+    commands.push('?')
+    commands.push('R=2')
+
+    const commandStr = `${commands.join('\n')}\n`
+    await sendSerial(commandStr)
+    applyConfiguration(nextConfig, currentDeviceMetadata.value.deviceId)
+  }
 
   const lineRegexs: DeviceRegexs = {
     deviceId: {
@@ -198,6 +235,7 @@ export function useJellyfishBridgeSerial() {
       onMatch: () => {
         currentDeviceState.value.runmode = 'CONFIG'
         // Ready to accept commands
+        applyNextConfig()
       },
     },
     runmodeHibernate: {
