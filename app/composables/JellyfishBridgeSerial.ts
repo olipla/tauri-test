@@ -38,6 +38,8 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
   const currentDeviceConfiguration = ref<DeviceConfiguration>(newDeviceConfiguration())
   const currentDeviceState = ref<DeviceState>(newDeviceState())
 
+  const automationEnabled = ref(true)
+
   const recentLineHistory: string[] = []
 
   async function applyNextConfig() {
@@ -70,7 +72,6 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
       commands.push(`M=${asset.radioIdFull},${asset.wmbusKey}`)
     }
     commands.push('?')
-    commands.push('R=2')
 
     const commandStr = `${commands.join('\n')}\n`
     await sendSerial(commandStr)
@@ -235,7 +236,10 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
       onMatch: () => {
         currentDeviceState.value.runmode = 'CONFIG'
         // Ready to accept commands
-        applyNextConfig()
+        if (automationEnabled.value) {
+          applyNextConfig()
+          sendSerial('R=2\n')
+        }
       },
     },
     runmodeHibernate: {
@@ -314,5 +318,5 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
     matchLine(partialLine, partialLineRegexs)
   }
 
-  return { serialLineCallback, serialPartialLineCallback, currentDeviceMetadata, currentDeviceConfiguration, currentDeviceState }
+  return { serialLineCallback, serialPartialLineCallback, currentDeviceMetadata, currentDeviceConfiguration, currentDeviceState, automationEnabled }
 }

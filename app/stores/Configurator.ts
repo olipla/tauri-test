@@ -44,6 +44,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     currentDeviceState: JFBCurrentDeviceState,
     serialLineCallback: JFBSerialLineCallback,
     serialPartialLineCallback: JFBSerialPartialLineCallback,
+    automationEnabled: JFBAutomationEnabled,
   } = useJellyfishBridgeSerial(stringToSerial, configAvailable, configApply)
 
   const serialListeners = new Set<SerialCallback>()
@@ -130,6 +131,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     JFBCurrentDeviceMetadata,
     JFBCurrentDeviceConfiguration,
     JFBCurrentDeviceState,
+    JFBAutomationEnabled,
     configAvailable,
     configImport,
     configFilename,
