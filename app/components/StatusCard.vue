@@ -49,7 +49,10 @@ const icon = computed(() => {
 
 <template>
   <CommonCard>
-    <div class="flex gap-3 min-h-full">
+    <div class="flex gap-3 min-h-full relative">
+      <div class="absolute top-[-20px] bottom-[-20px] left-[-20px] right-[-20px] flex items-center justify-center text-4xl bg-default/80 z-10 hover:opacity-0">
+        W.I.P
+      </div>
       <div class="h-full flex items-center ">
         <UIcon
           :name="icon" class="size-15" :class="{
