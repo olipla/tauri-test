@@ -20,7 +20,7 @@ const {
   configAvailable,
   configFilename,
   configApplied,
-  configImported,
+  configImportedSize,
 } = storeToRefs(configuratorStore)
 
 onMounted(async () => {
@@ -82,7 +82,7 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
                 @click.stop="() => openSettings('serial')"
               />
               <PrinterCard :status="printerConfiguredStatus" @click.stop="() => openSettings('printer')" />
-              <ConfigurationCard :size="configImported.length" :filter="configFilename" source="SHEET" :configured="configApplied.length" @click.stop="() => openSettings('configuration')" />
+              <ConfigurationCard :size="configImportedSize" :filter="configFilename" source="SHEET" :configured="configApplied.length" @click.stop="() => openSettings('configuration')" />
               <StatusCard :issues="statusIssues" />
             </div>
             <CommonCard title="Current Device (W.I.P)" :show-settings="false" status="error" class="w-full grow">

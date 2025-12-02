@@ -31,7 +31,7 @@ export function useConfigurationImport() {
     multiple: false,
   })
 
-  const importedConfigurations = ref<Configuration[]>([])
+  const importedSize = ref<number | undefined>()
   const availableConfigurations = ref<Configuration[]>([])
   const filename = ref<string | undefined>()
   const appliedConfigurations = ref<AppliedConfiguration[]>([])
@@ -53,7 +53,7 @@ export function useConfigurationImport() {
     filename.value = undefined
     availableConfigurations.value = []
     appliedConfigurations.value = []
-    importedConfigurations.value = []
+    importedSize.value = undefined
   }
 
   onChange(async (files) => {
@@ -159,10 +159,10 @@ export function useConfigurationImport() {
     }
 
     availableConfigurations.value = parsedJson
-    importedConfigurations.value = parsedJson
+    importedSize.value = parsedJson.length
     appliedConfigurations.value = []
     filename.value = file.name
   })
 
-  return { openFile, availableConfigurations, filename, clearConfig, applyConfiguration, appliedConfigurations, importedConfigurations }
+  return { openFile, availableConfigurations, filename, clearConfig, applyConfiguration, appliedConfigurations, importedSize }
 }

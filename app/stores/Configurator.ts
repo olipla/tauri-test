@@ -13,7 +13,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     clearConfig: configClear,
     appliedConfigurations: configApplied,
     applyConfiguration: configApply,
-    importedConfigurations: configImported,
+    importedSize: configImportedSize,
   } = useConfigurationImport()
 
   const {
@@ -131,11 +131,11 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     configClear,
     configApplied,
     configApply,
-    configImported,
+    configImportedSize,
   }
 }, {
   persist: {
-    pick: ['serialPortOptions', 'printerConfiguredName', 'configAvailable', 'configImported', 'configApplied', 'configFilename', 'serialLocalEcho'],
+    pick: ['serialPortOptions', 'printerConfiguredName', 'configAvailable', 'configImportedSize', 'configApplied', 'configFilename', 'serialLocalEcho'],
     storage: piniaPluginPersistedstate.localStorage(),
   },
 })
