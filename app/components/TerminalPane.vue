@@ -24,6 +24,7 @@ const {
   serialSanitisedSerialNumber,
   serialSanitisedManufacturer,
   serialPortOptions,
+  JFBCurrentDeviceMetadata,
 } = storeToRefs(configuratorStore)
 
 const serialDescription = computed(() => {
@@ -99,6 +100,14 @@ const currentDayMinutes = computed(() => {
   const minutes = date.getUTCMinutes()
   return (hours * 60) + minutes
 })
+
+function unlockDevice() {
+  if (!JFBCurrentDeviceMetadata.value.deviceAltId) {
+    return
+  }
+
+  terminalDataIn(`O=${JFBCurrentDeviceMetadata.value.deviceAltId}\n`)
+}
 </script>
 
 <template>
@@ -139,6 +148,9 @@ const currentDayMinutes = computed(() => {
       </div>
     </div>
     <div class="w-full bg-elevated flex flex-wrap gap-2 px-2 py-1">
+      <UButton color="secondary" @click.stop="unlockDevice()">
+        Unlock
+      </UButton>
       <UButton @click.stop="terminalDataIn('?\n')">
         ?
       </UButton>
