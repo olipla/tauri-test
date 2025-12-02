@@ -233,12 +233,12 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
     },
     runmodeConfig: {
       regex: /@07>>/,
-      onMatch: () => {
+      onMatch: async () => {
         currentDeviceState.value.runmode = 'CONFIG'
         // Ready to accept commands
         if (automationEnabled.value) {
-          applyNextConfig()
-          sendSerial('R=2\n')
+          await applyNextConfig()
+          await sendSerial('R=2\n')
         }
       },
     },
