@@ -85,8 +85,8 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
               <StatusCard :issues="statusIssues" />
             </div>
             <CommonCard title="Current Device" :show-settings="false" status="error" class="w-full grow">
-              <div class="w-full flex">
-                <div class="flex flex-col gap-4">
+              <div class="w-full flex h-full overflow-auto  ">
+                <div class="flex flex-col gap-4 h-full">
                   <table class="table">
                     <tbody>
                       <tr>
