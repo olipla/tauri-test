@@ -19,6 +19,11 @@ export interface Configuration {
   assets: ConfigurationAsset[]
 }
 
+export interface AppliedConfiguration extends Configuration {
+  timestamp: Date
+  deviceId: string
+}
+
 export function useConfigurationImport() {
   const { open: openFile, onChange } = useFileDialog({
     accept: '.csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel',
@@ -26,24 +31,29 @@ export function useConfigurationImport() {
     multiple: false,
   })
 
+  const importedConfigurations = ref<Configuration[]>([])
   const availableConfigurations = ref<Configuration[]>([])
   const filename = ref<string | undefined>()
-  const appliedConfigurations = ref<Configuration[]>([])
+  const appliedConfigurations = ref<AppliedConfiguration[]>([])
 
-  function applyConfiguration(configuration: Configuration) {
+  function applyConfiguration(configuration: Configuration, deviceId: string) {
     const availableIndex = availableConfigurations.value.findIndex(x => x.sFurnitureId === configuration.sFurnitureId)
     const availableConfiguration = availableConfigurations.value[availableIndex]
     if (!availableConfiguration) {
       return
     }
 
-    appliedConfigurations.value.push(availableConfiguration)
+    const timestamp = new Date(Date.now())
+
+    appliedConfigurations.value.push({ timestamp, deviceId, ...availableConfiguration })
     availableConfigurations.value.splice(availableIndex, 1)
   }
 
   function clearConfig() {
     filename.value = undefined
     availableConfigurations.value = []
+    appliedConfigurations.value = []
+    importedConfigurations.value = []
   }
 
   onChange(async (files) => {
@@ -149,8 +159,10 @@ export function useConfigurationImport() {
     }
 
     availableConfigurations.value = parsedJson
+    importedConfigurations.value = parsedJson
+    appliedConfigurations.value = []
     filename.value = file.name
   })
 
-  return { openFile, availableConfigurations, filename, clearConfig, applyConfiguration, appliedConfigurations }
+  return { openFile, availableConfigurations, filename, clearConfig, applyConfiguration, appliedConfigurations, importedConfigurations }
 }

@@ -20,6 +20,7 @@ const {
   configAvailable,
   configFilename,
   configApplied,
+  configImported,
 } = storeToRefs(configuratorStore)
 
 onMounted(async () => {
@@ -81,12 +82,15 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
                 @click.stop="() => openSettings('serial')"
               />
               <PrinterCard :status="printerConfiguredStatus" @click.stop="() => openSettings('printer')" />
-              <ConfigurationCard :size="configAvailable.length" :filter="configFilename" source="SHEET" :configured="configApplied.length" @click.stop="() => openSettings('configuration')" />
+              <ConfigurationCard :size="configImported.length" :filter="configFilename" source="SHEET" :configured="configApplied.length" @click.stop="() => openSettings('configuration')" />
               <StatusCard :issues="statusIssues" />
             </div>
             <CommonCard title="Current Device (W.I.P)" :show-settings="false" status="error" class="w-full grow">
               <div class="w-full flex h-full overflow-auto  ">
                 <div class="flex flex-col gap-4 h-full">
+                  <UButton @click.stop="configuratorStore.configApply(configAvailable[0], 'ABC123')">
+                    Test Configure
+                  </UButton>
                   <table class="table">
                     <tbody>
                       <tr>
@@ -193,8 +197,8 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
             </CommonCard>
           </div>
           <div class="flex flex-col gap-4 grow">
-            <ConfigurationsTable :configurations="configAvailable" :title="`Available Configurations (${configAvailable.length})`" />
-            <ConfigurationsTable :configurations="configApplied" :title="`Applied Configurations (${configApplied.length})`" />
+            <AvailableConfigurationsTable :configurations="configAvailable" :title="`Available Configurations (${configAvailable.length})`" />
+            <AppliedConfigurationsTable :configurations="configApplied" :title="`Applied Configurations (${configApplied.length})`" />
           </div>
         </div>
       </Pane>
