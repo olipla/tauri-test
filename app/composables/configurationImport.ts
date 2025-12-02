@@ -43,7 +43,7 @@ export function useConfigurationImport() {
       return
     }
 
-    const timestamp = new Date(Date.now())
+    const timestamp = new Date()
 
     appliedConfigurations.value.push({ timestamp, deviceId, ...availableConfiguration })
     availableConfigurations.value.splice(availableIndex, 1)

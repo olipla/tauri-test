@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { TableColumn } from '@nuxt/ui'
+import { format } from 'date-fns'
 
 const props = defineProps<{
   configurations: AppliedConfiguration[]
@@ -10,6 +11,10 @@ const columns: TableColumn<AppliedConfiguration>[] = [
   {
     accessorKey: 'timestamp',
     header: 'Timestamp',
+    cell: ({ row }) => {
+      const value = row.getValue('timestamp') as Date
+      return format(value, 'yyyy-MM-dd HH:mm:ss')
+    },
   },
   {
     accessorKey: 'deviceId',
