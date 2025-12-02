@@ -81,7 +81,7 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
                 @click.stop="() => openSettings('serial')"
               />
               <PrinterCard :status="printerConfiguredStatus" @click.stop="() => openSettings('printer')" />
-              <ConfigurationCard :size="configAvailable.length" :filter="configFilename" source="SHEET" @click.stop="() => openSettings('configuration')" />
+              <ConfigurationCard :size="configAvailable.length" :filter="configFilename" source="SHEET" :configured="configApplied.length" @click.stop="() => openSettings('configuration')" />
               <StatusCard :issues="statusIssues" />
             </div>
             <CommonCard title="Current Device (W.I.P)" :show-settings="false" status="error" class="w-full grow">
@@ -193,8 +193,8 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
             </CommonCard>
           </div>
           <div class="flex flex-col gap-4 grow">
-            <ConfigurationsTable :configurations="configAvailable" title="Available Configurations" />
-            <ConfigurationsTable :configurations="configApplied" title="Applied Configurations" />
+            <ConfigurationsTable :configurations="configAvailable" :title="`Available Configurations (${configAvailable.length})`" />
+            <ConfigurationsTable :configurations="configApplied" :title="`Applied Configurations (${configApplied.length})`" />
           </div>
         </div>
       </Pane>
