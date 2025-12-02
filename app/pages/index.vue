@@ -19,6 +19,7 @@ const {
   JFBCurrentDeviceConfiguration,
   configAvailable,
   configFilename,
+  configApplied,
 } = storeToRefs(configuratorStore)
 
 onMounted(async () => {
@@ -57,8 +58,8 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
   <div class="w-full h-full">
     <Splitpanes :horizontal="terminalPaneMount === 'bottom'" @resize="updatePanePercent">
       <Pane :size="bodyPaneSize">
-        <div class="w-full h-full flex gap-8 p-4">
-          <div class="flex flex-col gap-8 w-132">
+        <div class="w-full h-full flex gap-4 p-4">
+          <div class="flex flex-col gap-4 w-132">
             <div class="grid grid-cols-2 gap-4 w-full">
               <UButton icon="i-lucide-settings" @click="() => openSettings()">
                 Settings
@@ -190,6 +191,10 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
                 <div class="flex flex-col gap-4" />
               </div>
             </CommonCard>
+          </div>
+          <div class="flex flex-col gap-4 grow">
+            <ConfigurationsTable :configurations="configAvailable" title="Available Configurations" />
+            <ConfigurationsTable :configurations="configApplied" title="Applied Configurations" />
           </div>
         </div>
       </Pane>

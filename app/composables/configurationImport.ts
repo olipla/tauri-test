@@ -2,7 +2,7 @@ import { useFileDialog,
 } from '@vueuse/core'
 import { read, utils } from 'xlsx'
 
-interface ConfigurationAsset {
+export interface ConfigurationAsset {
   assetInfoId: string
   coAssetId: string
   radioId: string
@@ -10,7 +10,7 @@ interface ConfigurationAsset {
   wmbusKey: string
 }
 
-interface Configuration {
+export interface Configuration {
   sFurnitureId: string
   sFurnitureAddress: string
   sFurnitureLatitude: number

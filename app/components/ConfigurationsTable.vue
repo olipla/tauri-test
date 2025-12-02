@@ -1,0 +1,51 @@
+<script lang="ts" setup>
+import type { TableColumn } from '@nuxt/ui'
+
+const props = defineProps<{
+  configurations: Configuration[]
+  title: string
+}>()
+
+const columns: TableColumn<Configuration>[] = [
+  {
+    accessorKey: 'sFurnitureId',
+    header: 'SF ID',
+  },
+  {
+    accessorKey: 'sFurnitureW3W',
+    header: 'What 3 Words',
+  },
+  {
+    accessorKey: 'sFurnitureAddress',
+    header: 'Address',
+  },
+  {
+    accessorKey: 'assets',
+    header: 'Meters',
+    cell: ({ row }) => {
+      const value = row.getValue('assets') as ConfigurationAsset[]
+      // return value.map(x => x.radioIdFull).join(', ')
+      return value.length
+    },
+  },
+]
+</script>
+
+<template>
+  <TableCard>
+    <template #header>
+      <div class="px-1 flex">
+        <div>
+          {{ props.title }}
+        </div>
+      </div>
+    </template>
+    <template #default>
+      <UTable sticky :columns="columns" :data="props.configurations" class="w-full h-full" />
+    </template>
+  </TableCard>
+</template>
+
+<style>
+
+</style>
