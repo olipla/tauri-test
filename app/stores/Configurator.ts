@@ -15,10 +15,14 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     getConfiguredDevicesWithConfiguration,
     getAvailableConfigurations,
     applyConfiguration,
+    getSource,
   } = useConfigurationDatabase()
 
-  async function importedConfigurationsCallback(configurations: Configuration[], source?: string) {
-    await addConfigurations(configurations, source)
+  const configCurrentSourceId = ref<number | undefined>()
+
+  async function importedConfigurationsCallback(configurations: Configuration[], sourceType: string, sourceName: string) {
+    const sourceId = await addConfigurations(configurations, sourceType, sourceName)
+    configCurrentSourceId.value = sourceId
   }
 
   const configUnusedConfigurations = useObservable<DBConfiguration[]>(from(liveQuery<DBConfiguration[]>(getUnusedConfigurations)))
@@ -26,14 +30,32 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   const configConfiguredDevices = useObservable<DBConfiguredDevice[]>(from(liveQuery<DBConfiguredDevice[]>(getConfiguredDevices)))
   const configConfiguredDevicesWithConfiguration = useObservable<(DBConfiguredDevice & DBConfiguration)[]>(from(liveQuery<(DBConfiguredDevice & DBConfiguration)[]>(getConfiguredDevicesWithConfiguration)))
 
-  const {
-    availableConfigurations: configAvailable,
-    openFile: configImport,
-    filename: configFilename,
-    clearConfig: configClear,
-    appliedConfigurations: configApplied,
-    importedSize: configImportedSize,
+  const configCurrentSource = computed(() => {
+    const sourceId = configCurrentSourceId.value
+    if (sourceId === undefined) {
+      return
+    }
+    return useObservable<DBSource | undefined>(from(liveQuery<DBSource | undefined>(() => getSource(sourceId))))
+  })
 
+  const configCurrentSourceAvailableConfigurations = computed(() => {
+    const sourceId = configCurrentSourceId.value
+    if (sourceId === undefined) {
+      return
+    }
+    return useObservable<DBConfiguration[]>(from(liveQuery<DBConfiguration[]>(() => getAvailableConfigurations(sourceId))))
+  })
+
+  const configCurrentSourceConfiguredDevicesWithConfiguration = computed(() => {
+    const sourceId = configCurrentSourceId.value
+    if (sourceId === undefined) {
+      return
+    }
+    return useObservable<(DBConfiguredDevice & DBConfiguration)[]>(from(liveQuery<(DBConfiguredDevice & DBConfiguration)[]>(() => getConfiguredDevicesWithConfiguration(sourceId))))
+  })
+
+  const {
+    openFile: configImport,
   } = useConfigurationImport(importedConfigurationsCallback)
 
   const {
@@ -152,20 +174,19 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     JFBCurrentDeviceConfiguration,
     JFBCurrentDeviceState,
     JFBAutomationEnabled,
-    configAvailable,
     configImport,
-    configFilename,
-    configClear,
-    configApplied,
-    configImportedSize,
     configUnusedConfigurations,
     configConfiguredDevices,
     configConfiguredDevicesWithConfiguration,
     configAvailableConfigurations,
+    configCurrentSource,
+    configCurrentSourceId,
+    configCurrentSourceAvailableConfigurations,
+    configCurrentSourceConfiguredDevicesWithConfiguration,
   }
 }, {
   persist: {
-    pick: ['serialPortOptions', 'printerConfiguredName', 'configAvailable', 'configImportedSize', 'configApplied', 'configFilename', 'serialLocalEcho'],
+    pick: ['serialPortOptions', 'printerConfiguredName', 'configCurrentSourceId', 'configAvailable', 'configImportedSize', 'configApplied', 'configFilename', 'serialLocalEcho'],
     storage: piniaPluginPersistedstate.localStorage(),
   },
 })

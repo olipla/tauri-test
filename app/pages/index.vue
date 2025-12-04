@@ -18,14 +18,9 @@ const {
   JFBCurrentDeviceState,
   JFBCurrentDeviceConfiguration,
   JFBAutomationEnabled,
-  configAvailable,
-  configFilename,
-  configApplied,
-  configImportedSize,
-  configUnusedConfigurations,
-  configConfiguredDevices,
-  configConfiguredDevicesWithConfiguration,
-  configAvailableConfigurations,
+  configCurrentSource,
+  configCurrentSourceAvailableConfigurations,
+  configCurrentSourceConfiguredDevicesWithConfiguration,
 } = storeToRefs(configuratorStore)
 
 onMounted(async () => {
@@ -87,7 +82,7 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
                 @click.stop="() => openSettings('serial')"
               />
               <PrinterCard :status="printerConfiguredStatus" @click.stop="() => openSettings('printer')" />
-              <ConfigurationCard :size="configImportedSize" :filter="configFilename" source="SHEET" :configured="configApplied.length" @click.stop="() => openSettings('configuration')" />
+              <ConfigurationCard :size="configCurrentSourceAvailableConfigurations?.value?.length" :filter="configCurrentSource?.value?.name" :source="configCurrentSource?.value?.type" :configured="configCurrentSourceConfiguredDevicesWithConfiguration?.value?.length ?? 0" @click.stop="() => openSettings('configuration')" />
               <StatusCard :issues="statusIssues" />
             </div>
             <CommonCard title="Current Device (W.I.P)" :show-settings="false" status="error" class="w-full grow">
@@ -200,9 +195,9 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
             </CommonCard>
           </div>
           <div class="flex flex-col gap-4 grow">
-            <AvailableConfigurationsTable :configurations="configAvailableConfigurations ?? []" :title="`Available Configurations (${configAvailable.length})`" />
+            <AvailableConfigurationsTable :configurations="configCurrentSourceAvailableConfigurations?.value ?? []" :title="`Available Configurations (${configCurrentSourceAvailableConfigurations?.value?.length ?? 0})`" />
             <AppliedConfigurationsTable
-              :configurations="configConfiguredDevicesWithConfiguration ?? []" :title="`Applied Configurations (${configApplied.length})`"
+              :configurations="configCurrentSourceConfiguredDevicesWithConfiguration?.value ?? []" :title="`Applied Configurations (${configCurrentSourceConfiguredDevicesWithConfiguration?.value?.length ?? 0})`"
             />
           </div>
         </div>

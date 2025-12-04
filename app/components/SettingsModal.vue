@@ -135,9 +135,9 @@ watch(localEcho, (newValue) => {
             <UButton @click="configuratorStore.configImport()">
               Import from spreadsheet
             </UButton>
-            <UButton color="error" @click="configuratorStore.configClear()">
+            <!-- <UButton color="error" @click="configuratorStore.configClear()">
               Clear configurations
-            </UButton>
+            </UButton> -->
           </SettingsTab>
         </template>
       </UTabs>

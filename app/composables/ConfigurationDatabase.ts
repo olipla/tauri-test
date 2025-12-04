@@ -20,8 +20,7 @@ export interface Configuration {
 
 export interface DBConfiguration extends Configuration {
   id: number
-  imported: Date
-  source: string | undefined
+  sourceId: number
   available: number
 }
 
@@ -40,28 +39,44 @@ export interface DBConfiguredDevice extends ConfiguredDevice {
   configurationId: number
 }
 
+export interface Source {
+  timestamp: Date
+  type: string
+  name: string
+}
+
+export interface DBSource extends Source {
+  id: number
+}
+
 export function useConfigurationDatabase() {
   const db = new Dexie('ConfigurationDatabase') as Dexie & {
     configuration: EntityTable<DBConfiguration, 'id'>
     configuredDevice: EntityTable<DBConfiguredDevice, 'id'>
+    source: EntityTable<DBSource, 'id'>
   }
 
   db.version(1).stores({
-    configuration: '++id, available, imported, &sFurnitureId, sFurnitureAddress, sFurnitureLatitude, sFurnitureLongitude, sFurnitureW3W, assets',
+    configuration: '++id, available, sourceId, &sFurnitureId, sFurnitureAddress, sFurnitureLatitude, sFurnitureLongitude, sFurnitureW3W, assets',
     configuredDevice: '++id, timestamp, configurationId, deviceId, deviceAltId, versionLong, versionTag, versionShort, LPWANModemType',
+    source: '++id, timestamp, type, name',
   })
 
-  async function addConfiguration(configuration: Configuration, source?: string) {
-    const date = new Date()
-    await db.configuration.add({ ...configuration, imported: date, source, available: 1 })
+  async function addConfiguration(configuration: Configuration, sourceType: string, sourceName: string) {
+    const timestamp = new Date()
+    const sourceId = await db.source.add({ timestamp, type: sourceType, name: sourceName })
+    await db.configuration.add({ ...configuration, sourceId, available: 1 })
+    return sourceId
   }
 
-  async function addConfigurations(configurations: Configuration[], source?: string) {
-    const date = new Date()
+  async function addConfigurations(configurations: Configuration[], sourceType: string, sourceName: string) {
+    const timestamp = new Date()
+    const sourceId = await db.source.add({ timestamp, type: sourceType, name: sourceName })
     const dbConfigurations = configurations.map((x) => {
-      return { ...x, imported: date, source, available: 1 }
+      return { ...x, sourceId, available: 1 }
     })
     await db.configuration.bulkAdd(dbConfigurations)
+    return sourceId
   }
 
   async function addConfiguredDevice(device: ConfiguredDevice, configurationId: number) {
@@ -83,18 +98,23 @@ export function useConfigurationDatabase() {
     return db.configuration.where('id').noneOf(usedConfigurationIds).toArray()
   }
 
-  async function getAvailableConfigurations() {
-    return db.configuration.where('available').aboveOrEqual(1).toArray()
+  async function getAvailableConfigurations(sourceId?: number) {
+    if (sourceId !== undefined) {
+      return db.configuration.where({ available: 1, sourceId }).toArray()
+    }
+    else {
+      return db.configuration.where('available').aboveOrEqual(1).toArray()
+    }
   }
 
   async function getConfiguredDevices() {
     return db.configuredDevice.toArray()
   }
 
-  async function getConfiguredDevicesWithConfiguration(): Promise<(DBConfiguredDevice & DBConfiguration)[]> {
+  async function getConfiguredDevicesWithConfiguration(sourceId?: number): Promise<(DBConfiguredDevice & DBConfiguration)[]> {
     const configuredDevices = await db.configuredDevice.toArray()
 
-    return (await Promise.all(
+    const result = await Promise.all(
       configuredDevices.map(async (device) => {
         const configuration = await db.configuration.get(device.configurationId)
         if (!configuration) {
@@ -103,8 +123,36 @@ export function useConfigurationDatabase() {
 
         return { ...device, ...configuration }
       }),
-    )).filter(x => x !== undefined)
+    )
+
+    if (sourceId !== undefined) {
+      return result.filter((x): x is DBConfiguredDevice & DBConfiguration => x !== undefined && x.sourceId === sourceId)
+    }
+    else {
+      return result.filter((x): x is DBConfiguredDevice & DBConfiguration => x !== undefined)
+    }
   }
 
-  return { db, addConfiguration, addConfigurations, addConfiguredDevice, getAllConfigurations, getUnusedConfigurations, getConfiguredDevices, getConfiguredDevicesWithConfiguration, getAvailableConfigurations, applyConfiguration }
+  async function getSources(): Promise<DBSource[]> {
+    return db.source.toArray()
+  }
+
+  async function getSource(id: number): Promise<DBSource | undefined> {
+    return db.source.get(id)
+  }
+
+  return {
+    db,
+    addConfiguration,
+    addConfigurations,
+    addConfiguredDevice,
+    getAllConfigurations,
+    getUnusedConfigurations,
+    getConfiguredDevices,
+    getConfiguredDevicesWithConfiguration,
+    getAvailableConfigurations,
+    applyConfiguration,
+    getSources,
+    getSource,
+  }
 }

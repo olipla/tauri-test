@@ -7,37 +7,12 @@ export interface AppliedConfiguration extends Configuration {
   deviceId: string
 }
 
-export function useConfigurationImport(importedConfigurationsCallback: (configurations: Configuration[], source?: string) => void) {
+export function useConfigurationImport(importedConfigurationsCallback: (configurations: Configuration[], sourceType: string, sourceName: string) => void) {
   const { open: openFile, onChange } = useFileDialog({
     accept: '.csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel',
     directory: false,
     multiple: false,
   })
-
-  const importedSize = ref<number | undefined>()
-  const availableConfigurations = ref<Configuration[]>([])
-  const filename = ref<string | undefined>()
-  const appliedConfigurations = ref<AppliedConfiguration[]>([])
-
-  function applyConfiguration(configuration: Configuration, deviceId: string) {
-    const availableIndex = availableConfigurations.value.findIndex(x => x.sFurnitureId === configuration.sFurnitureId)
-    const availableConfiguration = availableConfigurations.value[availableIndex]
-    if (!availableConfiguration) {
-      return
-    }
-
-    const timestamp = new Date()
-
-    appliedConfigurations.value.push({ timestamp, deviceId, ...availableConfiguration })
-    availableConfigurations.value.splice(availableIndex, 1)
-  }
-
-  function clearConfig() {
-    filename.value = undefined
-    availableConfigurations.value = []
-    appliedConfigurations.value = []
-    importedSize.value = undefined
-  }
 
   onChange(async (files) => {
     if (!files) {
@@ -141,12 +116,8 @@ export function useConfigurationImport(importedConfigurationsCallback: (configur
       }
     }
 
-    importedConfigurationsCallback(parsedJson, file.name)
-    availableConfigurations.value = parsedJson
-    importedSize.value = parsedJson.length
-    appliedConfigurations.value = []
-    filename.value = file.name
+    importedConfigurationsCallback(parsedJson, 'SHEET', file.name)
   })
 
-  return { openFile, availableConfigurations, filename, clearConfig, applyConfiguration, appliedConfigurations, importedSize }
+  return { openFile }
 }
