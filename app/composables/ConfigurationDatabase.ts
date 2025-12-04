@@ -89,8 +89,13 @@ export function useConfigurationDatabase() {
     addConfiguredDevice(configuredDevice, configurationId)
   }
 
-  async function getAllConfigurations() {
-    return db.configuration.toArray()
+  async function getAllConfigurations(sourceId?: number) {
+    if (sourceId !== undefined) {
+      return db.configuration.where('sourceId').equals(sourceId).toArray()
+    }
+    else {
+      return db.configuration.toArray()
+    }
   }
 
   async function getUnusedConfigurations() {

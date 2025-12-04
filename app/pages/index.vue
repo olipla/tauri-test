@@ -21,6 +21,7 @@ const {
   configCurrentSource,
   configCurrentSourceAvailableConfigurations,
   configCurrentSourceConfiguredDevicesWithConfiguration,
+  configCurrentSourceAllConfigurations,
 } = storeToRefs(configuratorStore)
 
 onMounted(async () => {
@@ -82,7 +83,7 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
                 @click.stop="() => openSettings('serial')"
               />
               <PrinterCard :status="printerConfiguredStatus" @click.stop="() => openSettings('printer')" />
-              <ConfigurationCard :size="configCurrentSourceAvailableConfigurations?.value?.length" :filter="configCurrentSource?.value?.name" :source="configCurrentSource?.value?.type" :configured="configCurrentSourceConfiguredDevicesWithConfiguration?.value?.length ?? 0" @click.stop="() => openSettings('configuration')" />
+              <ConfigurationCard :size="configCurrentSourceAllConfigurations?.value?.length" :filter="configCurrentSource?.value?.name" :source="configCurrentSource?.value?.type" :configured="configCurrentSourceConfiguredDevicesWithConfiguration?.value?.length ?? 0" @click.stop="() => openSettings('configuration')" />
               <StatusCard :issues="statusIssues" />
             </div>
             <CommonCard title="Current Device (W.I.P)" :show-settings="false" status="error" class="w-full grow">
