@@ -33,7 +33,7 @@ function newDeviceState(): DeviceState {
   }
 }
 
-export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<void>, availableConfigurations: Ref<Configuration[]>, applyConfiguration: (configuration: Configuration, deviceId: string) => void) {
+export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<void>, availableConfigurations: Ref<DBConfiguration[] | undefined>, applyConfiguration: (configurationId: number, configuredDevice: ConfiguredDevice) => void) {
   const currentDeviceMetadata = ref<DeviceMetadata>(newDeviceMetadata())
   const currentDeviceConfiguration = ref<DeviceConfiguration>(newDeviceConfiguration())
   const currentDeviceState = ref<DeviceState>(newDeviceState())
@@ -49,6 +49,11 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
     if (!currentDeviceMetadata.value.deviceAltId) {
       return
     }
+
+    if (!availableConfigurations.value) {
+      return
+    }
+
     const nextConfig = availableConfigurations.value[0]
 
     if (!nextConfig) {
@@ -75,7 +80,12 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
 
     const commandStr = `${commands.join('\n')}\n`
     await sendSerial(commandStr)
-    applyConfiguration(nextConfig, currentDeviceMetadata.value.deviceId)
+
+    const metadata = currentDeviceMetadata.value
+
+    if (metadata.LPWANModemType !== undefined && metadata.deviceAltId !== undefined && metadata.deviceId !== undefined && metadata.versionLong !== undefined && metadata.versionShort !== undefined && metadata.versionTag !== undefined) {
+      applyConfiguration(nextConfig.id, metadata as ConfiguredDevice)
+    }
   }
 
   const lineRegexs: DeviceRegexs = {

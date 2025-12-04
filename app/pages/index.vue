@@ -22,6 +22,10 @@ const {
   configFilename,
   configApplied,
   configImportedSize,
+  configUnusedConfigurations,
+  configConfiguredDevices,
+  configConfiguredDevicesWithConfiguration,
+  configAvailableConfigurations,
 } = storeToRefs(configuratorStore)
 
 onMounted(async () => {
@@ -196,8 +200,10 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
             </CommonCard>
           </div>
           <div class="flex flex-col gap-4 grow">
-            <AvailableConfigurationsTable :configurations="configAvailable" :title="`Available Configurations (${configAvailable.length})`" />
-            <AppliedConfigurationsTable :configurations="configApplied" :title="`Applied Configurations (${configApplied.length})`" />
+            <AvailableConfigurationsTable :configurations="configAvailableConfigurations ?? []" :title="`Available Configurations (${configAvailable.length})`" />
+            <AppliedConfigurationsTable
+              :configurations="configConfiguredDevicesWithConfiguration ?? []" :title="`Applied Configurations (${configApplied.length})`"
+            />
           </div>
         </div>
       </Pane>

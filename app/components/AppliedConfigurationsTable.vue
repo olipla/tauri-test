@@ -3,7 +3,7 @@ import type { TableColumn } from '@nuxt/ui'
 import { format } from 'date-fns'
 
 const props = defineProps<{
-  configurations: AppliedConfiguration[]
+  configurations: (DBConfiguredDevice & DBConfiguration)[]
   title: string
 }>()
 

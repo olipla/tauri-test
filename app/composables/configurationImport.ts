@@ -2,29 +2,12 @@ import { useFileDialog,
 } from '@vueuse/core'
 import { read, utils } from 'xlsx'
 
-export interface ConfigurationAsset {
-  assetInfoId: string
-  coAssetId: string
-  radioId: string
-  radioIdFull: string
-  wmbusKey: string
-}
-
-export interface Configuration {
-  sFurnitureId: string
-  sFurnitureAddress: string
-  sFurnitureLatitude: number
-  sFurnitureLongitude: number
-  sFurnitureW3W: string
-  assets: ConfigurationAsset[]
-}
-
 export interface AppliedConfiguration extends Configuration {
   timestamp: Date
   deviceId: string
 }
 
-export function useConfigurationImport() {
+export function useConfigurationImport(importedConfigurationsCallback: (configurations: Configuration[], source?: string) => void) {
   const { open: openFile, onChange } = useFileDialog({
     accept: '.csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel',
     directory: false,
@@ -158,6 +141,7 @@ export function useConfigurationImport() {
       }
     }
 
+    importedConfigurationsCallback(parsedJson, file.name)
     availableConfigurations.value = parsedJson
     importedSize.value = parsedJson.length
     appliedConfigurations.value = []

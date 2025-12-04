@@ -1,4 +1,6 @@
+import { liveQuery } from 'dexie'
 import { defineStore } from 'pinia'
+import { from } from 'rxjs'
 
 type SerialCallback = (data: Uint8Array) => void
 type SerialLineCallback = (data: string) => void
@@ -7,14 +9,32 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   const settingsIsOpen = ref(false)
 
   const {
+    addConfigurations,
+    getUnusedConfigurations,
+    getConfiguredDevices,
+    getConfiguredDevicesWithConfiguration,
+    getAvailableConfigurations,
+    applyConfiguration,
+  } = useConfigurationDatabase()
+
+  async function importedConfigurationsCallback(configurations: Configuration[], source?: string) {
+    await addConfigurations(configurations, source)
+  }
+
+  const configUnusedConfigurations = useObservable<DBConfiguration[]>(from(liveQuery<DBConfiguration[]>(getUnusedConfigurations)))
+  const configAvailableConfigurations = useObservable<DBConfiguration[]>(from(liveQuery<DBConfiguration[]>(getAvailableConfigurations)))
+  const configConfiguredDevices = useObservable<DBConfiguredDevice[]>(from(liveQuery<DBConfiguredDevice[]>(getConfiguredDevices)))
+  const configConfiguredDevicesWithConfiguration = useObservable<(DBConfiguredDevice & DBConfiguration)[]>(from(liveQuery<(DBConfiguredDevice & DBConfiguration)[]>(getConfiguredDevicesWithConfiguration)))
+
+  const {
     availableConfigurations: configAvailable,
     openFile: configImport,
     filename: configFilename,
     clearConfig: configClear,
     appliedConfigurations: configApplied,
-    applyConfiguration: configApply,
     importedSize: configImportedSize,
-  } = useConfigurationImport()
+
+  } = useConfigurationImport(importedConfigurationsCallback)
 
   const {
     open: serialOpen,
@@ -45,7 +65,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     serialLineCallback: JFBSerialLineCallback,
     serialPartialLineCallback: JFBSerialPartialLineCallback,
     automationEnabled: JFBAutomationEnabled,
-  } = useJellyfishBridgeSerial(stringToSerial, configAvailable, configApply)
+  } = useJellyfishBridgeSerial(stringToSerial, configAvailableConfigurations, applyConfiguration)
 
   const serialListeners = new Set<SerialCallback>()
 
@@ -137,8 +157,11 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     configFilename,
     configClear,
     configApplied,
-    configApply,
     configImportedSize,
+    configUnusedConfigurations,
+    configConfiguredDevices,
+    configConfiguredDevicesWithConfiguration,
+    configAvailableConfigurations,
   }
 }, {
   persist: {
