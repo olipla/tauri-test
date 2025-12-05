@@ -60,6 +60,17 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
   const currentDeviceConfiguration = ref<DeviceConfiguration>(newDeviceConfiguration())
   const currentDeviceState = ref<DeviceState>(newDeviceState())
 
+  watch(currentDeviceState, (newData, oldData) => {
+    if (newData.runmode !== undefined && newData.runmode !== oldData.runmode) {
+      if (newData.runmode === 'NORMAL') {
+        showToast(`Device is in "${newData.runmode}" Runmode!`, 'warning')
+      }
+      else {
+        showToast(`Device is in "${newData.runmode}" Runmode`)
+      }
+    }
+  })
+
   const automationEnabled = ref(true)
 
   const automationSkipMBUSTest = ref(true)
