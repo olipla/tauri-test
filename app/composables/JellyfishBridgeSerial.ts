@@ -2,6 +2,10 @@ import type { DeviceConfiguration, DeviceMetadata, DeviceRegexs, DeviceState, Me
 
 const RECENT_HISTORY_LENGTH = 3
 
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 function newDeviceMetadata(): DeviceMetadata {
   return {
     deviceId: undefined,
@@ -40,24 +44,26 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
 
   const automationEnabled = ref(true)
 
+  const automationSkipMBUSTest = ref(true)
+
   const recentLineHistory: string[] = []
 
-  async function applyNextConfig() {
+  async function applyNextConfig(): Promise<boolean> {
     if (!currentDeviceMetadata.value.deviceId) {
-      return
+      return false
     }
     if (!currentDeviceMetadata.value.deviceAltId) {
-      return
+      return false
     }
 
     if (!availableConfigurations.value) {
-      return
+      return false
     }
 
     const nextConfig = availableConfigurations.value[0]
 
     if (!nextConfig) {
-      return
+      return false
     }
 
     const date = new Date()
@@ -78,14 +84,43 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
     }
     commands.push('?')
 
-    const commandStr = `${commands.join('\n')}\n`
-    await sendSerial(commandStr)
+    for (const command of commands) {
+      await sendSerial(`${command}\n`)
+      await sleep(100)
+    }
+
+    await sleep(400)
+
+    const currentMeters = Array.from(currentDeviceConfiguration.value.meters.values())
+
+    const assetsMatch = currentMeters.length === nextConfig.assets.length
+      && currentMeters.every((meter, index) =>
+        meter.id === nextConfig.assets[index]?.radioIdFull
+        && meter.key === nextConfig.assets[index].wmbusKey,
+      )
+
+    if (!assetsMatch) {
+      console.log('Meters don\'t match!')
+      return false
+    }
+
+    if (currentDeviceConfiguration.value.listeningCycle !== 60) {
+      console.log('Listening cycle is wrong!')
+      return false
+    }
+
+    if (currentDeviceConfiguration.value.meterType !== '_NONE_') {
+      console.log('Meter type is wrong!')
+      return false
+    }
 
     const metadata = currentDeviceMetadata.value
 
     if (metadata.LPWANModemType !== undefined && metadata.deviceAltId !== undefined && metadata.deviceId !== undefined && metadata.versionLong !== undefined && metadata.versionShort !== undefined && metadata.versionTag !== undefined) {
       applyConfiguration(nextConfig.id, metadata as ConfiguredDevice)
     }
+
+    return true
   }
 
   const lineRegexs: DeviceRegexs = {
@@ -98,6 +133,28 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
         const groups = match.groups as { id: string, altId: string }
 
         currentDeviceMetadata.value.deviceId = groups.id
+        currentDeviceMetadata.value.deviceAltId = groups.altId
+      },
+    },
+    deviceIdFactory: {
+      regex: /@02.2>>DEVID: (?<id>\d+)/,
+      onMatch: (str, match) => {
+        if (!match.groups) {
+          return
+        }
+        const groups = match.groups as { id: string }
+
+        currentDeviceMetadata.value.deviceId = groups.id
+      },
+    },
+    simIdFactory: {
+      regex: /@02.3>>SIMID: (?<altId>\d+)/,
+      onMatch: (str, match) => {
+        if (!match.groups) {
+          return
+        }
+        const groups = match.groups as { altId: string }
+
         currentDeviceMetadata.value.deviceAltId = groups.altId
       },
     },
@@ -244,11 +301,27 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
     runmodeConfig: {
       regex: /@07>>/,
       onMatch: async () => {
+        await sendSerial('?\n')
+        await sleep(500)
         currentDeviceState.value.runmode = 'CONFIG'
         // Ready to accept commands
         if (automationEnabled.value) {
-          await applyNextConfig()
-          await sendSerial('R=2\n')
+          try {
+            const success = await applyNextConfig()
+            // await sleep(500)
+            if (success) {
+              await sendSerial('R=2\n')
+            }
+            else {
+              console.log('DEVICE FAILED TO CONFIGURE, ATTEMPTING HIBERNATE')
+              await sendSerial('R=0\n')
+            }
+          }
+          catch (e) {
+            console.error(e)
+            console.log('DEVICE FAILED TO CONFIGURE, ATTEMPTING HIBERNATE')
+            await sendSerial('R=0\n')
+          }
         }
       },
     },
@@ -292,11 +365,72 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
         }
       },
     },
+    initialisingRadioModem: {
+      regex: /@02.1/,
+      onMatch: () => {
+        // Press A a little bit later to skip
+      },
+    },
+    initialisingMbusModem: {
+      regex: /@02.5/,
+      onMatch: () => {
+        // Press A a little bit later to skip
+      },
+    },
+    setMeterTypePrompt: {
+      regex: /Set Meter Type:/,
+      onMatch: () => {
+        // Press 0 to register SENSUS test meter
+        // Press 1 to register ITRON test meter
+        // Press 2 to register DIEHL test meter
+        // Any other to skip - will go to test but won't listen - need to then send unlock and R=1
+        // No action will hibernate after a few seconds
+      },
+    },
+    magnetTapped: {
+      regex: /Magnet Tapped/,
+      onMatch: () => {
+        // Shows immediately when light becomes solid
+      },
+    },
   }
 
   const partialLineRegexs: DeviceRegexs = {
     registerPreDefinedPrompt: {
       regex: /@05/,
+      onMatch: async () => {
+        if (!automationEnabled.value || !automationSkipMBUSTest.value) {
+          return
+        }
+
+        await sendSerial('N\n')
+        await sleep(500)
+        await sendSerial('?\n')
+        await sleep(500)
+        if (!currentDeviceMetadata.value.deviceAltId) {
+          console.log('Failed to get Alt ID')
+          return
+        }
+        await sendSerial(`O=${currentDeviceMetadata.value.deviceAltId}\n`)
+        await sleep(500)
+        await sendSerial('R=1\n')
+        await sleep(500)
+      },
+    },
+    confirmMBUSFlashedPrompt: {
+      regex: /Confirm MBUS FW has been flashed. Press 'y':/,
+      onMatch: () => {
+
+      },
+    },
+    abortInitialisationTestPrompt: {
+      regex: /Press 'A' to abort initialisation test/,
+      onMatch: () => {
+
+      },
+    },
+    skipSendStatusMessagePrompt: {
+      regex: /Skip send Status message \? Press 'y':/,
       onMatch: () => {
 
       },
