@@ -162,6 +162,9 @@ async function unlockDevice() {
       <UButton @click.stop="terminalDataIn('N\n')">
         N
       </UButton>
+      <UButton @click.stop="terminalDataIn('R=255\n')">
+        R=255
+      </UButton>
       <UButton @click.stop="terminalDataIn('R=0\n')">
         R=0
       </UButton>
