@@ -36,11 +36,12 @@ function newDeviceState(): DeviceState {
 export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<void>, availableConfigurations: Ref<DBConfiguration[] | undefined>, applyConfiguration: (configurationId: number, configuredDevice: ConfiguredDevice) => void) {
   const toast = useToast()
 
-  function showToast(title: string, type: 'info' | 'error' | 'warning' = 'info') {
+  function showToast(title: string, type: 'info' | 'error' | 'warning' | 'success' = 'info') {
     const icons = {
       info: 'i-lucide-info',
       error: 'i-lucide-octagon-alert',
       warning: 'i-lucide-triangle-alert',
+      success: 'i-lucide-check',
     }
     toast.add({
       title,
@@ -337,7 +338,7 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
             const success = await applyNextConfig()
             // await sleep(500)
             if (success) {
-              showToast('Config Successful')
+              showToast('Device Configured Successfully', 'success')
               await sendSerial('R=2\n')
             }
             else {
