@@ -45,6 +45,7 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
   const automationEnabled = ref(true)
 
   const automationSkipMBUSTest = ref(true)
+  const automationSkipStatusMessage = ref(true)
 
   const recentLineHistory: string[] = []
 
@@ -431,8 +432,13 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
     },
     skipSendStatusMessagePrompt: {
       regex: /Skip send Status message \? Press 'y':/,
-      onMatch: () => {
+      onMatch: async () => {
+        if (!automationEnabled.value || !automationSkipStatusMessage.value) {
+          return
+        }
 
+        await sleep(250)
+        await sendSerial('y\n')
       },
     },
   }
