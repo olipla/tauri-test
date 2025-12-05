@@ -2,10 +2,6 @@ import type { DeviceConfiguration, DeviceMetadata, DeviceRegexs, DeviceState, Me
 
 const RECENT_HISTORY_LENGTH = 3
 
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
-
 function newDeviceMetadata(): DeviceMetadata {
   return {
     deviceId: undefined,

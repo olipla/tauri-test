@@ -101,7 +101,9 @@ const currentDayMinutes = computed(() => {
   return (hours * 60) + minutes
 })
 
-function unlockDevice() {
+async function unlockDevice() {
+  terminalDataIn('?\n')
+  await sleep(500)
   if (!JFBCurrentDeviceMetadata.value.deviceAltId) {
     return
   }
