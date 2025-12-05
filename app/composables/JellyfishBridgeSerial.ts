@@ -36,10 +36,11 @@ function newDeviceState(): DeviceState {
 export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<void>, availableConfigurations: Ref<DBConfiguration[] | undefined>, applyConfiguration: (configurationId: number, configuredDevice: ConfiguredDevice) => void) {
   const toast = useToast()
 
-  function showToast(title: string, type: 'info' | 'error' = 'info') {
+  function showToast(title: string, type: 'info' | 'error' | 'warning' = 'info') {
     const icons = {
       info: 'i-lucide-info',
       error: 'i-lucide-octagon-alert',
+      warning: 'i-lucide-triangle-alert',
     }
     toast.add({
       title,
@@ -293,6 +294,13 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
         // 4 TEST
         // 5 TEST_CONTINUOUS
 
+        // if (groups.runmode === 'NORMAL') {
+        //   showToast(`Device is in "${groups.runmode}" Runmode!`, 'warning')
+        // }
+        // else {
+        //   showToast(`Device is in "${groups.runmode}" Runmode`)
+        // }
+
         currentDeviceState.value.runmode = groups.runmode
       },
     },
@@ -314,13 +322,14 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
       regex: /@08>>/,
       onMatch: () => {
         currentDeviceState.value.runmode = 'NORMAL'
+        // showToast(`Device Entered "NORMAL" Runmode!`, 'warning')
       },
     },
     runmodeConfig: {
       regex: /@07>>/,
       onMatch: async () => {
         await sendSerial('?\n')
-        await sleep(500)
+        await sleep(1000)
         currentDeviceState.value.runmode = 'CONFIG'
         // Ready to accept commands
         if (automationEnabled.value) {
@@ -328,8 +337,8 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
             const success = await applyNextConfig()
             // await sleep(500)
             if (success) {
+              showToast('Config Successful')
               await sendSerial('R=2\n')
-              showToast('Config Successful: Entering pre-runmode hibernate')
             }
             else {
               console.log('DEVICE FAILED TO CONFIGURE, ATTEMPTING HIBERNATE')
@@ -410,11 +419,11 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
         if (!automationEnabled.value || !automationSkipMBUSTest.value) {
           return
         }
-        await sleep(500)
+        await sleep(800)
         await sendSerial('N\n')
-        await sleep(500)
+        await sleep(100)
         await sendSerial('?\n')
-        await sleep(500)
+        await sleep(1000)
         if (!currentDeviceMetadata.value.deviceAltId) {
           console.log('Failed to get Alt ID')
           showToast('Could not skip MBUS Test', 'error')
@@ -422,7 +431,7 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
         }
         await sendSerial(`O=${currentDeviceMetadata.value.deviceAltId}\n`)
         await sleep(500)
-        await sendSerial('R=1\n')
+        await sendSerial('R=1\nR=1\nR=1\nR=1\n')
         showToast('Skipped MBUS Test: Entering config mode')
         await sleep(500)
       },
