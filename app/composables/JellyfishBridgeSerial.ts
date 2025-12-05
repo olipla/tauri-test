@@ -38,6 +38,26 @@ function newDeviceState(): DeviceState {
 }
 
 export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<void>, availableConfigurations: Ref<DBConfiguration[] | undefined>, applyConfiguration: (configurationId: number, configuredDevice: ConfiguredDevice) => void) {
+  const toast = useToast()
+
+  function showToast(title: string, type: 'info' | 'error' = 'info') {
+    const icons = {
+      info: 'i-lucide-info',
+      error: 'i-lucide-octagon-alert',
+    }
+    toast.add({
+      title,
+      icon: icons[type],
+      color: type,
+      ui: {
+        title: 'text-xl',
+        root: 'p-8',
+        icon: 'size-20',
+        wrapper: 'self-stretch justify-center pl-6',
+      },
+    })
+  }
+
   const currentDeviceMetadata = ref<DeviceMetadata>(newDeviceMetadata())
   const currentDeviceConfiguration = ref<DeviceConfiguration>(newDeviceConfiguration())
   const currentDeviceState = ref<DeviceState>(newDeviceState())
@@ -313,15 +333,18 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
             // await sleep(500)
             if (success) {
               await sendSerial('R=2\n')
+              showToast('Config Successful - Entering pre-runmode hibernate')
             }
             else {
               console.log('DEVICE FAILED TO CONFIGURE, ATTEMPTING HIBERNATE')
+              showToast('Config Failed - Device NOT configured correctly!', 'error')
               await sendSerial('R=0\n')
             }
           }
           catch (e) {
             console.error(e)
             console.log('DEVICE FAILED TO CONFIGURE, ATTEMPTING HIBERNATE')
+            showToast('Config Failed - Device NOT configured correctly!', 'error')
             await sendSerial('R=0\n')
           }
         }
@@ -356,17 +379,6 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
         currentDeviceState.value.transmitting = null
       },
     },
-
-    emptyLine: {
-      regex: / /,
-      onMatch: () => {
-        if (recentLineHistory[1]?.includes('Configured Meter List:')) {
-          // Configured meter list is blank!
-          console.log('Clearing meter list!')
-          currentDeviceConfiguration.value.meters.clear()
-        }
-      },
-    },
     initialisingRadioModem: {
       regex: /@02.1/,
       onMatch: () => {
@@ -393,6 +405,18 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
       regex: /Magnet Tapped/,
       onMatch: () => {
         // Shows immediately when light becomes solid
+        showToast('Magnet Tap Registered')
+      },
+    },
+    // MUST BE LAST
+    emptyLine: {
+      regex: / /,
+      onMatch: () => {
+        if (recentLineHistory[1]?.includes('Configured Meter List:')) {
+          // Configured meter list is blank!
+          console.log('Clearing meter list!')
+          currentDeviceConfiguration.value.meters.clear()
+        }
       },
     },
   }
@@ -411,11 +435,13 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
         await sleep(500)
         if (!currentDeviceMetadata.value.deviceAltId) {
           console.log('Failed to get Alt ID')
+          showToast('Could not skip MBUS Test', 'error')
           return
         }
         await sendSerial(`O=${currentDeviceMetadata.value.deviceAltId}\n`)
         await sleep(500)
         await sendSerial('R=1\n')
+        showToast('Skipped MBUS Test - Entering config mode')
         await sleep(500)
       },
     },
@@ -428,6 +454,7 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
 
         await sleep(250)
         await sendSerial('y\n')
+        showToast('Confirmed MBUS Flash')
       },
     },
     abortInitialisationTestPrompt: {
@@ -445,6 +472,7 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
 
         await sleep(250)
         await sendSerial('y\n')
+        showToast('Skipped Sending Status Message')
       },
     },
   }
