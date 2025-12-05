@@ -46,6 +46,7 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
 
   const automationSkipMBUSTest = ref(true)
   const automationSkipStatusMessage = ref(true)
+  const automationConfirmMbusFlash = ref(true)
 
   const recentLineHistory: string[] = []
 
@@ -420,8 +421,13 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
     },
     confirmMBUSFlashedPrompt: {
       regex: /Confirm MBUS FW has been flashed. Press 'y':/,
-      onMatch: () => {
+      onMatch: async () => {
+        if (!automationEnabled.value || !automationConfirmMbusFlash.value) {
+          return
+        }
 
+        await sleep(250)
+        await sendSerial('y\n')
       },
     },
     abortInitialisationTestPrompt: {
