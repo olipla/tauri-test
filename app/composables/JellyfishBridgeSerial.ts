@@ -53,6 +53,7 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
         icon: 'size-20',
         wrapper: 'self-stretch justify-center pl-6',
       },
+      duration: type === 'error' ? 30000 : 10000,
     })
   }
 
