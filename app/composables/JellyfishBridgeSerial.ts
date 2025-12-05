@@ -333,18 +333,18 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
             // await sleep(500)
             if (success) {
               await sendSerial('R=2\n')
-              showToast('Config Successful - Entering pre-runmode hibernate')
+              showToast('Config Successful: Entering pre-runmode hibernate')
             }
             else {
               console.log('DEVICE FAILED TO CONFIGURE, ATTEMPTING HIBERNATE')
-              showToast('Config Failed - Device NOT configured correctly!', 'error')
+              showToast('Config Failed: Device NOT configured correctly!', 'error')
               await sendSerial('R=0\n')
             }
           }
           catch (e) {
             console.error(e)
             console.log('DEVICE FAILED TO CONFIGURE, ATTEMPTING HIBERNATE')
-            showToast('Config Failed - Device NOT configured correctly!', 'error')
+            showToast('Config Failed: Device NOT configured correctly!', 'error')
             await sendSerial('R=0\n')
           }
         }
@@ -408,6 +408,29 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
         showToast('Magnet Tap Registered')
       },
     },
+    registerPreDefinedPrompt: {
+      regex: /@05>>/,
+      onMatch: async () => {
+        if (!automationEnabled.value || !automationSkipMBUSTest.value) {
+          return
+        }
+        await sleep(500)
+        await sendSerial('N\n')
+        await sleep(500)
+        await sendSerial('?\n')
+        await sleep(500)
+        if (!currentDeviceMetadata.value.deviceAltId) {
+          console.log('Failed to get Alt ID')
+          showToast('Could not skip MBUS Test', 'error')
+          return
+        }
+        await sendSerial(`O=${currentDeviceMetadata.value.deviceAltId}\n`)
+        await sleep(500)
+        await sendSerial('R=1\n')
+        showToast('Skipped MBUS Test: Entering config mode')
+        await sleep(500)
+      },
+    },
     // MUST BE LAST
     emptyLine: {
       regex: / /,
@@ -422,29 +445,6 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
   }
 
   const partialLineRegexs: DeviceRegexs = {
-    registerPreDefinedPrompt: {
-      regex: /@05/,
-      onMatch: async () => {
-        if (!automationEnabled.value || !automationSkipMBUSTest.value) {
-          return
-        }
-
-        await sendSerial('N\n')
-        await sleep(500)
-        await sendSerial('?\n')
-        await sleep(500)
-        if (!currentDeviceMetadata.value.deviceAltId) {
-          console.log('Failed to get Alt ID')
-          showToast('Could not skip MBUS Test', 'error')
-          return
-        }
-        await sendSerial(`O=${currentDeviceMetadata.value.deviceAltId}\n`)
-        await sleep(500)
-        await sendSerial('R=1\n')
-        showToast('Skipped MBUS Test - Entering config mode')
-        await sleep(500)
-      },
-    },
     confirmMBUSFlashedPrompt: {
       regex: /Confirm MBUS FW has been flashed. Press 'y':/,
       onMatch: async () => {

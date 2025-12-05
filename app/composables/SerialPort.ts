@@ -75,7 +75,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
   }
 
   watchEffect(() => {
-    console.log('SERIAL WE', autoReconnect.value, !isConnected.value, portOptions.value !== undefined)
+    // console.log('SERIAL WE', autoReconnect.value, !isConnected.value, portOptions.value !== undefined)
     if (autoReconnect.value && !isConnected.value && portOptions.value !== undefined) {
       resumeAutoReconnect()
     }
@@ -159,6 +159,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
     try {
       if (port) {
         transmitting.value = true
+        console.log('SENDING SERIAL:', new TextDecoder().decode(bytes))
         await port.writeBinary(bytes)
         serialSentCallback(bytes)
       }
@@ -186,7 +187,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
   }
 
   function serialPartialLineCallbackWrapper(partialLine: string) {
-    console.log('PARTIAL SERIAL LINE:', partialLine)
+    // console.log('PARTIAL SERIAL LINE:', partialLine)
     if (serialPartialLineCallback) {
       serialPartialLineCallback(partialLine)
     }
