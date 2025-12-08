@@ -1,6 +1,6 @@
 import type { DeviceConfiguration, DeviceMetadata, DeviceRegexs, DeviceState, MeterConfig } from '~/types/jellyfishBridge'
 
-const RECENT_HISTORY_LENGTH = 3
+const RECENT_HISTORY_LENGTH = 10
 
 function newDeviceMetadata(): DeviceMetadata {
   return {
@@ -33,7 +33,12 @@ function newDeviceState(): DeviceState {
   }
 }
 
-export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<void>, availableConfigurations: Ref<DBConfiguration[] | undefined>, applyConfiguration: (configurationId: number, configuredDevice: ConfiguredDevice) => void) {
+export function useJellyfishBridgeSerial(
+  sendSerial: (data: string) => Promise<void>,
+  availableConfigurations: Ref<DBConfiguration[] | undefined>,
+  applyConfiguration: (configurationId: number, configuredDevice: ConfiguredDevice) => void,
+  upsertHistory: (start: Date, deviceId: string, history: string | string[]) => Promise<void>,
+) {
   const toast = useToast()
 
   function showToast(title: string, type: 'info' | 'error' | 'warning' | 'success' = 'info') {
@@ -60,6 +65,54 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
   const currentDeviceMetadata = ref<DeviceMetadata>(newDeviceMetadata())
   const currentDeviceConfiguration = ref<DeviceConfiguration>(newDeviceConfiguration())
   const currentDeviceState = ref<DeviceState>(newDeviceState())
+
+  const unknownDeviceHistory = ref<string[]>([])
+  const unknownDeviceStart = ref<Date | undefined>()
+
+  function resetDevice(existingHistory?: string | string[], force = false) {
+    if (!force || currentDeviceMetadata.value.deviceId === undefined) {
+      return
+    }
+
+    unknownDeviceHistory.value = []
+
+    if (existingHistory !== undefined) {
+      if (typeof existingHistory === 'string') {
+        unknownDeviceHistory.value.push(existingHistory)
+      }
+      else {
+        unknownDeviceHistory.value.push(...existingHistory)
+      }
+    }
+
+    unknownDeviceStart.value = undefined
+
+    currentDeviceMetadata.value = newDeviceMetadata()
+    currentDeviceConfiguration.value = newDeviceConfiguration()
+    currentDeviceState.value = newDeviceState()
+  }
+
+  async function saveHistoryLine(line: string) {
+    if (unknownDeviceStart.value === undefined) {
+      unknownDeviceStart.value = new Date()
+    }
+
+    if (currentDeviceMetadata.value.deviceId === undefined) {
+      unknownDeviceHistory.value.push(line)
+      console.log('SAVING LINE TO UNKNOWN: ', line)
+    }
+    else {
+      console.log('SAVING LINE TO DEVICE: ', currentDeviceMetadata.value.deviceId, line)
+      if (unknownDeviceHistory.value.length > 0) {
+        const history = [...unknownDeviceHistory.value, line]
+        unknownDeviceHistory.value = []
+        await upsertHistory(unknownDeviceStart.value, currentDeviceMetadata.value.deviceId, history)
+      }
+      else {
+        await upsertHistory(unknownDeviceStart.value, currentDeviceMetadata.value.deviceId, line)
+      }
+    }
+  }
 
   watch(() => currentDeviceState.value.runmode, (newData, oldData) => {
     console.log(newData, oldData)
@@ -399,13 +452,13 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
       },
     },
     initialisingRadioModem: {
-      regex: /@02.1/,
+      regex: /@02\.1/,
       onMatch: () => {
         // Press A a little bit later to skip
       },
     },
     initialisingMbusModem: {
-      regex: /@02.5/,
+      regex: /@02\.5/,
       onMatch: () => {
         // Press A a little bit later to skip
       },
@@ -429,7 +482,9 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
     },
     registerPreDefinedPrompt: {
       regex: /@05>>/,
-      onMatch: async () => {
+      onMatch: async (str) => {
+        await resetDevice([...recentLineHistory, str])
+
         if (!automationEnabled.value || !automationSkipMBUSTest.value) {
           return
         }
@@ -448,6 +503,14 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
         await sendSerial('R=1\nR=1\nR=1\nR=1\n')
         showToast('Skipped MBUS Test: Entering config mode')
         await sleep(500)
+      },
+    },
+    factoryStart: {
+      regex: /@01>>/,
+      onMatch: async (str) => {
+        // Device has started for the first time
+        showToast('Device Performing Factory Start')
+        await resetDevice(str)
       },
     },
     // MUST BE LAST
@@ -512,9 +575,10 @@ export function useJellyfishBridgeSerial(sendSerial: (data: string) => Promise<v
     recentLineHistory.splice(RECENT_HISTORY_LENGTH)
   }
 
-  function serialLineCallback(line: string) {
+  async function serialLineCallback(line: string) {
     matchLine(line, lineRegexs)
     updateRecentLineHistory(line)
+    await saveHistoryLine(line)
   }
 
   function serialPartialLineCallback(partialLine: string) {

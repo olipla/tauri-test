@@ -49,18 +49,63 @@ export interface DBSource extends Source {
   id: number
 }
 
+export interface DeviceHistory {
+  start: number
+  deviceId: string
+  history: string[]
+}
+
+export interface DBDeviceHistory extends DeviceHistory {
+  id: number
+}
+
 export function useConfigurationDatabase() {
   const db = new Dexie('ConfigurationDatabase') as Dexie & {
     configuration: EntityTable<DBConfiguration, 'id'>
     configuredDevice: EntityTable<DBConfiguredDevice, 'id'>
     source: EntityTable<DBSource, 'id'>
+    deviceHistory: EntityTable<DBDeviceHistory, 'id'>
   }
 
   db.version(1).stores({
     configuration: '++id, available, sourceId, &sFurnitureId, sFurnitureAddress, sFurnitureLatitude, sFurnitureLongitude, sFurnitureW3W, assets',
     configuredDevice: '++id, timestamp, configurationId, deviceId, deviceAltId, versionLong, versionTag, versionShort, LPWANModemType',
     source: '++id, timestamp, type, name',
+    deviceHistory: '++id, [start+deviceId], history',
   })
+
+  async function upsertHistory(start: Date | number, deviceId: string, history: string | string[]) {
+    const startEpoch = typeof start === 'number' ? start : start.getTime()
+
+    const historyLines = []
+    if (typeof history === 'string') {
+      historyLines.push(history)
+    }
+    else {
+      historyLines.push(...history)
+    }
+
+    console.log('UPSERT HISTORY LINES', historyLines)
+
+    // console.log(await db.deviceHistory.toArray())
+
+    const allExistingHistory = await db.deviceHistory.where({ start: startEpoch, deviceId }).toArray()
+    const existingHistory = allExistingHistory[0]
+
+    const pendingIds = allExistingHistory.map(x => x.id).slice(1)
+
+    db.deviceHistory.bulkDelete(pendingIds)
+
+    console.log('UPSERT EXISTING HISTORY', existingHistory)
+    if (existingHistory === undefined) {
+      await db.deviceHistory.put({ start: startEpoch, deviceId, history: historyLines })
+    }
+    else {
+      const pendingHistory = allExistingHistory.flatMap(x => x.history)
+
+      await db.deviceHistory.update(existingHistory.id, { history: [...pendingHistory, ...historyLines] })
+    }
+  }
 
   async function addConfiguration(configuration: Configuration, sourceType: string, sourceName: string) {
     const timestamp = new Date()
@@ -159,5 +204,6 @@ export function useConfigurationDatabase() {
     applyConfiguration,
     getSources,
     getSource,
+    upsertHistory,
   }
 }

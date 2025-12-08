@@ -17,6 +17,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     getAllConfigurations,
     applyConfiguration,
     getSource,
+    upsertHistory,
   } = useConfigurationDatabase()
 
   const configCurrentSourceId = ref<number | undefined>()
@@ -96,7 +97,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     serialLineCallback: JFBSerialLineCallback,
     serialPartialLineCallback: JFBSerialPartialLineCallback,
     automationEnabled: JFBAutomationEnabled,
-  } = useJellyfishBridgeSerial(stringToSerial, configAvailableConfigurations, applyConfiguration)
+  } = useJellyfishBridgeSerial(stringToSerial, configAvailableConfigurations, applyConfiguration, upsertHistory)
 
   const serialListeners = new Set<SerialCallback>()
 
