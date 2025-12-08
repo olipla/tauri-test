@@ -33,11 +33,16 @@ function newDeviceState(): DeviceState {
   }
 }
 
+export interface TimestampedLine {
+  timestamp: Date
+  line: string
+}
+
 export function useJellyfishBridgeSerial(
   sendSerial: (data: string) => Promise<void>,
   availableConfigurations: Ref<DBConfiguration[] | undefined>,
   applyConfiguration: (configurationId: number, configuredDevice: ConfiguredDevice) => void,
-  upsertHistory: (start: Date, deviceId: string, history: string | string[]) => Promise<void>,
+  upsertHistory: (start: Date, deviceId: string, history: TimestampedLine | TimestampedLine[]) => Promise<void>,
 ) {
   const toast = useToast()
 
@@ -66,22 +71,24 @@ export function useJellyfishBridgeSerial(
   const currentDeviceConfiguration = ref<DeviceConfiguration>(newDeviceConfiguration())
   const currentDeviceState = ref<DeviceState>(newDeviceState())
 
-  const unknownDeviceHistory = ref<string[]>([])
+  const unknownDeviceHistory = ref<TimestampedLine[]>([])
   const unknownDeviceStart = ref<Date | undefined>()
 
   function resetDevice(existingHistory?: string | string[], force = false) {
-    if (!force || currentDeviceMetadata.value.deviceId === undefined) {
+    if (currentDeviceMetadata.value.deviceId === undefined && !force) {
       return
     }
 
     unknownDeviceHistory.value = []
 
+    const timestamp = new Date()
+
     if (existingHistory !== undefined) {
       if (typeof existingHistory === 'string') {
-        unknownDeviceHistory.value.push(existingHistory)
+        unknownDeviceHistory.value.push({ timestamp, line: existingHistory })
       }
       else {
-        unknownDeviceHistory.value.push(...existingHistory)
+        unknownDeviceHistory.value.push(...existingHistory.map(x => ({ timestamp, line: x })))
       }
     }
 
@@ -97,19 +104,22 @@ export function useJellyfishBridgeSerial(
       unknownDeviceStart.value = new Date()
     }
 
+    const timestamp = new Date()
+    const timestampedLine = { timestamp, line }
+
     if (currentDeviceMetadata.value.deviceId === undefined) {
-      unknownDeviceHistory.value.push(line)
+      unknownDeviceHistory.value.push(timestampedLine)
       console.log('SAVING LINE TO UNKNOWN: ', line)
     }
     else {
       console.log('SAVING LINE TO DEVICE: ', currentDeviceMetadata.value.deviceId, line)
       if (unknownDeviceHistory.value.length > 0) {
-        const history = [...unknownDeviceHistory.value, line]
+        const history = [...unknownDeviceHistory.value, timestampedLine]
         unknownDeviceHistory.value = []
         await upsertHistory(unknownDeviceStart.value, currentDeviceMetadata.value.deviceId, history)
       }
       else {
-        await upsertHistory(unknownDeviceStart.value, currentDeviceMetadata.value.deviceId, line)
+        await upsertHistory(unknownDeviceStart.value, currentDeviceMetadata.value.deviceId, timestampedLine)
       }
     }
   }

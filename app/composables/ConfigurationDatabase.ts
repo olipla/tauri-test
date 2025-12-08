@@ -52,7 +52,8 @@ export interface DBSource extends Source {
 export interface DeviceHistory {
   start: number
   deviceId: string
-  history: string[]
+  timestamp: Date
+  line: string
 }
 
 export interface DBDeviceHistory extends DeviceHistory {
@@ -71,40 +72,21 @@ export function useConfigurationDatabase() {
     configuration: '++id, available, sourceId, &sFurnitureId, sFurnitureAddress, sFurnitureLatitude, sFurnitureLongitude, sFurnitureW3W, assets',
     configuredDevice: '++id, timestamp, configurationId, deviceId, deviceAltId, versionLong, versionTag, versionShort, LPWANModemType',
     source: '++id, timestamp, type, name',
-    deviceHistory: '++id, [start+deviceId], history',
+    deviceHistory: '++id, [start+deviceId], timestamp, line',
   })
 
-  async function upsertHistory(start: Date | number, deviceId: string, history: string | string[]) {
+  async function upsertHistory(start: Date | number, deviceId: string, history: TimestampedLine | TimestampedLine[]) {
     const startEpoch = typeof start === 'number' ? start : start.getTime()
 
     const historyLines = []
-    if (typeof history === 'string') {
-      historyLines.push(history)
-    }
-    else {
+    if (Array.isArray(history)) {
       historyLines.push(...history)
     }
-
-    console.log('UPSERT HISTORY LINES', historyLines)
-
-    // console.log(await db.deviceHistory.toArray())
-
-    const allExistingHistory = await db.deviceHistory.where({ start: startEpoch, deviceId }).toArray()
-    const existingHistory = allExistingHistory[0]
-
-    const pendingIds = allExistingHistory.map(x => x.id).slice(1)
-
-    db.deviceHistory.bulkDelete(pendingIds)
-
-    console.log('UPSERT EXISTING HISTORY', existingHistory)
-    if (existingHistory === undefined) {
-      await db.deviceHistory.put({ start: startEpoch, deviceId, history: historyLines })
-    }
     else {
-      const pendingHistory = allExistingHistory.flatMap(x => x.history)
-
-      await db.deviceHistory.update(existingHistory.id, { history: [...pendingHistory, ...historyLines] })
+      historyLines.push(history)
     }
+
+    await db.deviceHistory.bulkAdd(historyLines.map(x => ({ deviceId, start: startEpoch, timestamp: x.timestamp, line: x.line })))
   }
 
   async function addConfiguration(configuration: Configuration, sourceType: string, sourceName: string) {
