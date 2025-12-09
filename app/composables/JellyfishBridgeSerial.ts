@@ -75,11 +75,19 @@ export function useJellyfishBridgeSerial(
   const unknownDeviceStart = ref<Date | undefined>()
 
   async function queryDevice() {
-    await sendSerial('X=1\nX=1\nX=1\n')
-    await sleep(100)
+    const mbusEnabled = currentDeviceState.value.mbusEnabled
+
+    if (mbusEnabled) {
+      await sendSerial('E=0\nE=0\nE=0\n')
+      await sleep(100)
+    }
+
     await sendSerial('?\n')
     await sleep(1000)
-    await sendSerial('X=0\n')
+
+    if (mbusEnabled) {
+      await sendSerial('E=1\n')
+    }
   }
 
   function resetDevice(existingHistory?: string | string[], force = false) {
