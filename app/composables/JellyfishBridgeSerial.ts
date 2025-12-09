@@ -33,6 +33,41 @@ function newDeviceState(): DeviceState {
   }
 }
 
+function getLabel(sFurnitureW3W: string, sFurnitureAddress: string) {
+  const [w3w1, w3w2, w3w3] = sFurnitureW3W.replace('///', '').split('.')
+
+  if (!w3w1 || !w3w2 || !w3w3) {
+    return
+  }
+
+  const label = `
+^XA
+^FX Set monospace font
+^CF1,30
+
+^FB600,2,10,L^FO10,15,0^FD#W3W_FULL#\&^FS
+
+^FB340,6,10,L^FO10,90,0^FD#LOCATION#\&#POSTCODE#\&^FS
+
+^FX QR Code
+^FT360,338^BQN,2,7,M,7^FDQA,https://w3w.co/#W3W1#.#W3W2#.#W3W3#^FS
+
+^FX Top Label Box
+^FO616,7,0^GB290,290,5,B,0^FS
+^FX Set smaller monospace font
+^CF1,40
+^FB280,4,10,C^FO620,40,0^FD#W3W1#\&#W3W2#\&#W3W3#\&^FS
+^FB280,1,10,C^FO620,230,0^FD#POSTCODE#\&^FS
+^XZ`
+
+  return label
+    .replaceAll('#W3W_FULL#', sFurnitureW3W)
+    .replaceAll('#W3W1#', w3w1)
+    .replaceAll('#W3W2#', w3w2)
+    .replaceAll('#W3W3#', w3w3)
+    .replaceAll('#LOCATION#', sFurnitureAddress)
+}
+
 export interface TimestampedLine {
   timestamp: Date
   line: string
@@ -43,6 +78,7 @@ export function useJellyfishBridgeSerial(
   availableConfigurations: Ref<DBConfiguration[] | undefined>,
   applyConfiguration: (configurationId: number, configuredDevice: ConfiguredDevice) => void,
   upsertHistory: (start: Date, deviceId: string, history: TimestampedLine | TimestampedLine[]) => Promise<void>,
+  printData: (data: string) => Promise<number | undefined>,
 ) {
   const toast = useToast()
 
@@ -230,9 +266,15 @@ export function useJellyfishBridgeSerial(
 
     if (metadata.LPWANModemType !== undefined && metadata.deviceAltId !== undefined && metadata.deviceId !== undefined && metadata.versionLong !== undefined && metadata.versionShort !== undefined && metadata.versionTag !== undefined) {
       applyConfiguration(nextConfig.id, metadata as ConfiguredDevice)
+
+      const labelData = getLabel(nextConfig.sFurnitureW3W, nextConfig.sFurnitureAddress)
+      if (labelData) {
+        await printData(labelData)
+      }
+      return true
     }
 
-    return true
+    return false
   }
 
   const lineRegexs: DeviceRegexs = {
@@ -430,6 +472,7 @@ export function useJellyfishBridgeSerial(
             // await sleep(500)
             if (success) {
               showToast('Device Configured Successfully', 'success')
+
               await sendSerial('R=2\n')
             }
             else {

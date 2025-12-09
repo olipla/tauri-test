@@ -9,6 +9,12 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   const settingsIsOpen = ref(false)
 
   const {
+    configuredName: printerConfiguredName,
+    configuredStatus: printerConfiguredStatus,
+    printData: printerPrintData,
+  } = usePrinter()
+
+  const {
     addConfigurations,
     getUnusedConfigurations,
     getConfiguredDevices,
@@ -97,7 +103,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     serialLineCallback: JFBSerialLineCallback,
     serialPartialLineCallback: JFBSerialPartialLineCallback,
     automationEnabled: JFBAutomationEnabled,
-  } = useJellyfishBridgeSerial(stringToSerial, configAvailableConfigurations, applyConfiguration, upsertHistory)
+  } = useJellyfishBridgeSerial(stringToSerial, configAvailableConfigurations, applyConfiguration, upsertHistory, printerPrintData)
 
   const serialListeners = new Set<SerialCallback>()
 
@@ -150,12 +156,6 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   })
 
   const serialLocalEcho = ref(false)
-
-  const {
-    configuredName: printerConfiguredName,
-    configuredStatus: printerConfiguredStatus,
-    printData: printerPrintData,
-  } = usePrinter()
 
   return {
     settingsIsOpen,
