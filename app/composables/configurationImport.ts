@@ -95,6 +95,8 @@ export function useConfigurationImport(importedConfigurationsCallback: (configur
               radioId: fuzzyKey(row, ['radioid']),
               radioIdFull,
               wmbusKey,
+              distance: fuzzyKey(row, ['distance']),
+              meterPostcode: fuzzyKey(row, ['meterpostcode']),
             },
           ],
         }

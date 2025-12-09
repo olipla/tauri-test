@@ -33,7 +33,7 @@ function newDeviceState(): DeviceState {
   }
 }
 
-function getLabel(sFurnitureW3W: string, sFurnitureAddress: string) {
+function getLabel(sFurnitureW3W: string, sFurnitureAddress: string, postcode: string) {
   const [w3w1, w3w2, w3w3] = sFurnitureW3W.replace('///', '').split('.')
 
   if (!w3w1 || !w3w2 || !w3w3) {
@@ -66,6 +66,7 @@ function getLabel(sFurnitureW3W: string, sFurnitureAddress: string) {
     .replaceAll('#W3W2#', w3w2)
     .replaceAll('#W3W3#', w3w3)
     .replaceAll('#LOCATION#', sFurnitureAddress)
+    .replaceAll('#POSTCODE#', postcode)
 }
 
 export interface TimestampedLine {
@@ -267,9 +268,12 @@ export function useJellyfishBridgeSerial(
     if (metadata.LPWANModemType !== undefined && metadata.deviceAltId !== undefined && metadata.deviceId !== undefined && metadata.versionLong !== undefined && metadata.versionShort !== undefined && metadata.versionTag !== undefined) {
       applyConfiguration(nextConfig.id, metadata as ConfiguredDevice)
 
-      const labelData = getLabel(nextConfig.sFurnitureW3W, nextConfig.sFurnitureAddress)
-      if (labelData) {
-        await printData(labelData)
+      const nearestPostcode = nextConfig.assets.sort((a, b) => Number(a.distance) - Number(b.distance))[0]?.meterPostcode
+      if (nearestPostcode) {
+        const labelData = getLabel(nextConfig.sFurnitureW3W, nextConfig.sFurnitureAddress, nearestPostcode)
+        if (labelData) {
+          await printData(labelData)
+        }
       }
       return true
     }

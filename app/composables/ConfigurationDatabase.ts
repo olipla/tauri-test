@@ -7,6 +7,8 @@ export interface ConfigurationAsset {
   radioId: string
   radioIdFull: string
   wmbusKey: string
+  distance: string
+  meterPostcode: string
 }
 
 export interface Configuration {
