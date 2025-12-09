@@ -45,9 +45,9 @@ function getLabel(sFurnitureW3W: string, sFurnitureAddress: string, postcode: st
 ^FX Set monospace font
 ^CF1,30
 
-^FB600,2,10,L^FO10,15,0^FD#W3W_FULL#\&^FS
+^FB600,2,10,L^FO10,15,0^FD#W3W_FULL#\\&^FS
 
-^FB340,6,10,L^FO10,90,0^FD#LOCATION#\&#POSTCODE#\&^FS
+^FB340,6,10,L^FO10,90,0^FD#LOCATION#\\&#POSTCODE#\\&^FS
 
 ^FX QR Code
 ^FT360,338^BQN,2,7,M,7^FDQA,https://w3w.co/#W3W1#.#W3W2#.#W3W3#^FS
@@ -56,8 +56,8 @@ function getLabel(sFurnitureW3W: string, sFurnitureAddress: string, postcode: st
 ^FO616,7,0^GB290,290,5,B,0^FS
 ^FX Set smaller monospace font
 ^CF1,40
-^FB280,4,10,C^FO620,40,0^FD#W3W1#\&#W3W2#\&#W3W3#\&^FS
-^FB280,1,10,C^FO620,230,0^FD#POSTCODE#\&^FS
+^FB280,4,10,C^FO620,40,0^FD#W3W1#\\&#W3W2#\\&#W3W3#\\&^FS
+^FB280,1,10,C^FO620,230,0^FD#POSTCODE#\\&^FS
 ^XZ`
 
   return label
@@ -268,9 +268,12 @@ export function useJellyfishBridgeSerial(
     if (metadata.LPWANModemType !== undefined && metadata.deviceAltId !== undefined && metadata.deviceId !== undefined && metadata.versionLong !== undefined && metadata.versionShort !== undefined && metadata.versionTag !== undefined) {
       applyConfiguration(nextConfig.id, metadata as ConfiguredDevice)
 
+      console.log(nextConfig)
+
       const nearestPostcode = nextConfig.assets.sort((a, b) => Number(a.distance) - Number(b.distance))[0]?.meterPostcode
       if (nearestPostcode) {
         const labelData = getLabel(nextConfig.sFurnitureW3W, nextConfig.sFurnitureAddress, nearestPostcode)
+        console.log(labelData)
         if (labelData) {
           await printData(labelData)
         }
