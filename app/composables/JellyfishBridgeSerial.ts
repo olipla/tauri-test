@@ -74,6 +74,14 @@ export function useJellyfishBridgeSerial(
   const unknownDeviceHistory = ref<TimestampedLine[]>([])
   const unknownDeviceStart = ref<Date | undefined>()
 
+  async function queryDevice() {
+    await sendSerial('X=1\nX=1\nX=1\n')
+    await sleep(100)
+    await sendSerial('?\n')
+    await sleep(1000)
+    await sendSerial('X=0\n')
+  }
+
   function resetDevice(existingHistory?: string | string[], force = false) {
     if (currentDeviceMetadata.value.deviceId === undefined && !force) {
       return
@@ -405,8 +413,7 @@ export function useJellyfishBridgeSerial(
     runmodeConfig: {
       regex: /@07>>/,
       onMatch: async () => {
-        await sendSerial('?\n')
-        await sleep(1000)
+        await queryDevice()
         currentDeviceState.value.runmode = 'CONFIG'
         // Ready to accept commands
         if (automationEnabled.value) {
@@ -501,8 +508,7 @@ export function useJellyfishBridgeSerial(
         await sleep(800)
         await sendSerial('N\n')
         await sleep(100)
-        await sendSerial('?\n')
-        await sleep(1000)
+        await queryDevice()
         if (!currentDeviceMetadata.value.deviceAltId) {
           console.log('Failed to get Alt ID')
           showToast('Could not skip MBUS Test', 'error')
