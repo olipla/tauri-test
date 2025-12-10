@@ -89,7 +89,6 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
             <CommonCard title="Current Device (W.I.P)" :show-settings="false" status="error" class="w-full grow">
               <div class="w-full flex h-full overflow-auto  ">
                 <div class="flex flex-col gap-4 h-full">
-                  <USwitch v-model="JFBAutomationEnabled" label="Automation" />
                   <table class="table">
                     <tbody>
                       <tr>

@@ -48,7 +48,7 @@ const activeItem = computed(() => {
 
 const configuratorStore = useConfiguratorStore()
 
-const { settingsIsOpen, printerConfiguredName, serialLocalEcho, JFBVersionTarget } = storeToRefs(configuratorStore)
+const { settingsIsOpen, printerConfiguredName, serialLocalEcho, JFBVersionTarget, JFBAutomationEnabled, JFBAutomationConfirmMbusFlash, JFBAutomationSkipMBUSTest, JFBAutomationSkipStatusMessage } = storeToRefs(configuratorStore)
 
 onMounted(() => {
   console.log('SETTINGS MODAL MOUNT')
@@ -114,6 +114,10 @@ watch(localEcho, (newValue) => {
                 class="w-full"
               />
             </UFormField>
+            <USwitch v-model="JFBAutomationEnabled" label="All Automation" />
+            <USwitch v-model="JFBAutomationConfirmMbusFlash" label="Confirm MBUS Flash Automation" />
+            <USwitch v-model="JFBAutomationSkipMBUSTest" label="Skip MBUS Test Automation" />
+            <USwitch v-model="JFBAutomationSkipStatusMessage" label="Skip Status Message Automation" />
           </SettingsTab>
         </template>
         <template #serial>

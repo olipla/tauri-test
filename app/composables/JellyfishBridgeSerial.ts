@@ -672,5 +672,5 @@ export function useJellyfishBridgeSerial(
     matchLine(partialLine, partialLineRegexs)
   }
 
-  return { serialLineCallback, serialPartialLineCallback, currentDeviceMetadata, currentDeviceConfiguration, currentDeviceState, automationEnabled, versionTarget }
+  return { serialLineCallback, serialPartialLineCallback, currentDeviceMetadata, currentDeviceConfiguration, currentDeviceState, automationEnabled, versionTarget, automationConfirmMbusFlash, automationSkipMBUSTest, automationSkipStatusMessage }
 }

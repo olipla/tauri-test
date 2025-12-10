@@ -104,6 +104,9 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     serialPartialLineCallback: JFBSerialPartialLineCallback,
     automationEnabled: JFBAutomationEnabled,
     versionTarget: JFBVersionTarget,
+    automationConfirmMbusFlash: JFBAutomationConfirmMbusFlash,
+    automationSkipMBUSTest: JFBAutomationSkipMBUSTest,
+    automationSkipStatusMessage: JFBAutomationSkipStatusMessage,
   } = useJellyfishBridgeSerial(stringToSerial, configAvailableConfigurations, applyConfiguration, upsertHistory, printerPrintData)
 
   const serialListeners = new Set<SerialCallback>()
@@ -186,6 +189,9 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     JFBCurrentDeviceState,
     JFBAutomationEnabled,
     JFBVersionTarget,
+    JFBAutomationConfirmMbusFlash,
+    JFBAutomationSkipMBUSTest,
+    JFBAutomationSkipStatusMessage,
     configImport,
     configUnusedConfigurations,
     configConfiguredDevices,
@@ -199,7 +205,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   }
 }, {
   persist: {
-    pick: ['serialPortOptions', 'printerConfiguredName', 'configCurrentSourceId', 'configAvailable', 'configImportedSize', 'configApplied', 'configFilename', 'serialLocalEcho', 'JFBVersionTarget'],
+    pick: ['serialPortOptions', 'printerConfiguredName', 'configCurrentSourceId', 'configAvailable', 'configImportedSize', 'configApplied', 'configFilename', 'serialLocalEcho', 'JFBVersionTarget', 'JFBAutomationEnabled', 'JFBAutomationConfirmMbusFlash', 'JFBAutomationSkipMBUSTest', 'JFBAutomationSkipStatusMessage'],
     storage: piniaPluginPersistedstate.localStorage(),
   },
 })
