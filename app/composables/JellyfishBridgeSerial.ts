@@ -42,23 +42,30 @@ function getLabel(sFurnitureW3W: string, sFurnitureAddress: string, postcode: st
 
   const label = `
 ^XA
+
+^LT14
+^LS4
+
 ^FX Set monospace font
 ^CF1,30
 
-^FB600,2,10,L^FO10,15,0^FD#W3W_FULL#\\&^FS
+^FB590,2,10,L^FO12,15,0^FD#W3W_FULL#\\&^FS
 
-^FB340,6,10,L^FO10,90,0^FD#LOCATION#\\&#POSTCODE#\\&^FS
+^FB340,6,10,L^FO12,90,0^FD#LOCATION#\\&#POSTCODE#\\&^FS
 
 ^FX QR Code
-^FT360,338^BQN,2,7,M,7^FDQA,https://w3w.co/#W3W1#.#W3W2#.#W3W3#^FS
+^FT360,332^BQN,2,7,M,7^FDQA,https://w3w.co/#W3W1#.#W3W2#.#W3W3#/##HASH#^FS
 
 ^FX Top Label Box
-^FO616,7,0^GB290,290,5,B,0^FS
+^FO606,8,0^GB280,280,5,B,2^FS
 ^FX Set smaller monospace font
 ^CF1,40
-^FB280,4,10,C^FO620,40,0^FD#W3W1#\\&#W3W2#\\&#W3W3#\\&^FS
-^FB280,1,10,C^FO620,230,0^FD#POSTCODE#\\&^FS
+^FB280,4,10,C^FO606,40,0^FD#W3W1#\\&#W3W2#\\&#W3W3#\\&^FS
+^FB280,1,10,C^FO606,230,0^FD#POSTCODE#\\&^FS
 ^XZ`
+
+  const qrLength = 19 + w3w1.length + w3w2.length + w3w3.length
+  const padding = '0'.repeat(qrLength > 43 ? 0 : 43 - qrLength)
 
   return label
     .replaceAll('#W3W_FULL#', sFurnitureW3W)
@@ -67,6 +74,7 @@ function getLabel(sFurnitureW3W: string, sFurnitureAddress: string, postcode: st
     .replaceAll('#W3W3#', w3w3)
     .replaceAll('#LOCATION#', sFurnitureAddress)
     .replaceAll('#POSTCODE#', postcode)
+    .replaceAll('#HASH#', padding)
 }
 
 export interface TimestampedLine {
