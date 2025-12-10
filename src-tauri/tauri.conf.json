@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "jellyfish-configurator",
+  "productName": "Jellyfish Configurator",
   "version": "0.1.0",
   "identifier": "com.barter4things.jellyfish-configurator",
   "build": {
@@ -20,7 +20,7 @@
         "resizable": true,
         "fullscreen": false,
         "maximized": true,
-        "backgroundColor": "#f00",
+        "backgroundColor": "#7f7f7f",
         "preventOverflow": true,
         "visible": false
       }
