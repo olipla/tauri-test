@@ -18,6 +18,9 @@ pub fn run() {
             }
 
             let window = app.get_webview_window("main").unwrap();
+            let version = app.package_info().version.to_string();
+
+            let _ = window.set_title(&format!("Jellyfish Configurator {version}"));
             if let Ok(theme) = window.theme() {
                 match theme {
                     tauri::Theme::Dark => {
