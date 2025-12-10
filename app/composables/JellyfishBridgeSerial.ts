@@ -623,7 +623,7 @@ export function useJellyfishBridgeSerial(
 
         await sleep(250)
         await sendSerial('y\n')
-        showToast('Confirmed MBUS Flash')
+        // showToast('Confirmed MBUS Flash')
       },
     },
     abortInitialisationTestPrompt: {
@@ -641,7 +641,7 @@ export function useJellyfishBridgeSerial(
 
         await sleep(250)
         await sendSerial('y\n')
-        showToast('Skipped Sending Status Message')
+        // showToast('Skipped Sending Status Message')
       },
     },
   }
