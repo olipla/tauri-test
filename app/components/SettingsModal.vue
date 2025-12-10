@@ -48,7 +48,7 @@ const activeItem = computed(() => {
 
 const configuratorStore = useConfiguratorStore()
 
-const { settingsIsOpen, printerConfiguredName, serialLocalEcho } = storeToRefs(configuratorStore)
+const { settingsIsOpen, printerConfiguredName, serialLocalEcho, JFBVersionTarget } = storeToRefs(configuratorStore)
 
 onMounted(() => {
   console.log('SETTINGS MODAL MOUNT')
@@ -107,7 +107,14 @@ watch(localEcho, (newValue) => {
         }"
       >
         <template #general>
-          <SettingsTab />
+          <SettingsTab>
+            <UFormField label="Version Target">
+              <UInput
+                v-model="JFBVersionTarget"
+                class="w-full"
+              />
+            </UFormField>
+          </SettingsTab>
         </template>
         <template #serial>
           <SettingsTab>

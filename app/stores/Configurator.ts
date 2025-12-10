@@ -103,6 +103,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     serialLineCallback: JFBSerialLineCallback,
     serialPartialLineCallback: JFBSerialPartialLineCallback,
     automationEnabled: JFBAutomationEnabled,
+    versionTarget: JFBVersionTarget,
   } = useJellyfishBridgeSerial(stringToSerial, configAvailableConfigurations, applyConfiguration, upsertHistory, printerPrintData)
 
   const serialListeners = new Set<SerialCallback>()
@@ -184,6 +185,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     JFBCurrentDeviceConfiguration,
     JFBCurrentDeviceState,
     JFBAutomationEnabled,
+    JFBVersionTarget,
     configImport,
     configUnusedConfigurations,
     configConfiguredDevices,
@@ -197,7 +199,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   }
 }, {
   persist: {
-    pick: ['serialPortOptions', 'printerConfiguredName', 'configCurrentSourceId', 'configAvailable', 'configImportedSize', 'configApplied', 'configFilename', 'serialLocalEcho'],
+    pick: ['serialPortOptions', 'printerConfiguredName', 'configCurrentSourceId', 'configAvailable', 'configImportedSize', 'configApplied', 'configFilename', 'serialLocalEcho', 'JFBVersionTarget'],
     storage: piniaPluginPersistedstate.localStorage(),
   },
 })

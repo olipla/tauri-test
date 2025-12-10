@@ -91,6 +91,8 @@ export function useJellyfishBridgeSerial(
 ) {
   const toast = useToast()
 
+  const versionTarget = ref<string | undefined>()
+
   function showToast(title: string, type: 'info' | 'error' | 'warning' | 'success' = 'info') {
     const icons = {
       info: 'i-lucide-info',
@@ -362,6 +364,9 @@ export function useJellyfishBridgeSerial(
       regex: /v\w+(?:\.\w+)+/,
       onMatch: (str) => {
         currentDeviceMetadata.value.versionShort = str
+        if (versionTarget.value && str.toLowerCase().trim() !== versionTarget.value.toLowerCase().trim()) {
+          showToast(`Device Version (${str}) Does Not Match Target Version (${versionTarget.value})!`, 'error')
+        }
       },
     },
     stackMode: {
@@ -667,5 +672,5 @@ export function useJellyfishBridgeSerial(
     matchLine(partialLine, partialLineRegexs)
   }
 
-  return { serialLineCallback, serialPartialLineCallback, currentDeviceMetadata, currentDeviceConfiguration, currentDeviceState, automationEnabled }
+  return { serialLineCallback, serialPartialLineCallback, currentDeviceMetadata, currentDeviceConfiguration, currentDeviceState, automationEnabled, versionTarget }
 }
