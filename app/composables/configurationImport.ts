@@ -55,6 +55,7 @@ export function useConfigurationImport(importedConfigurationsCallback: (configur
     }
 
     for (const row of json) {
+      console.log(row)
       try {
         let sFurnitureLatitude
         let sFurnitureLongitude
@@ -67,6 +68,10 @@ export function useConfigurationImport(importedConfigurationsCallback: (configur
             sFurnitureLatitude = latitude
             sFurnitureLongitude = longitude
           }
+        }
+        else {
+          sFurnitureLatitude = fuzzyKey(row, ['sflatitude'])
+          sFurnitureLongitude = fuzzyKey(row, ['sflongitude'])
         }
 
         let radioIdFull
