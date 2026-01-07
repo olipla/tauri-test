@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { SelectMenuItem } from '@nuxt/ui'
 import type { Issue } from '~/components/StatusCard.vue'
+import { listen } from '@tauri-apps/api/event'
 import { Pane, Splitpanes } from 'splitpanes'
 import SettingsModal from '~/components/SettingsModal.vue'
 
@@ -68,6 +69,12 @@ async function flash() {
     await flashDevice(path)
   }
 }
+
+listen('bsl-finished', async () => {
+  console.log('BSL FINISHED')
+  serialAutoReconnect.value = true
+  await configuratorStore.serialOpen()
+})
 
 const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The selected printer is offline' }, { title: 'Serial Error', description: 'COM 4 does not exist!' }])
 </script>

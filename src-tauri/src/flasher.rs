@@ -53,7 +53,8 @@ SET_PC 0x6586
                 //   child.write("message from Rust\n".as_bytes()).unwrap();
             }
         }
-        log::info!("SIDECAR FINISHED")
+        log::info!("SIDECAR FINISHED");
+        app.emit("bsl-finished", ()).unwrap();
     });
     Ok(())
 }
