@@ -1,7 +1,10 @@
 <script lang="ts" setup>
+import type { SelectMenuItem } from '@nuxt/ui'
 import type { Issue } from '~/components/StatusCard.vue'
 import { Pane, Splitpanes } from 'splitpanes'
 import SettingsModal from '~/components/SettingsModal.vue'
+
+import { flashDevice } from '~/lib/tauriFlash'
 
 const configuratorStore = useConfiguratorStore()
 const {
@@ -9,6 +12,7 @@ const {
   serialTransmitting,
   serialReceiving,
   serialIsOpen,
+  serialAutoReconnect,
   serialIsConnected,
   serialSanitisedProduct,
   serialSanitisedSerialNumber,
@@ -22,6 +26,7 @@ const {
   configCurrentSourceAvailableConfigurations,
   configCurrentSourceConfiguredDevicesWithConfiguration,
   configCurrentSourceAllConfigurations,
+  configSources,
 } = storeToRefs(configuratorStore)
 
 onMounted(async () => {
@@ -29,6 +34,8 @@ onMounted(async () => {
     configuratorStore.serialOpen()
   }
 })
+
+watch(configSources, newValue => console.log(newValue), { immediate: true })
 
 const overlay = useOverlay()
 
@@ -52,6 +59,15 @@ const {
   toggleMountPane,
   terminalPaneMount,
 } = useTerminalPane()
+
+async function flash() {
+  const path = serialPortOptions.value?.path
+  if (path) {
+    serialAutoReconnect.value = false
+    await configuratorStore.serialClose(false)
+    await flashDevice(path)
+  }
+}
 
 const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The selected printer is offline' }, { title: 'Serial Error', description: 'COM 4 does not exist!' }])
 </script>
@@ -89,6 +105,9 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
             <CommonCard title="Current Device (W.I.P)" :show-settings="false" status="error" class="w-full grow">
               <div class="w-full flex h-full overflow-auto  ">
                 <div class="flex flex-col gap-4 h-full">
+                  <UButton @click.stop="flash">
+                    Flash
+                  </UButton>
                   <table class="table">
                     <tbody>
                       <tr>

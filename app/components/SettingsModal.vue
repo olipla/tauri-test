@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { TabsItem } from '@nuxt/ui'
+import type { SelectMenuItem, TabsItem } from '@nuxt/ui'
 import { PortChooserModal, UModal } from '#components'
 import PrinterChooserModal from './PrinterChooserModal.vue'
 import SettingsTab from './SettingsTab.vue'
@@ -48,7 +48,28 @@ const activeItem = computed(() => {
 
 const configuratorStore = useConfiguratorStore()
 
-const { settingsIsOpen, printerConfiguredName, serialLocalEcho, JFBVersionTarget, JFBAutomationEnabled, JFBAutomationConfirmMbusFlash, JFBAutomationSkipMBUSTest, JFBAutomationSkipStatusMessage } = storeToRefs(configuratorStore)
+const { settingsIsOpen, printerConfiguredName, serialLocalEcho, JFBVersionTarget, JFBAutomationEnabled, JFBAutomationConfirmMbusFlash, JFBAutomationSkipMBUSTest, JFBAutomationSkipStatusMessage, configCurrentSource, configSources, configCurrentSourceId } = storeToRefs(configuratorStore)
+
+const configSourcesItems = computed<SelectMenuItem[]>(() => {
+  return configSources.value?.value?.map((value) => {
+    return {
+      label: `${value.id}: ${value.name}`,
+      id: value.id,
+    }
+  }) ?? []
+})
+
+const selectedSourceItem = ref<DBSource | undefined>(undefined)
+
+watch(selectedSourceItem, (newItem) => {
+  if (newItem) {
+    console.log('setting currentsourceid to', newItem.id)
+    configCurrentSourceId.value = newItem.id
+  }
+})
+
+watch(configSources, newValue => console.log('configSources', newValue), { immediate: true })
+watch(configCurrentSourceId, newValue => console.log('currentSourceId', newValue), { immediate: true })
 
 onMounted(() => {
   console.log('SETTINGS MODAL MOUNT')
@@ -146,6 +167,7 @@ watch(localEcho, (newValue) => {
             <UButton @click="configuratorStore.configImport()">
               Import from spreadsheet
             </UButton>
+            <USelectMenu v-model="selectedSourceItem" value-key="id" label-key="label" :items="configSourcesItems" class="w-48" />
             <!-- <UButton color="error" @click="configuratorStore.configClear()">
               Clear configurations
             </UButton> -->

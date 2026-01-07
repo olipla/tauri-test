@@ -23,6 +23,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     getAllConfigurations,
     applyConfiguration,
     getSource,
+    getSources,
     upsertHistory,
   } = useConfigurationDatabase()
 
@@ -37,6 +38,14 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   const configAvailableConfigurations = useObservable<DBConfiguration[]>(from(liveQuery<DBConfiguration[]>(getAvailableConfigurations)))
   const configConfiguredDevices = useObservable<DBConfiguredDevice[]>(from(liveQuery<DBConfiguredDevice[]>(getConfiguredDevices)))
   const configConfiguredDevicesWithConfiguration = useObservable<(DBConfiguredDevice & DBConfiguration)[]>(from(liveQuery<(DBConfiguredDevice & DBConfiguration)[]>(getConfiguredDevicesWithConfiguration)))
+
+  const configSources = computed(() => {
+    const sourceId = configCurrentSourceId.value
+    if (sourceId === undefined) {
+      return
+    }
+    return useObservable<DBSource[] | undefined>(from(liveQuery<DBSource[] | undefined>(() => getSources())))
+  })
 
   const configCurrentSource = computed(() => {
     const sourceId = configCurrentSourceId.value
