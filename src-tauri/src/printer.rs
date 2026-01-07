@@ -68,7 +68,9 @@ pub async fn get_printer_summaries() -> Result<Vec<PrinterSummary>, PrinterError
     Ok(summaries)
 }
 
-pub async fn get_printer_status(printer_name: &str) -> Result<Option<PrinterShortSummary>, PrinterError> {
+pub async fn get_printer_status(
+    printer_name: &str,
+) -> Result<Option<PrinterShortSummary>, PrinterError> {
     let peh_monitor = PrinterMonitor::new().await?;
     Ok(match peh_monitor.find_printer(printer_name).await? {
         None => None,
@@ -105,7 +107,8 @@ pub async fn get_printers() -> Result<PrinterSummaries, String> {
 pub async fn get_printer(printer_name: &str) -> Result<PrinterShortSummary, String> {
     get_printer_status(printer_name)
         .await
-        .map_err(|err| err.to_string())?.ok_or("Printer not found!".to_string())
+        .map_err(|err| err.to_string())?
+        .ok_or("Printer not found!".to_string())
 }
 
 #[tauri::command]

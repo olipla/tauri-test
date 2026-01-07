@@ -89,6 +89,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
       if (port) {
         await port.cancelAllListeners()
         await port.close()
+        console.log('CLOSING PORT', port)
         if (resetRefs) {
           portInfo.value = undefined
           portOptions.value = undefined
@@ -217,6 +218,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
     open,
     write,
     getHistory,
+    close,
     receiving,
     transmitting,
     portInfo,

@@ -87,6 +87,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     open: serialOpen,
     write: serialWrite,
     getHistory: serialGetHistory,
+    close: serialClose,
     isOpen: serialIsOpen,
     portInfo: serialPortInfo,
     portOptions: serialPortOptions,
@@ -173,6 +174,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   return {
     settingsIsOpen,
     serialOpen,
+    serialClose,
     serialWrite,
     serialSubscribe,
     serialWriteSubscribe,
@@ -180,6 +182,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     serialLineSubscribe,
     serialPartialLineSubscribe,
     serialIsOpen,
+    serialAutoReconnect,
     serialPortInfo,
     serialPortOptions,
     serialReceiving,
@@ -211,6 +214,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     configCurrentSourceAvailableConfigurations,
     configCurrentSourceConfiguredDevicesWithConfiguration,
     configCurrentSourceAllConfigurations,
+    configSources,
   }
 }, {
   persist: {
