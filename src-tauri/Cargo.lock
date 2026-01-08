@@ -1768,6 +1768,7 @@ dependencies = [
 name = "jellyfish-configurator"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "log",
  "printer_event_handler",
  "printers",

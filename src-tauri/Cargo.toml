@@ -28,6 +28,7 @@ printers = "2.2.0"
 printer_event_handler = "1.4.0"
 tauri-plugin-shell = "2"
 tempfile = "3.24.0"
+anyhow = "1.0.100"
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.
