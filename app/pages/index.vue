@@ -76,6 +76,18 @@ listen('bsl-finished', async () => {
   await configuratorStore.serialOpen()
 })
 
+listen('bsl-stdout', async (event) => {
+  console.log('BSL STDOUT', event.payload)
+})
+
+listen('bsl-stdout', async (event) => {
+  console.log('BSL STDERR', event.payload)
+})
+
+listen('bsl-failed', async (event) => {
+  console.log('BSL FAILED', event.payload)
+})
+
 const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The selected printer is offline' }, { title: 'Serial Error', description: 'COM 4 does not exist!' }])
 </script>
 
