@@ -1,7 +1,11 @@
-use tauri::{window::Color, Manager};
+use tauri::{async_runtime::Mutex, window::Color, Manager};
 
-mod printer;
 mod flasher;
+mod printer;
+
+pub struct AppData {
+    bsl_flasher_running: bool,
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -15,6 +19,10 @@ pub fn run() {
         ])
         .plugin(tauri_plugin_serialplugin::init())
         .setup(|app| {
+            app.manage(Mutex::new(AppData {
+                bsl_flasher_running: false,
+            }));
+
             if cfg!(debug_assertions) {
                 app.handle().plugin(
                     tauri_plugin_log::Builder::default()
