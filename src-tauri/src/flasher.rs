@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use std::path::PathBuf;
+use std::time::Duration;
 
 use indoc::formatdoc;
 use tauri::async_runtime::{Mutex, Receiver};
@@ -13,6 +14,8 @@ use crate::AppData;
 /// Embedded firmware and password files
 const FIRMWARE: &[u8] = include_bytes!("../firmware.txt");
 const PASSWORD: &[u8] = include_bytes!("../password.txt");
+
+const DEFAULT_TIMEOUT: Duration = Duration::from_secs(20);
 
 struct FlashConfig {
     _temp_dir: TempDir,
@@ -94,6 +97,7 @@ fn release_flasher_lock_with_app(app: &tauri::AppHandle) {
 struct FlashResult {
     success: bool,
     exit_code: Option<i32>,
+    timed_out: bool,
 }
 
 async fn handle_bsl_scripter_output(
@@ -129,6 +133,7 @@ async fn handle_bsl_scripter_output(
                 return FlashResult {
                     success,
                     exit_code: payload.code,
+                    timed_out: false,
                 };
             }
             _ => {}
@@ -141,6 +146,7 @@ async fn handle_bsl_scripter_output(
     FlashResult {
         success: false,
         exit_code: None,
+        timed_out: false,
     }
 }
 
@@ -187,7 +193,7 @@ pub async fn flash(
         .map_err(|e| format!("Failed to create sidecar command: {}", e))?
         .arg(&config.script_path);
 
-    let (rx, _child) = sidecar_command.spawn().map_err(|e| {
+    let (rx, child) = sidecar_command.spawn().map_err(|e| {
         // Release lock on error
         release_flasher_lock_with_app(&app);
         format!("Failed to spawn BSL scripter: {}", e)
@@ -195,8 +201,39 @@ pub async fn flash(
 
     let app_clone = app.clone();
     tauri::async_runtime::spawn(async move {
-        let result = handle_bsl_scripter_output(&app_clone, rx, config).await;
-        cleanup_flash(&app_clone, result).await;
+        let result = tokio::time::timeout(
+            DEFAULT_TIMEOUT,
+            handle_bsl_scripter_output(&app_clone, rx, config),
+        )
+        .await;
+
+        match result {
+            Ok(flash_result) => {
+                // Process completed within timeout
+                cleanup_flash(&app_clone, flash_result).await;
+            }
+            Err(_) => {
+                // Timeout occurred - kill the process
+                log::error!(
+                    "Flash operation timed out after {} seconds",
+                    DEFAULT_TIMEOUT.as_secs()
+                );
+
+                if let Err(e) = child.kill() {
+                    log::error!("Failed to kill timed-out process: {}", e);
+                }
+
+                cleanup_flash(
+                    &app_clone,
+                    FlashResult {
+                        success: false,
+                        exit_code: None,
+                        timed_out: true,
+                    },
+                )
+                .await;
+            }
+        }
     });
 
     Ok(())

@@ -30,6 +30,7 @@ tauri-plugin-shell = "2"
 tempfile = "3.24.0"
 anyhow = "1.0.100"
 indoc = "2.0.7"
+tokio = "1.49.0"
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.
