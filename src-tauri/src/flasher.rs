@@ -169,7 +169,7 @@ async fn handle_bsl_scripter_output(
     }
 }
 
-async fn cleanup_flash(app: &tauri::AppHandle, result: FlashResult, child: CommandChild) {
+async fn cleanup_flash(app: &tauri::AppHandle, result: FlashResult, child: Option<CommandChild>) {
     if result.success {
         log::info!("BSL Scripter finished successfully");
         if let Err(e) = app.emit("bsl-finished", ()) {
@@ -188,8 +188,10 @@ async fn cleanup_flash(app: &tauri::AppHandle, result: FlashResult, child: Comma
     }
 
     // Ensure BSL scripter is always killed
-    if let Err(e) = child.kill() {
-        log::error!("Failed to kill BSL scripter: {}", e);
+    if let Some(child) = child {
+        if let Err(e) = child.kill() {
+            log::error!("Failed to kill BSL scripter: {}", e);
+        }
     }
 
     // Release the lock
@@ -200,6 +202,29 @@ async fn cleanup_flash(app: &tauri::AppHandle, result: FlashResult, child: Comma
     }
 }
 
+fn store_child(app: &tauri::AppHandle, child: CommandChild) {
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        if let Some(state) = app.try_state::<Mutex<AppData>>() {
+            let mut state = state.lock().await;
+            state.bsl_flasher_child = Some(child);
+        } else {
+            log::error!("Failed to access app state to store BSL Flasher process");
+        }
+    });
+}
+
+async fn get_child(app: &tauri::AppHandle) -> Option<CommandChild> {
+    let app = app.clone();
+    if let Some(state) = app.try_state::<Mutex<AppData>>() {
+        let mut state = state.lock().await;
+        return state.bsl_flasher_child.take();
+    } else {
+        log::error!("Failed to access app state to get BSL Flasher process");
+    }
+
+    None
+}
 #[tauri::command]
 pub async fn flash(
     app: tauri::AppHandle,
@@ -228,6 +253,8 @@ pub async fn flash(
         format!("Failed to spawn BSL scripter: {}", e)
     })?;
 
+    store_child(&app, child);
+
     let app_clone = app.clone();
     tauri::async_runtime::spawn(async move {
         let result = tokio::time::timeout(
@@ -235,6 +262,8 @@ pub async fn flash(
             handle_bsl_scripter_output(&app_clone, rx, config),
         )
         .await;
+
+        let child = get_child(&app).await;
 
         match result {
             Ok(flash_result) => {

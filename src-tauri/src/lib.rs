@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use tauri::{async_runtime::Mutex, window::Color, Manager};
+use tauri_plugin_shell::process::CommandChild;
 
 mod flasher;
 mod printer;
@@ -9,12 +10,14 @@ mod printer;
 pub struct AppData {
     /// Flag to prevent multiple flashers running at the same time
     bsl_flasher_running: bool,
+    bsl_flasher_child: Option<CommandChild>,
 }
 
 impl AppData {
     fn new() -> Self {
         Self {
             bsl_flasher_running: false,
+            bsl_flasher_child: None,
         }
     }
 }
@@ -88,6 +91,23 @@ pub fn run() {
             flasher::flash,
         ])
         .setup(|app| setup_app(app).map_err(Into::into))
-        .run(tauri::generate_context!())
-        .expect("Error while running Tauri application!");
+        .build(tauri::generate_context!())
+        .expect("Error while building Tauri application!")
+        .run(|app_handle: &tauri::AppHandle, event| {
+            if let tauri::RunEvent::Exit = event {
+                // Kill the sidecar on exit
+                log::info!("Running tauri exit handler");
+                let app = app_handle.clone();
+                if let Some(state) = app.try_state::<Mutex<AppData>>() {
+                    let mut state = state.blocking_lock();
+                    if let Some(child) = state.bsl_flasher_child.take() {
+                        if let Err(e) = child.kill() {
+                            log::error!("Failed to kill BSL scripter: {}", e);
+                        }
+                    }
+                } else {
+                    log::error!("Failed to access app state to release flasher lock");
+                }
+            }
+        });
 }
