@@ -16,6 +16,7 @@ const FIRMWARE: &[u8] = include_bytes!("../firmware.txt");
 const PASSWORD: &[u8] = include_bytes!("../password.txt");
 
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(20);
+const MAX_CONSECUTIVE_ACK_ERRORS: i32 = 5;
 
 struct FlashConfig {
     _temp_dir: TempDir,
@@ -105,11 +106,29 @@ async fn handle_bsl_scripter_output(
     mut rx: Receiver<CommandEvent>,
     _config: FlashConfig, // Keep config alive while processing events
 ) -> FlashResult {
+    let mut consecutive_ack_errors = 0;
     while let Some(event) = rx.recv().await {
         match event {
             CommandEvent::Stdout(line_bytes) => {
                 let line = String::from_utf8_lossy(&line_bytes);
                 log::info!("BSL Scripter: {}", line);
+
+                if line.contains("[ACK_ERROR_MESSAGE]") {
+                    consecutive_ack_errors += 1;
+                    if consecutive_ack_errors >= MAX_CONSECUTIVE_ACK_ERRORS {
+                        log::error!(
+                            "BSL Scripter returned too many ack errors: {}",
+                            consecutive_ack_errors
+                        );
+                        return FlashResult {
+                            success: false,
+                            exit_code: None,
+                            timed_out: false,
+                        };
+                    }
+                } else {
+                    consecutive_ack_errors = 0;
+                }
 
                 if let Err(e) = app.emit("bsl-stdout", line.to_string()) {
                     log::error!("Failed to emit bsl-stdout event: {}", e);
