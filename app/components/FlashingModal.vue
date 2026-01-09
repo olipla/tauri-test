@@ -17,10 +17,14 @@ function logLine(line: string) {
   div.scrollIntoView()
 }
 
-listen('bsl-stdout', async (event) => {
+const unlisten = await listen('bsl-stdout', async (event) => {
   if (typeof event.payload === 'string') {
     logLine(event.payload)
   }
+})
+
+onUnmounted(() => {
+  unlisten()
 })
 </script>
 

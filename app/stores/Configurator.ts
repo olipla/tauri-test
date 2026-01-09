@@ -1,6 +1,8 @@
+import type { FlashFinishReason } from '~/composables/BSLFlasher'
 import { liveQuery } from 'dexie'
 import { defineStore } from 'pinia'
 import { from } from 'rxjs'
+import { useBSLFlasher } from '~/composables/BSLFlasher'
 
 type SerialCallback = (data: Uint8Array) => void
 type SerialLineCallback = (data: string) => void
@@ -171,6 +173,25 @@ export const useConfiguratorStore = defineStore('configurator', () => {
 
   const serialLocalEcho = ref(false)
 
+  const BSLFlasherserialAutoReconnectPrevious = ref(true)
+
+  async function BSLFlasherFinished(reason: FlashFinishReason) {
+    serialAutoReconnect.value = BSLFlasherserialAutoReconnectPrevious.value
+    await serialOpen()
+  }
+
+  const { flash: BSLFlasherFlashInner } = useBSLFlasher(BSLFlasherFinished)
+
+  async function BSLFlasherFlash() {
+    const path = serialPortOptions.value?.path
+    if (path) {
+      BSLFlasherserialAutoReconnectPrevious.value = serialAutoReconnect.value
+      serialAutoReconnect.value = false
+      await serialClose(false)
+      BSLFlasherFlashInner(path)
+    }
+  }
+
   return {
     settingsIsOpen,
     serialOpen,
@@ -215,6 +236,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     configCurrentSourceConfiguredDevicesWithConfiguration,
     configCurrentSourceAllConfigurations,
     configSources,
+    BSLFlasherFlash,
   }
 }, {
   persist: {

@@ -62,42 +62,6 @@ const {
   terminalPaneMount,
 } = useTerminalPane()
 
-const flashingModal = overlay.create(FlashingModal)
-
-function openFlashingModal() {
-  flashingModal.open()
-}
-
-async function flash() {
-  const path = serialPortOptions.value?.path
-  if (path) {
-    openFlashingModal()
-    serialAutoReconnect.value = false
-    await configuratorStore.serialClose(false)
-    await flashDevice(path)
-  }
-}
-
-listen('bsl-finished', async () => {
-  console.log('BSL FINISHED')
-  flashingModal.close()
-  serialAutoReconnect.value = true
-  await configuratorStore.serialOpen()
-})
-
-listen('bsl-stdout', async (event) => {
-  console.log('BSL STDOUT', event.payload)
-})
-
-listen('bsl-stderr', async (event) => {
-  console.log('BSL STDERR', event.payload)
-})
-
-listen('bsl-failed', async (event) => {
-  flashingModal.close()
-  console.log('BSL FAILED', event.payload)
-})
-
 const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The selected printer is offline' }, { title: 'Serial Error', description: 'COM 4 does not exist!' }])
 </script>
 
@@ -134,7 +98,7 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
             <CommonCard title="Current Device (W.I.P)" :show-settings="false" status="error" class="w-full grow">
               <div class="w-full flex h-full overflow-auto  ">
                 <div class="flex flex-col gap-4 h-full">
-                  <UButton @click.stop="flash">
+                  <UButton @click.stop="configuratorStore.BSLFlasherFlash()">
                     Flash
                   </UButton>
                   <table class="table">

@@ -122,7 +122,7 @@ async fn handle_bsl_scripter_output(
                         );
                         return FlashResult {
                             success: false,
-                            exit_code: None,
+                            exit_code: Some(1000),
                             timed_out: false,
                         };
                     }
@@ -174,6 +174,11 @@ async fn cleanup_flash(app: &tauri::AppHandle, result: FlashResult) {
         log::info!("BSL Scripter finished successfully");
         if let Err(e) = app.emit("bsl-finished", ()) {
             log::error!("Failed to emit bsl-finished event: {}", e);
+        }
+    } else if result.timed_out {
+        log::error!("BSL Scripter timed out");
+        if let Err(e) = app.emit("bsl-timeout", ()) {
+            log::error!("Failed to emit bsl-timeout event: {}", e);
         }
     } else {
         log::error!("BSL Scripter failed with exit code: {:?}", result.exit_code);
