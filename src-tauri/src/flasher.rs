@@ -5,7 +5,7 @@ use std::time::Duration;
 use indoc::formatdoc;
 use tauri::async_runtime::{Mutex, Receiver};
 use tauri::{Emitter, Manager, State};
-use tauri_plugin_shell::process::CommandEvent;
+use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 use tauri_plugin_shell::ShellExt;
 use tempfile::TempDir;
 
@@ -169,7 +169,7 @@ async fn handle_bsl_scripter_output(
     }
 }
 
-async fn cleanup_flash(app: &tauri::AppHandle, result: FlashResult) {
+async fn cleanup_flash(app: &tauri::AppHandle, result: FlashResult, child: CommandChild) {
     if result.success {
         log::info!("BSL Scripter finished successfully");
         if let Err(e) = app.emit("bsl-finished", ()) {
@@ -185,6 +185,11 @@ async fn cleanup_flash(app: &tauri::AppHandle, result: FlashResult) {
         if let Err(e) = app.emit("bsl-failed", result.exit_code) {
             log::error!("Failed to emit bsl-failed event: {}", e);
         }
+    }
+
+    // Ensure BSL scripter is always killed
+    if let Err(e) = child.kill() {
+        log::error!("Failed to kill BSL scripter: {}", e);
     }
 
     // Release the lock
@@ -234,7 +239,7 @@ pub async fn flash(
         match result {
             Ok(flash_result) => {
                 // Process completed within timeout
-                cleanup_flash(&app_clone, flash_result).await;
+                cleanup_flash(&app_clone, flash_result, child).await;
             }
             Err(_) => {
                 // Timeout occurred - kill the process
@@ -243,10 +248,6 @@ pub async fn flash(
                     DEFAULT_TIMEOUT.as_secs()
                 );
 
-                if let Err(e) = child.kill() {
-                    log::error!("Failed to kill timed-out process: {}", e);
-                }
-
                 cleanup_flash(
                     &app_clone,
                     FlashResult {
@@ -254,6 +255,7 @@ pub async fn flash(
                         exit_code: None,
                         timed_out: true,
                     },
+                    child,
                 )
                 .await;
             }
