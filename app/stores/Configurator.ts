@@ -175,9 +175,12 @@ export const useConfiguratorStore = defineStore('configurator', () => {
 
   const BSLFlasherserialAutoReconnectPrevious = ref(true)
 
+  const BSLFlasherFlashing = ref(false)
+
   async function BSLFlasherFinished(reason: FlashFinishReason) {
     serialAutoReconnect.value = BSLFlasherserialAutoReconnectPrevious.value
     await serialOpen()
+    BSLFlasherFlashing.value = false
   }
 
   const { flash: BSLFlasherFlashInner } = useBSLFlasher(BSLFlasherFinished)
@@ -185,6 +188,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   async function BSLFlasherFlash() {
     const path = serialPortOptions.value?.path
     if (path) {
+      BSLFlasherFlashing.value = true
       BSLFlasherserialAutoReconnectPrevious.value = serialAutoReconnect.value
       serialAutoReconnect.value = false
       await serialClose(false)
@@ -237,6 +241,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     configCurrentSourceAllConfigurations,
     configSources,
     BSLFlasherFlash,
+    BSLFlasherFlashing,
   }
 }, {
   persist: {

@@ -3,7 +3,10 @@ import type { SelectMenuItem } from '@nuxt/ui'
 import type { Issue } from '~/components/StatusCard.vue'
 import { FlashingModal } from '#components'
 import { listen } from '@tauri-apps/api/event'
+import { Window } from '@tauri-apps/api/window'
 import { Pane, Splitpanes } from 'splitpanes'
+
+import QuitWhileFlashingModal from '~/components/QuitWhileFlashingModal.vue'
 import SettingsModal from '~/components/SettingsModal.vue'
 
 import { flashDevice } from '~/lib/tauriFlash'
@@ -29,6 +32,7 @@ const {
   configCurrentSourceConfiguredDevicesWithConfiguration,
   configCurrentSourceAllConfigurations,
   configSources,
+  BSLFlasherFlashing,
 } = storeToRefs(configuratorStore)
 
 onMounted(async () => {
@@ -48,6 +52,16 @@ async function openSettings(tab: 'general' | 'serial' | 'printer' | 'configurati
     tab,
   })
 }
+
+const quitWhileFlashingModal = overlay.create(QuitWhileFlashingModal)
+
+const appWindow = new Window('main')
+appWindow.onCloseRequested((event) => {
+  if (BSLFlasherFlashing.value) {
+    event.preventDefault()
+    quitWhileFlashingModal.open()
+  }
+})
 
 const {
   updatePanePercent,
