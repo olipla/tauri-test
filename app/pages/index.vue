@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { SelectMenuItem } from '@nuxt/ui'
 import type { Issue } from '~/components/StatusCard.vue'
+import { FlashingModal } from '#components'
 import { listen } from '@tauri-apps/api/event'
 import { Pane, Splitpanes } from 'splitpanes'
 import SettingsModal from '~/components/SettingsModal.vue'
@@ -61,9 +62,16 @@ const {
   terminalPaneMount,
 } = useTerminalPane()
 
+const flashingModal = overlay.create(FlashingModal)
+
+function openFlashingModal() {
+  flashingModal.open()
+}
+
 async function flash() {
   const path = serialPortOptions.value?.path
   if (path) {
+    openFlashingModal()
     serialAutoReconnect.value = false
     await configuratorStore.serialClose(false)
     await flashDevice(path)
@@ -72,6 +80,7 @@ async function flash() {
 
 listen('bsl-finished', async () => {
   console.log('BSL FINISHED')
+  flashingModal.close()
   serialAutoReconnect.value = true
   await configuratorStore.serialOpen()
 })
@@ -80,11 +89,12 @@ listen('bsl-stdout', async (event) => {
   console.log('BSL STDOUT', event.payload)
 })
 
-listen('bsl-stdout', async (event) => {
+listen('bsl-stderr', async (event) => {
   console.log('BSL STDERR', event.payload)
 })
 
 listen('bsl-failed', async (event) => {
+  flashingModal.close()
   console.log('BSL FAILED', event.payload)
 })
 
