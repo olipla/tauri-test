@@ -183,26 +183,8 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     serialAutoReconnect.value = BSLFlasherserialAutoReconnectPrevious.value
     await serialOpen()
     BSLFlasherFlashing.value = false
-    switch (reason) {
-      case FlashFinishReason.SUCCESS:
-        showToast('Device firmware update finished Successfully', 'success')
-        break
-
-      case FlashFinishReason.ACK_ERROR:
-        showToast('Device firmware update failed - device didn\'t respond', 'error')
-        break
-
-      case FlashFinishReason.INIT_ERROR:
-        showToast('Couldn\'t start flasher, try restarting the configurator', 'error')
-        break
-
-      case FlashFinishReason.TIMEOUT:
-        showToast('Device firmware update failed - flash took too long', 'error')
-        break
-
-      default:
-        showToast('Device firmware update failed', 'error')
-        break
+    if (reason === FlashFinishReason.SUCCESS) {
+      showToast('Device firmware update finished Successfully', 'success')
     }
   }
 

@@ -22,7 +22,30 @@ export function useBSLFlasher(finishedCallback: (reason: FlashFinishReason) => v
 
   function cleanup(reason: FlashFinishReason) {
     flashing.value = false
-    flashingModal.close()
+    if (reason === FlashFinishReason.SUCCESS || reason === FlashFinishReason.INIT_ERROR) {
+      flashingModal.close()
+    }
+    else {
+      switch (reason) {
+        case FlashFinishReason.ACK_ERROR:
+          flashingModal.patch({
+            error: 'Device didn\'t respond',
+          })
+          break
+
+        case FlashFinishReason.TIMEOUT:
+          flashingModal.patch({
+            error: 'Flash took too long',
+          })
+          break
+
+        default:
+          flashingModal.patch({
+            error: 'Firmware update failed',
+          })
+          break
+      }
+    }
     finishedCallback(reason)
   }
 

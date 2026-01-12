@@ -3,6 +3,10 @@
 
 import { listen } from '@tauri-apps/api/event'
 
+const props = defineProps<{
+  error: string | undefined
+}>()
+
 const logContainer = useTemplateRef('logContainer')
 
 function logLine(line: string) {
@@ -29,9 +33,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <UModal :ui="{ content: 'sm:max-w-4xl' }" title="Firmware flashing in progress" description="Do not unplug device while firmware is being flashed to it!" :dismissible="false" :close="false">
+  <UModal :ui="{ content: 'sm:max-w-4xl' }" title="Firmware flashing in progress" description="Do not unplug device while firmware is being flashed to it!" :dismissible="props.error !== undefined" :close="props.error !== undefined">
     <template #body>
       <div ref="logContainer" class="font-mono w-full h-96 bg-elevated overflow-y-auto" />
+    </template>
+    <template v-if="props.error !== undefined" #footer>
+      <UAlert color="error" title="Error!" :description="props.error" icon="i-lucide-triangle-alert" />
     </template>
   </UModal>
 </template>
