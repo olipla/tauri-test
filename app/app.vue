@@ -2,7 +2,7 @@
   <UApp
     :toaster="{
       ui: {
-        viewport: 'sm:w-[calc(50%-2rem)]',
+        viewport: 'sm:w-[calc(25%-2rem)]',
       },
     }"
   >

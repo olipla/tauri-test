@@ -13,8 +13,8 @@ export function useCustomToast() {
       icon: icons[type],
       color: type,
       ui: {
-        title: 'text-xl',
-        root: 'p-8',
+        title: 'text-lg',
+        root: 'p-8 opacity-70',
         icon: 'size-20',
         wrapper: 'self-stretch justify-center pl-6',
       },
