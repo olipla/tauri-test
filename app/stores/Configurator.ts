@@ -1,8 +1,8 @@
-import type { FlashFinishReason } from '~/composables/BSLFlasher'
 import { liveQuery } from 'dexie'
 import { defineStore } from 'pinia'
 import { from } from 'rxjs'
-import { useBSLFlasher } from '~/composables/BSLFlasher'
+import { FlashFinishReason, useBSLFlasher } from '~/composables/BSLFlasher'
+import { useCustomToast } from '~/composables/CustomToast'
 
 type SerialCallback = (data: Uint8Array) => void
 type SerialLineCallback = (data: string) => void
@@ -177,10 +177,33 @@ export const useConfiguratorStore = defineStore('configurator', () => {
 
   const BSLFlasherFlashing = ref(false)
 
+  const { showToast } = useCustomToast()
+
   async function BSLFlasherFinished(reason: FlashFinishReason) {
     serialAutoReconnect.value = BSLFlasherserialAutoReconnectPrevious.value
     await serialOpen()
     BSLFlasherFlashing.value = false
+    switch (reason) {
+      case FlashFinishReason.SUCCESS:
+        showToast('Device firmware update finished Successfully', 'success')
+        break
+
+      case FlashFinishReason.ACK_ERROR:
+        showToast('Device firmware update failed - device didn\'t respond', 'error')
+        break
+
+      case FlashFinishReason.INIT_ERROR:
+        showToast('Couldn\'t start flasher, try restarting the configurator', 'error')
+        break
+
+      case FlashFinishReason.TIMEOUT:
+        showToast('Device firmware update failed - flash took too long', 'error')
+        break
+
+      default:
+        showToast('Device firmware update failed', 'error')
+        break
+    }
   }
 
   const { flash: BSLFlasherFlashInner } = useBSLFlasher(BSLFlasherFinished)
