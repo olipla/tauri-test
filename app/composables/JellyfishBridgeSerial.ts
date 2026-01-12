@@ -1,4 +1,5 @@
 import type { DeviceConfiguration, DeviceMetadata, DeviceRegexs, DeviceState, MeterConfig } from '~/types/jellyfishBridge'
+import { useCustomToast } from './CustomToast'
 
 const RECENT_HISTORY_LENGTH = 10
 
@@ -89,30 +90,9 @@ export function useJellyfishBridgeSerial(
   upsertHistory: (start: Date, deviceId: string, history: TimestampedLine | TimestampedLine[]) => Promise<void>,
   printData: (data: string) => Promise<number | undefined>,
 ) {
-  const toast = useToast()
-
   const versionTarget = ref<string | undefined>()
 
-  function showToast(title: string, type: 'info' | 'error' | 'warning' | 'success' = 'info') {
-    const icons = {
-      info: 'i-lucide-info',
-      error: 'i-lucide-octagon-alert',
-      warning: 'i-lucide-triangle-alert',
-      success: 'i-lucide-check',
-    }
-    toast.add({
-      title,
-      icon: icons[type],
-      color: type,
-      ui: {
-        title: 'text-xl',
-        root: 'p-8',
-        icon: 'size-20',
-        wrapper: 'self-stretch justify-center pl-6',
-      },
-      duration: type === 'error' ? 30000 : 10000,
-    })
-  }
+  const { showToast } = useCustomToast()
 
   const currentDeviceMetadata = ref<DeviceMetadata>(newDeviceMetadata())
   const currentDeviceConfiguration = ref<DeviceConfiguration>(newDeviceConfiguration())
