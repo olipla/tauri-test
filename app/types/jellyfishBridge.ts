@@ -35,6 +35,7 @@ export interface DeviceState {
   runmode: string | undefined
   mbusEnabled: boolean
   transmitting: null | string
+  needsFlash: boolean
 }
 
 export interface DeviceRegexs {

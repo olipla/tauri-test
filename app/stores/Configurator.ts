@@ -107,6 +107,33 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     const bytes = new TextEncoder().encode(data)
     await serialWrite(bytes)
   }
+  const BSLFlasherserialAutoReconnectPrevious = ref(true)
+
+  const BSLFlasherFlashing = ref(false)
+
+  const { showToast } = useCustomToast()
+
+  async function BSLFlasherFinished(reason: FlashFinishReason) {
+    serialAutoReconnect.value = BSLFlasherserialAutoReconnectPrevious.value
+    await serialOpen()
+    BSLFlasherFlashing.value = false
+    if (reason === FlashFinishReason.SUCCESS) {
+      showToast('Device firmware update finished Successfully', 'success')
+    }
+  }
+
+  const { flash: BSLFlasherFlashInner } = useBSLFlasher(BSLFlasherFinished)
+
+  async function BSLFlasherFlash() {
+    const path = serialPortOptions.value?.path
+    if (path) {
+      BSLFlasherFlashing.value = true
+      BSLFlasherserialAutoReconnectPrevious.value = serialAutoReconnect.value
+      serialAutoReconnect.value = false
+      await serialClose(false)
+      BSLFlasherFlashInner(path)
+    }
+  }
 
   const {
     currentDeviceMetadata: JFBCurrentDeviceMetadata,
@@ -119,7 +146,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     automationConfirmMbusFlash: JFBAutomationConfirmMbusFlash,
     automationSkipMBUSTest: JFBAutomationSkipMBUSTest,
     automationSkipStatusMessage: JFBAutomationSkipStatusMessage,
-  } = useJellyfishBridgeSerial(stringToSerial, configAvailableConfigurations, applyConfiguration, upsertHistory, printerPrintData)
+  } = useJellyfishBridgeSerial(stringToSerial, configAvailableConfigurations, applyConfiguration, upsertHistory, printerPrintData, BSLFlasherFlash)
 
   const serialListeners = new Set<SerialCallback>()
 
@@ -172,34 +199,6 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   })
 
   const serialLocalEcho = ref(false)
-
-  const BSLFlasherserialAutoReconnectPrevious = ref(true)
-
-  const BSLFlasherFlashing = ref(false)
-
-  const { showToast } = useCustomToast()
-
-  async function BSLFlasherFinished(reason: FlashFinishReason) {
-    serialAutoReconnect.value = BSLFlasherserialAutoReconnectPrevious.value
-    await serialOpen()
-    BSLFlasherFlashing.value = false
-    if (reason === FlashFinishReason.SUCCESS) {
-      showToast('Device firmware update finished Successfully', 'success')
-    }
-  }
-
-  const { flash: BSLFlasherFlashInner } = useBSLFlasher(BSLFlasherFinished)
-
-  async function BSLFlasherFlash() {
-    const path = serialPortOptions.value?.path
-    if (path) {
-      BSLFlasherFlashing.value = true
-      BSLFlasherserialAutoReconnectPrevious.value = serialAutoReconnect.value
-      serialAutoReconnect.value = false
-      await serialClose(false)
-      BSLFlasherFlashInner(path)
-    }
-  }
 
   return {
     settingsIsOpen,

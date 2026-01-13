@@ -31,6 +31,7 @@ function newDeviceState(): DeviceState {
     runmode: undefined,
     mbusEnabled: false,
     transmitting: null,
+    needsFlash: false,
   }
 }
 
@@ -89,6 +90,7 @@ export function useJellyfishBridgeSerial(
   applyConfiguration: (configurationId: number, configuredDevice: ConfiguredDevice) => void,
   upsertHistory: (start: Date, deviceId: string, history: TimestampedLine | TimestampedLine[]) => Promise<void>,
   printData: (data: string) => Promise<number | undefined>,
+  flashDevice: () => Promise<void>,
 ) {
   const versionTarget = ref<string | undefined>()
 
@@ -102,19 +104,8 @@ export function useJellyfishBridgeSerial(
   const unknownDeviceStart = ref<Date | undefined>()
 
   async function queryDevice() {
-    const mbusEnabled = currentDeviceState.value.mbusEnabled
-
-    if (mbusEnabled) {
-      await sendSerial('E=0\nE=0\nE=0\n')
-      await sleep(100)
-    }
-
     await sendSerial('?\n')
     await sleep(1000)
-
-    if (mbusEnabled) {
-      await sendSerial('E=1\n')
-    }
   }
 
   function resetDevice(existingHistory?: string | string[], force = false) {
@@ -184,6 +175,9 @@ export function useJellyfishBridgeSerial(
   const automationSkipMBUSTest = ref(true)
   const automationSkipStatusMessage = ref(true)
   const automationConfirmMbusFlash = ref(true)
+  const automationEnterTimedConfig = ref(true)
+  const automationSkipSetMeterType = ref(true)
+  const automationFlashOldFirmware = ref(true)
 
   const recentLineHistory: string[] = []
 
@@ -200,6 +194,7 @@ export function useJellyfishBridgeSerial(
     }
 
     const nextConfig = availableConfigurations.value[0]
+    console.log(nextConfig)
 
     if (!nextConfig) {
       return false
@@ -346,6 +341,7 @@ export function useJellyfishBridgeSerial(
         currentDeviceMetadata.value.versionShort = str
         if (versionTarget.value && str.toLowerCase().trim() !== versionTarget.value.toLowerCase().trim()) {
           showToast(`Device Version (${str}) Does Not Match Target Version (${versionTarget.value})!`, 'error')
+          currentDeviceState.value.needsFlash = true
         }
       },
     },
@@ -532,13 +528,20 @@ export function useJellyfishBridgeSerial(
       },
     },
     setMeterTypePrompt: {
-      regex: /Set Meter Type:/,
-      onMatch: () => {
+      regex: /@03>>/,
+      onMatch: async () => {
         // Press 0 to register SENSUS test meter
         // Press 1 to register ITRON test meter
         // Press 2 to register DIEHL test meter
         // Any other to skip - will go to test but won't listen - need to then send unlock and R=1
         // No action will hibernate after a few seconds
+
+        if (!automationEnabled.value || !automationSkipSetMeterType.value) {
+          return
+        }
+
+        await sleep(800)
+        await sendSerial(' \n')
       },
     },
     magnetTapped: {
@@ -553,12 +556,29 @@ export function useJellyfishBridgeSerial(
       onMatch: async (str) => {
         await resetDevice([...recentLineHistory, str])
 
-        if (!automationEnabled.value || !automationSkipMBUSTest.value) {
+        if (!automationEnabled.value) {
           return
         }
-        await sleep(800)
-        await sendSerial('N\n')
-        await sleep(100)
+
+        if (automationSkipSetMeterType.value) {
+          await sleep(500)
+          await sendSerial(' \n')
+        }
+
+        if (automationFlashOldFirmware.value) {
+          await queryDevice()
+          await sendSerial(`O=${currentDeviceMetadata.value.deviceAltId}\n`)
+          await sleep(500)
+          if (currentDeviceState.value.needsFlash) {
+            await sendSerial('R=250\n')
+            return
+          }
+        }
+
+        if (!automationSkipMBUSTest.value) {
+          return
+        }
+        await sleep(200)
         await queryDevice()
         if (!currentDeviceMetadata.value.deviceAltId) {
           console.log('Failed to get Alt ID')
@@ -578,6 +598,24 @@ export function useJellyfishBridgeSerial(
         // Device has started for the first time
         showToast('Device Performing Factory Start')
         await resetDevice(str)
+      },
+    },
+    invokingBootloader: {
+      regex: /Invoking Bootloader/,
+      onMatch: async () => {
+        // Device has started for the first time
+        showToast('Device is in bootloader mode')
+        await flashDevice()
+      },
+    },
+    loadMBUSFW: {
+      regex: /Load MBUS FW using XDS110 UniFlash/,
+      onMatch: async () => {
+        if (!automationEnabled.value || !automationConfirmMbusFlash.value) {
+          return
+        }
+        await sleep(800)
+        await sendSerial('X\n')
       },
     },
     // MUST BE LAST
@@ -622,6 +660,31 @@ export function useJellyfishBridgeSerial(
         await sleep(250)
         await sendSerial('y\n')
         // showToast('Skipped Sending Status Message')
+      },
+    },
+    enterTimedConfigPrompt: {
+      regex: /Enter timed CONFIG \? Press 'y':/,
+      onMatch: async () => {
+        if (!automationEnabled.value || !automationEnterTimedConfig.value) {
+          return
+        }
+
+        await sleep(250)
+        await sendSerial('y\n')
+
+        await sleep(100)
+        await queryDevice()
+        if (!currentDeviceMetadata.value.deviceAltId) {
+          console.log('Failed to get Alt ID')
+          showToast('Could not start firmware upgrade', 'error')
+          return
+        }
+        await sendSerial(`O=${currentDeviceMetadata.value.deviceAltId}\n`)
+        await sleep(500)
+
+        if (currentDeviceState.value.needsFlash) {
+          await sendSerial('F=250\n')
+        }
       },
     },
   }
