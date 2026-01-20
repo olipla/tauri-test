@@ -1,6 +1,6 @@
 import { liveQuery } from 'dexie'
 import { defineStore } from 'pinia'
-import { from } from 'rxjs'
+import { of, switchMap } from 'rxjs'
 import { FlashFinishReason, useBSLFlasher } from '~/composables/BSLFlasher'
 import { useCustomToast } from '~/composables/CustomToast'
 
@@ -41,45 +41,57 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   const configConfiguredDevices = useObservable<DBConfiguredDevice[]>(from(liveQuery<DBConfiguredDevice[]>(getConfiguredDevices)))
   const configConfiguredDevicesWithConfiguration = useObservable<(DBConfiguredDevice & DBConfiguration)[]>(from(liveQuery<(DBConfiguredDevice & DBConfiguration)[]>(getConfiguredDevicesWithConfiguration)))
 
-  const configSources = computed(() => {
-    const sourceId = configCurrentSourceId.value
-    if (sourceId === undefined) {
-      return
-    }
-    return useObservable<DBSource[] | undefined>(from(liveQuery<DBSource[] | undefined>(() => getSources())))
-  })
+  const configCurrentSourceId$ = from(configCurrentSourceId)
 
-  const configCurrentSource = computed(() => {
-    const sourceId = configCurrentSourceId.value
-    if (sourceId === undefined) {
-      return
-    }
-    return useObservable<DBSource | undefined>(from(liveQuery<DBSource | undefined>(() => getSource(sourceId))))
-  })
+  const configSources = useObservable<DBSource[] | undefined>(from(liveQuery<DBSource[] | undefined>(() => getSources())))
 
-  const configCurrentSourceAvailableConfigurations = computed(() => {
-    const sourceId = configCurrentSourceId.value
-    if (sourceId === undefined) {
-      return
-    }
-    return useObservable<DBConfiguration[]>(from(liveQuery<DBConfiguration[]>(() => getAvailableConfigurations(sourceId))))
-  })
+  const configCurrentSource = useObservable(
+    configCurrentSourceId$.pipe(
+      switchMap((id) => {
+        if (id === undefined) {
+          return of(undefined)
+        }
 
-  const configCurrentSourceAllConfigurations = computed(() => {
-    const sourceId = configCurrentSourceId.value
-    if (sourceId === undefined) {
-      return
-    }
-    return useObservable<DBConfiguration[]>(from(liveQuery<DBConfiguration[]>(() => getAllConfigurations(sourceId))))
-  })
+        return from(liveQuery<DBSource | undefined>(() => getSource(id)))
+      }),
+    ),
+  )
 
-  const configCurrentSourceConfiguredDevicesWithConfiguration = computed(() => {
-    const sourceId = configCurrentSourceId.value
-    if (sourceId === undefined) {
-      return
-    }
-    return useObservable<(DBConfiguredDevice & DBConfiguration)[]>(from(liveQuery<(DBConfiguredDevice & DBConfiguration)[]>(() => getConfiguredDevicesWithConfiguration(sourceId))))
-  })
+  const configCurrentSourceAvailableConfigurations = useObservable(
+    configCurrentSourceId$.pipe(
+      switchMap((id) => {
+        if (id === undefined) {
+          return of(undefined)
+        }
+
+        return from(liveQuery<DBConfiguration[]>(() => getAvailableConfigurations(id)))
+      }),
+    ),
+  )
+
+  const configCurrentSourceAllConfigurations = useObservable(
+    configCurrentSourceId$.pipe(
+      switchMap((id) => {
+        if (id === undefined) {
+          return of(undefined)
+        }
+
+        return from(liveQuery(() => getAllConfigurations(id)))
+      }),
+    ),
+  )
+
+  const configCurrentSourceConfiguredDevicesWithConfiguration = useObservable(
+    configCurrentSourceId$.pipe(
+      switchMap((id) => {
+        if (id === undefined) {
+          return of(undefined)
+        }
+
+        return from(liveQuery<(DBConfiguredDevice & DBConfiguration)[]>(() => getConfiguredDevicesWithConfiguration(id)))
+      }),
+    ),
+  )
 
   const {
     openFile: configImport,
@@ -146,7 +158,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     automationConfirmMbusFlash: JFBAutomationConfirmMbusFlash,
     automationSkipMBUSTest: JFBAutomationSkipMBUSTest,
     automationSkipStatusMessage: JFBAutomationSkipStatusMessage,
-  } = useJellyfishBridgeSerial(stringToSerial, configAvailableConfigurations, applyConfiguration, upsertHistory, printerPrintData, BSLFlasherFlash)
+  } = useJellyfishBridgeSerial(stringToSerial, configCurrentSourceAvailableConfigurations, applyConfiguration, upsertHistory, printerPrintData, BSLFlasherFlash)
 
   const serialListeners = new Set<SerialCallback>()
 

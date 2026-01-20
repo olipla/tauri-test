@@ -51,7 +51,7 @@ const configuratorStore = useConfiguratorStore()
 const { settingsIsOpen, printerConfiguredName, serialLocalEcho, JFBVersionTarget, JFBAutomationEnabled, JFBAutomationConfirmMbusFlash, JFBAutomationSkipMBUSTest, JFBAutomationSkipStatusMessage, configCurrentSource, configSources, configCurrentSourceId } = storeToRefs(configuratorStore)
 
 const configSourcesItems = computed<SelectMenuItem[]>(() => {
-  return configSources.value?.value?.map((value) => {
+  return configSources.value?.map((value) => {
     return {
       label: `${value.id}: ${value.name}`,
       id: value.id,
@@ -59,12 +59,12 @@ const configSourcesItems = computed<SelectMenuItem[]>(() => {
   }) ?? []
 })
 
-const selectedSourceItem = ref<DBSource | undefined>(undefined)
+const selectedSourceItem = ref<number | undefined>(undefined)
 
 watch(selectedSourceItem, (newItem) => {
   if (newItem) {
-    console.log('setting currentsourceid to', newItem.id)
-    configCurrentSourceId.value = newItem.id
+    console.log('setting currentsourceid to', newItem)
+    configCurrentSourceId.value = newItem
   }
 })
 
@@ -130,10 +130,7 @@ watch(localEcho, (newValue) => {
         <template #general>
           <SettingsTab>
             <UFormField label="Version Target">
-              <UInput
-                v-model="JFBVersionTarget"
-                class="w-full"
-              />
+              <UInput v-model="JFBVersionTarget" class="w-full" />
             </UFormField>
             <USwitch v-model="JFBAutomationEnabled" label="All Automation" />
             <USwitch v-model="JFBAutomationConfirmMbusFlash" label="Confirm MBUS Flash Automation" />
@@ -167,7 +164,10 @@ watch(localEcho, (newValue) => {
             <UButton @click="configuratorStore.configImport()">
               Import from spreadsheet
             </UButton>
-            <USelectMenu v-model="selectedSourceItem" value-key="id" label-key="label" :items="configSourcesItems" class="w-48" />
+            <USelectMenu
+              v-model="selectedSourceItem" value-key="id" label-key="label" :items="configSourcesItems"
+              class="w-48"
+            />
             <!-- <UButton color="error" @click="configuratorStore.configClear()">
               Clear configurations
             </UButton> -->
@@ -178,6 +178,4 @@ watch(localEcho, (newValue) => {
   </UModal>
 </template>
 
-<style>
-
-</style>
+<style></style>
