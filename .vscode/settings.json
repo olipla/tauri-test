@@ -1,10 +1,6 @@
 {
   // Disable the default formatter, use eslint instead
-  "prettier.enable": false,
   "editor.formatOnSave": false,
-  "[rust]": {
-    "editor.formatOnSave": true
-  },
   // Auto fix
   "editor.codeActionsOnSave": [
     "source.formatDocument",
@@ -16,7 +12,7 @@
   "files.associations": {
     "*.css": "tailwindcss"
   },
-  // Silent the stylistic rules in you IDE, but still auto fix them
+  // Silence the stylistic rules, but still auto fix them
   "eslint.rules.customizations": [
     {
       "rule": "style/*",
