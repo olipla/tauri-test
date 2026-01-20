@@ -1,15 +1,15 @@
 <script lang="ts" setup>
-import type { SelectMenuItem } from '@nuxt/ui'
 import type { Issue } from '~/components/StatusCard.vue'
-import { FlashingModal } from '#components'
-import { listen } from '@tauri-apps/api/event'
 import { Window } from '@tauri-apps/api/window'
 import { Pane, Splitpanes } from 'splitpanes'
 
 import QuitWhileFlashingModal from '~/components/QuitWhileFlashingModal.vue'
 import SettingsModal from '~/components/SettingsModal.vue'
 
-import { flashDevice } from '~/lib/tauriFlash'
+const overlay = useOverlay()
+
+const settingsModal = overlay.create(SettingsModal)
+const quitWhileFlashingModal = overlay.create(QuitWhileFlashingModal)
 
 const configuratorStore = useConfiguratorStore()
 const {
@@ -17,7 +17,6 @@ const {
   serialTransmitting,
   serialReceiving,
   serialIsOpen,
-  serialAutoReconnect,
   serialIsConnected,
   serialSanitisedProduct,
   serialSanitisedSerialNumber,
@@ -26,7 +25,6 @@ const {
   JFBCurrentDeviceMetadata,
   JFBCurrentDeviceState,
   JFBCurrentDeviceConfiguration,
-  JFBAutomationEnabled,
   configCurrentSource,
   configCurrentSourceAvailableConfigurations,
   configCurrentSourceConfiguredDevicesWithConfiguration,
@@ -38,30 +36,24 @@ const {
 onMounted(async () => {
   if (window.__TAURI__) {
     configuratorStore.serialOpen()
+
+    const appWindow = new Window('main')
+    appWindow.onCloseRequested((event) => {
+      if (BSLFlasherFlashing.value) {
+        event.preventDefault()
+        quitWhileFlashingModal.open()
+      }
+    })
   }
 })
 
 watch(configSources, newValue => console.log(newValue), { immediate: true })
-
-const overlay = useOverlay()
-
-const settingsModal = overlay.create(SettingsModal)
 
 async function openSettings(tab: 'general' | 'serial' | 'printer' | 'configuration' | undefined = undefined) {
   settingsModal.open({
     tab,
   })
 }
-
-const quitWhileFlashingModal = overlay.create(QuitWhileFlashingModal)
-
-const appWindow = new Window('main')
-appWindow.onCloseRequested((event) => {
-  if (BSLFlasherFlashing.value) {
-    event.preventDefault()
-    quitWhileFlashingModal.open()
-  }
-})
 
 const {
   updatePanePercent,
@@ -92,18 +84,22 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
               <UButton icon="i-lucide-terminal" variant="outline" @click="toggleTerminalPane">
                 {{ terminalPaneVisible ? 'Close' : 'Open' }} Terminal
               </UButton>
-              <SerialCard :status="serialIsConnected ? 'ok' : 'error'" :serial-details="serialIsOpen ? {
-                baudRate: serialPortOptions?.baudRate ?? 0,
-                id: serialSanitisedSerialNumber ?? '',
-                name: serialSanitisedProduct ?? '',
-                port: serialPortOptions?.path ?? '',
-              } : undefined" :transmitting="serialTransmitting" :receiving="serialReceiving"
-                :is-connected="serialIsConnected" @click.stop="() => openSettings('serial')" />
+              <SerialCard
+                :status="serialIsConnected ? 'ok' : 'error'" :serial-details="serialIsOpen ? {
+                  baudRate: serialPortOptions?.baudRate ?? 0,
+                  id: serialSanitisedSerialNumber ?? '',
+                  name: serialSanitisedProduct ?? '',
+                  port: serialPortOptions?.path ?? '',
+                } : undefined" :transmitting="serialTransmitting" :receiving="serialReceiving"
+                :is-connected="serialIsConnected" @click.stop="() => openSettings('serial')"
+              />
               <PrinterCard :status="printerConfiguredStatus" @click.stop="() => openSettings('printer')" />
-              <ConfigurationCard :size="configCurrentSourceAllConfigurations?.length"
+              <ConfigurationCard
+                :size="configCurrentSourceAllConfigurations?.length"
                 :filter="configCurrentSource?.name" :source="configCurrentSource?.type"
                 :configured="configCurrentSourceConfiguredDevicesWithConfiguration?.length ?? 0"
-                @click.stop="() => openSettings('configuration')" />
+                @click.stop="() => openSettings('configuration')"
+              />
               <StatusCard :issues="statusIssues" />
             </div>
             <CommonCard title="Current Device (W.I.P)" :show-settings="false" status="error" class="w-full grow">
@@ -224,17 +220,23 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
             </CommonCard>
           </div>
           <div class="flex flex-col gap-4 grow">
-            <AvailableConfigurationsTable :configurations="configCurrentSourceAvailableConfigurations ?? []"
-              :title="`Available Configurations (${configCurrentSourceAvailableConfigurations?.length ?? 0})`" />
-            <AppliedConfigurationsTable :configurations="configCurrentSourceConfiguredDevicesWithConfiguration ?? []"
-              :title="`Applied Configurations (${configCurrentSourceConfiguredDevicesWithConfiguration?.length ?? 0})`" />
+            <AvailableConfigurationsTable
+              :configurations="configCurrentSourceAvailableConfigurations ?? []"
+              :title="`Available Configurations (${configCurrentSourceAvailableConfigurations?.length ?? 0})`"
+            />
+            <AppliedConfigurationsTable
+              :configurations="configCurrentSourceConfiguredDevicesWithConfiguration ?? []"
+              :title="`Applied Configurations (${configCurrentSourceConfiguredDevicesWithConfiguration?.length ?? 0})`"
+            />
           </div>
         </div>
       </Pane>
       <Pane v-if="terminalPaneVisible" :size="terminalPaneSize">
-        <TerminalPane :mounted="terminalPaneMount" :maximised="isTerminalMaximised" class="w-full h-full"
+        <TerminalPane
+          :mounted="terminalPaneMount" :maximised="isTerminalMaximised" class="w-full h-full"
           :local-echo="serialLocalEcho" @close="closeTerminalPane" @maximise="toggleMaximisePane"
-          @mount="toggleMountPane" />
+          @mount="toggleMountPane"
+        />
       </Pane>
     </Splitpanes>
   </div>
