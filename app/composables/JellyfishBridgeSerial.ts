@@ -587,7 +587,11 @@ export function useJellyfishBridgeSerial(
         }
         await sendSerial(`O=${currentDeviceMetadata.value.deviceAltId}\n`)
         await sleep(500)
-        await sendSerial('R=1\nR=1\nR=1\nR=1\n')
+        await sendSerial('R=1\n')
+        await sleep(300)
+        await sendSerial('R=1\n')
+        await sleep(200)
+        await sendSerial('R=1\n')
         showToast('Skipped MBUS Test: Entering config mode')
         await sleep(500)
       },
@@ -615,6 +619,10 @@ export function useJellyfishBridgeSerial(
           return
         }
         await sleep(800)
+        await sendSerial('X\n')
+        await sleep(400)
+        await sendSerial('X\n')
+        await sleep(200)
         await sendSerial('X\n')
       },
     },
