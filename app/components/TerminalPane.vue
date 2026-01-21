@@ -144,8 +144,14 @@ async function unlockDevice() {
       </div>
       <div class="flex gap-1 p-1">
         <UButton icon="i-lucide-settings" variant="ghost" @click.stop="choosePort" />
-        <UButton :icon="props.mounted === 'bottom' ? 'i-lucide-panel-right' : 'i-lucide-panel-bottom'" variant="ghost" @click.stop="emit('mount')" />
-        <UButton :icon="props.maximised ? 'i-lucide-minimize' : 'i-lucide-maximize'" variant="ghost" @click.stop="emit('maximise')" />
+        <UButton
+          :icon="props.mounted === 'bottom' ? 'i-lucide-panel-right' : 'i-lucide-panel-bottom'" variant="ghost"
+          @click.stop="emit('mount')"
+        />
+        <UButton
+          :icon="props.maximised ? 'i-lucide-minimize' : 'i-lucide-maximize'" variant="ghost"
+          @click.stop="emit('maximise')"
+        />
         <UButton icon="i-lucide-x" variant="ghost" @click.stop="emit('close')" />
       </div>
     </div>
@@ -161,6 +167,9 @@ async function unlockDevice() {
       </UButton>
       <UButton @click.stop="terminalDataIn('N\n')">
         N
+      </UButton>
+      <UButton @click.stop="terminalDataIn('R=250\n')">
+        R=250
       </UButton>
       <UButton @click.stop="terminalDataIn('R=255\n')">
         R=255
