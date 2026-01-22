@@ -48,7 +48,22 @@ const activeItem = computed(() => {
 
 const configuratorStore = useConfiguratorStore()
 
-const { settingsIsOpen, printerConfiguredName, serialLocalEcho, JFBVersionTarget, JFBAutomationEnabled, JFBAutomationConfirmMbusFlash, JFBAutomationSkipMBUSTest, JFBAutomationSkipStatusMessage, configCurrentSource, configSources, configCurrentSourceId } = storeToRefs(configuratorStore)
+const {
+  settingsIsOpen,
+  printerConfiguredName,
+  serialLocalEcho,
+  JFBVersionTarget,
+  JFBAutomationEnabled,
+  JFBAutomationConfirmMbusFlash,
+  JFBAutomationSkipMBUSTest,
+  JFBAutomationSkipStatusMessage,
+  JFBAutomationEnterTimedConfig,
+  JFBAutomationFlashOldFirmware,
+  JFBAutomationSkipSetMeterType,
+  configCurrentSource,
+  configSources,
+  configCurrentSourceId,
+} = storeToRefs(configuratorStore)
 
 const configSourcesItems = computed<SelectMenuItem[]>(() => {
   return configSources.value?.map((value) => {
@@ -136,6 +151,9 @@ watch(localEcho, (newValue) => {
             <USwitch v-model="JFBAutomationConfirmMbusFlash" label="Confirm MBUS Flash Automation" />
             <USwitch v-model="JFBAutomationSkipMBUSTest" label="Skip MBUS Test Automation" />
             <USwitch v-model="JFBAutomationSkipStatusMessage" label="Skip Status Message Automation" />
+            <USwitch v-model="JFBAutomationEnterTimedConfig" label="Enter Timed Config Automation" />
+            <USwitch v-model="JFBAutomationFlashOldFirmware" label="Flash When Old Firmware Automation" />
+            <USwitch v-model="JFBAutomationSkipSetMeterType" label="Skip Set Meter Type Automation" />
           </SettingsTab>
         </template>
         <template #serial>
