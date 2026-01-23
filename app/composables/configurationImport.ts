@@ -143,7 +143,7 @@ export function useConfigurationImport(importedConfigurationsCallback: (configur
     }
     else {
       importedConfigurationsCallback(parsedJson, 'SHEET', file.name)
-      showToast('Config import success', 'success')
+      // showToast('Config import success', 'success')
     }
   })
 

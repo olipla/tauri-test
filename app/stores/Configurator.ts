@@ -2,6 +2,7 @@ import { liveQuery } from 'dexie'
 import { defineStore } from 'pinia'
 import { of, switchMap } from 'rxjs'
 import { FlashFinishReason, useBSLFlasher } from '~/composables/BSLFlasher'
+
 import { useCustomToast } from '~/composables/CustomToast'
 
 type SerialCallback = (data: Uint8Array) => void
@@ -9,6 +10,7 @@ type SerialLineCallback = (data: string) => void
 
 export const useConfiguratorStore = defineStore('configurator', () => {
   const settingsIsOpen = ref(false)
+  const { showToast } = useCustomToast()
 
   const {
     configuredName: printerConfiguredName,
@@ -32,8 +34,23 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   const configCurrentSourceId = ref<number | undefined>()
 
   async function importedConfigurationsCallback(configurations: Configuration[], sourceType: string, sourceName: string) {
-    const sourceId = await addConfigurations(configurations, sourceType, sourceName)
-    configCurrentSourceId.value = sourceId
+    try {
+      const sourceId = await addConfigurations(configurations, sourceType, sourceName)
+      configCurrentSourceId.value = sourceId
+      showToast('Config import success', 'success')
+    }
+    catch (err) {
+      console.error(err)
+      if (typeof err === 'object' && err && 'name' in err && err.name === 'BulkError') {
+        if ('failures' in err && Array.isArray(err.failures) && err.failures.length > 0) {
+          if ('name' in err.failures[0] && err.failures[0].name === 'ConstraintError') {
+            showToast('Error importing configurations - record already ingested', 'error')
+            return
+          }
+        }
+      }
+      showToast('Error importing configurations', 'error')
+    }
   }
 
   const configUnusedConfigurations = useObservable<DBConfiguration[]>(from(liveQuery<DBConfiguration[]>(getUnusedConfigurations)))
@@ -122,8 +139,6 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   const BSLFlasherserialAutoReconnectPrevious = ref(true)
 
   const BSLFlasherFlashing = ref(false)
-
-  const { showToast } = useCustomToast()
 
   async function BSLFlasherFinished(reason: FlashFinishReason) {
     serialAutoReconnect.value = BSLFlasherserialAutoReconnectPrevious.value
