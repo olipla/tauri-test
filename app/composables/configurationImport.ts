@@ -1,4 +1,5 @@
-import { useFileDialog,
+import {
+  useFileDialog,
 } from '@vueuse/core'
 import { read, utils } from 'xlsx'
 
@@ -13,6 +14,8 @@ export function useConfigurationImport(importedConfigurationsCallback: (configur
     directory: false,
     multiple: false,
   })
+
+  const { showToast } = useCustomToast()
 
   onChange(async (files) => {
     if (!files) {
@@ -53,6 +56,8 @@ export function useConfigurationImport(importedConfigurationsCallback: (configur
         return String(row[key])
       }
     }
+
+    const invalidKeys = new Set<string>()
 
     for (const row of json) {
       console.log(row)
@@ -106,13 +111,21 @@ export function useConfigurationImport(importedConfigurationsCallback: (configur
           ],
         }
 
-        if (Object.entries(configuration).find(([_, value]) => value === undefined)) {
-          if (configuration.assets[0] && !Object.entries(configuration.assets[0]).find(([_, value]) => value === undefined)) {
+        const configUndefinedKeys = Object.entries(configuration).filter(([_, value]) => value === undefined).map(([key]) => key)
+        const assetUndefinedKeys = configuration.assets[0] ? Object.entries(configuration.assets[0]).filter(([_, value]) => value === undefined).map(([key]) => key) : []
+        if (configUndefinedKeys.length > 0) {
+          if (configuration.assets[0] && assetUndefinedKeys.length === 0 && configUndefinedKeys.length === 5) {
             parsedJson[parsedJson.length - 1]?.assets.push(configuration.assets[0] as ConfigurationAsset)
+            continue
           }
           else {
-            console.warn('Skipping invalid row', row)
+            console.warn('Row has invalid assets', row)
+            console.warn('Undefined keys in asset:', assetUndefinedKeys)
+            assetUndefinedKeys.forEach(key => invalidKeys.add(key))
           }
+          console.warn('Skipping invalid row', row)
+          console.warn('Undefined keys in configuration:', configUndefinedKeys)
+          configUndefinedKeys.forEach(key => invalidKeys.add(key))
           continue
         }
 
@@ -123,7 +136,15 @@ export function useConfigurationImport(importedConfigurationsCallback: (configur
       }
     }
 
-    importedConfigurationsCallback(parsedJson, 'SHEET', file.name)
+    if (invalidKeys.size > 0) {
+      const invalidKeyArray = invalidKeys.values().toArray()
+      console.warn('The following keys have invalid values:', invalidKeyArray)
+      showToast(`Config import failed, invalid key(s): ${invalidKeyArray.join(', ')}`, 'error')
+    }
+    else {
+      importedConfigurationsCallback(parsedJson, 'SHEET', file.name)
+      showToast('Config import success', 'success')
+    }
   })
 
   return { openFile }
