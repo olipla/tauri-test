@@ -99,13 +99,15 @@ export function useConfigurationDatabase() {
   }
 
   async function addConfigurations(configurations: Configuration[], sourceType: string, sourceName: string) {
-    const timestamp = new Date()
-    const sourceId = await db.source.add({ timestamp, type: sourceType, name: sourceName })
-    const dbConfigurations = configurations.map((x) => {
-      return { ...x, sourceId, available: 1 }
+    return await db.transaction('rw', [db.source, db.configuration], async () => {
+      const timestamp = new Date()
+      const sourceId = await db.source.add({ timestamp, type: sourceType, name: sourceName })
+      const dbConfigurations = configurations.map((x) => {
+        return { ...x, sourceId, available: 1 }
+      })
+      await db.configuration.bulkAdd(dbConfigurations)
+      return sourceId
     })
-    await db.configuration.bulkAdd(dbConfigurations)
-    return sourceId
   }
 
   async function addConfiguredDevice(device: ConfiguredDevice, configurationId: number) {
