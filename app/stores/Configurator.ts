@@ -36,6 +36,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   async function importedConfigurationsCallback(configurations: Configuration[], sourceType: string, sourceName: string) {
     try {
       const sourceId = await addConfigurations(configurations, sourceType, sourceName)
+      console.log('Setting current source id', sourceId)
       configCurrentSourceId.value = sourceId
       showToast('Config import success', 'success')
     }

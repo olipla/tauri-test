@@ -84,7 +84,7 @@ watch(selectedSourceItem, (newItem) => {
 })
 
 watch(configSources, newValue => console.log('configSources', newValue), { immediate: true })
-watch(configCurrentSourceId, newValue => console.log('currentSourceId', newValue), { immediate: true })
+watch(configCurrentSourceId, newValue => selectedSourceItem.value = newValue, { immediate: true })
 
 onMounted(() => {
   console.log('SETTINGS MODAL MOUNT')
