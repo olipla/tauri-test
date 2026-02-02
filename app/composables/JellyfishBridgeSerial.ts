@@ -178,6 +178,7 @@ export function useJellyfishBridgeSerial(
   const automationEnterTimedConfig = ref(true)
   const automationSkipSetMeterType = ref(true)
   const automationFlashOldFirmware = ref(true)
+  const automationErrorOnNot1NCE = ref(true)
 
   const recentLineHistory: string[] = []
 
@@ -280,6 +281,12 @@ export function useJellyfishBridgeSerial(
 
         currentDeviceMetadata.value.deviceId = groups.id
         currentDeviceMetadata.value.deviceAltId = groups.altId
+
+        if (automationErrorOnNot1NCE.value) {
+          if (!groups.altId.startsWith('8988228')) {
+            showToast('ALT ID is not a 1NCE SIM ID', 'error')
+          }
+        }
       },
     },
     deviceIdFactory: {
@@ -302,6 +309,11 @@ export function useJellyfishBridgeSerial(
         const groups = match.groups as { altId: string }
 
         currentDeviceMetadata.value.deviceAltId = groups.altId
+        if (automationErrorOnNot1NCE.value) {
+          if (!groups.altId.startsWith('8988228')) {
+            showToast('ALT ID is not a 1NCE SIM ID', 'error')
+          }
+        }
       },
     },
     versionLong: {
