@@ -25,7 +25,9 @@ impl AppData {
 /// Configure appearance and title of main window
 fn configure_window(window: &tauri::WebviewWindow, version: &str) -> Result<()> {
     window
-        .set_title(&format!("Jellyfish Configurator {version}"))
+        .set_title(&format!(
+            "Jellyfish Configurator {version} [GW_v4_Nb_2_1_6]"
+        ))
         .context("Failed to set window title")?;
 
     // Set background colour to match Nuxt theme to avoid flash when starting
