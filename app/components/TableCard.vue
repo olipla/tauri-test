@@ -4,7 +4,8 @@
 
 <template>
   <UCard
-    class="grow bg-elevated" :ui="{
+    class="grow bg-elevated"
+    :ui="{
       root: 'flex flex-col',
       body: 'grow p-0 sm:p-0',
       header: 'p-2 sm:p-2 relative bg-default/75',
@@ -21,6 +22,4 @@
   </UCard>
 </template>
 
-<style>
-
-</style>
+<style></style>

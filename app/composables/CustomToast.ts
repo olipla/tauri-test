@@ -22,5 +22,8 @@ export function useCustomToast() {
     })
   }
 
-  return { toast, showToast }
+  return {
+    toast,
+    showToast,
+  }
 }

@@ -18,18 +18,33 @@ const status = computed<Status>(() => {
 <template>
   <ClientOnly>
     <template #fallback>
-      <CommonCard title="Printer" status="error" />
+      <CommonCard
+        title="Printer"
+        status="error"
+      />
     </template>
-    <CommonCard :status="status" title="Printer">
-      <div v-if="!props.status" class="flex justify-center items-center w-full">
+    <CommonCard
+      :status="status"
+      title="Printer"
+    >
+      <div
+        v-if="!props.status"
+        class="flex justify-center items-center w-full"
+      >
         <div class="flex flex-col grow items-center justify-center gap-1 w-full">
-          <UIcon name="i-lucide-triangle-alert" class="size-6" />
+          <UIcon
+            name="i-lucide-triangle-alert"
+            class="size-6"
+          />
           <div>
             Not configured
           </div>
         </div>
       </div>
-      <div v-else class="flex flex-col gap-1 pl-1">
+      <div
+        v-else
+        class="flex flex-col gap-1 pl-1"
+      >
         <div class="font-bold">
           {{ props.status?.name }}
         </div>
@@ -45,6 +60,4 @@ const status = computed<Status>(() => {
   </ClientOnly>
 </template>
 
-<style>
-
-</style>
+<style></style>

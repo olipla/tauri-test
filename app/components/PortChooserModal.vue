@@ -197,14 +197,24 @@ const columnPinning = computed(() => {
             Choose a serial port
           </h1>
         </div>
-        <UTabs v-model="activeTab" :content="false" :items="tabItems" />
+        <UTabs
+          v-model="activeTab"
+          :content="false"
+          :items="tabItems"
+        />
       </div>
     </template>
     <template #body>
       <UTable
-        ref="table" v-model:column-visibility="columnVisibility" v-model:row-selection="rowSelection"
-        v-model:column-pinning="columnPinning" :data="portData" class="flex-1 transition-[height]" :columns="columns"
-        :ui="{ th: 'whitespace-nowrap cursor-auto', tr: 'cursor-pointer' }" @select="onSelect"
+        ref="table"
+        v-model:column-visibility="columnVisibility"
+        v-model:row-selection="rowSelection"
+        v-model:column-pinning="columnPinning"
+        :data="portData"
+        class="flex-1 transition-[height]"
+        :columns="columns"
+        :ui="{ th: 'whitespace-nowrap cursor-auto', tr: 'cursor-pointer' }"
+        @select="onSelect"
       />
     </template>
   </UModal>

@@ -117,7 +117,8 @@ async function unlockDevice() {
     <div class="flex bg-elevated items-center">
       <div class="grow pl-2 p-1 flex items-center gap-3">
         <div
-          class="rounded-full w-3 h-3" :class="{
+          class="rounded-full w-3 h-3"
+          :class="{
             'dark:bg-red-400': !serialIsConnected,
             'bg-red-500': !serialIsConnected,
             'dark:bg-green-400': serialIsConnected,
@@ -143,20 +144,33 @@ async function unlockDevice() {
         </div>
       </div>
       <div class="flex gap-1 p-1">
-        <UButton icon="i-lucide-settings" variant="ghost" @click.stop="choosePort" />
         <UButton
-          :icon="props.mounted === 'bottom' ? 'i-lucide-panel-right' : 'i-lucide-panel-bottom'" variant="ghost"
+          icon="i-lucide-settings"
+          variant="ghost"
+          @click.stop="choosePort"
+        />
+        <UButton
+          :icon="props.mounted === 'bottom' ? 'i-lucide-panel-right' : 'i-lucide-panel-bottom'"
+          variant="ghost"
           @click.stop="emit('mount')"
         />
         <UButton
-          :icon="props.maximised ? 'i-lucide-minimize' : 'i-lucide-maximize'" variant="ghost"
+          :icon="props.maximised ? 'i-lucide-minimize' : 'i-lucide-maximize'"
+          variant="ghost"
           @click.stop="emit('maximise')"
         />
-        <UButton icon="i-lucide-x" variant="ghost" @click.stop="emit('close')" />
+        <UButton
+          icon="i-lucide-x"
+          variant="ghost"
+          @click.stop="emit('close')"
+        />
       </div>
     </div>
     <div class="w-full bg-elevated flex flex-wrap gap-2 px-2 py-1">
-      <UButton color="secondary" @click.stop="unlockDevice()">
+      <UButton
+        color="secondary"
+        @click.stop="unlockDevice()"
+      >
         Unlock
       </UButton>
       <UButton @click.stop="terminalDataIn('?\n')">
@@ -218,7 +232,10 @@ async function unlockDevice() {
       </UButton>
     </div>
     <div class="w-full grow bg-elevated pl-2 pb-2">
-      <SerialTerminal ref="terminal" @data="terminalDataIn" />
+      <SerialTerminal
+        ref="terminal"
+        @data="terminalDataIn"
+      />
     </div>
   </div>
 </template>

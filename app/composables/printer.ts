@@ -41,5 +41,9 @@ export function usePrinter() {
     }
   }
 
-  return { configuredName, configuredStatus, printData }
+  return {
+    configuredName,
+    configuredStatus,
+    printData,
+  }
 }

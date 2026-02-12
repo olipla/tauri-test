@@ -67,9 +67,13 @@ useIntervalFn(updateAvailablePrinters, 1000, {
     </template>
     <template #body>
       <UTable
-        ref="table" v-model:row-selection="rowSelection"
-        :data="printers" class="flex-1 transition-[height]" :columns="columns"
-        :ui="{ th: 'whitespace-nowrap cursor-auto', tr: 'cursor-pointer' }" @select="onSelect"
+        ref="table"
+        v-model:row-selection="rowSelection"
+        :data="printers"
+        class="flex-1 transition-[height]"
+        :columns="columns"
+        :ui="{ th: 'whitespace-nowrap cursor-auto', tr: 'cursor-pointer' }"
+        @select="onSelect"
       />
     </template>
   </UModal>

@@ -134,10 +134,18 @@ watch(localEcho, (newValue) => {
 </script>
 
 <template>
-  <UModal :title="activeItem?.title" :ui="{ body: 'p-0 sm:p-0' }">
+  <UModal
+    :title="activeItem?.title"
+    :ui="{ body: 'p-0 sm:p-0' }"
+  >
     <template #body>
       <UTabs
-        v-model="active" variant="link" orientation="vertical" :items="items" class="w-full items-start" :ui="{
+        v-model="active"
+        variant="link"
+        orientation="vertical"
+        :items="items"
+        class="w-full items-start"
+        :ui="{
           list: 'pt-3',
           indicator: 'w-1',
         }"
@@ -145,15 +153,39 @@ watch(localEcho, (newValue) => {
         <template #general>
           <SettingsTab>
             <UFormField label="Version Target">
-              <UInput v-model="JFBVersionTarget" class="w-full" />
+              <UInput
+                v-model="JFBVersionTarget"
+                class="w-full"
+              />
             </UFormField>
-            <USwitch v-model="JFBAutomationEnabled" label="All Automation" />
-            <USwitch v-model="JFBAutomationConfirmMbusFlash" label="Confirm MBUS Flash Automation" />
-            <USwitch v-model="JFBAutomationSkipMBUSTest" label="Skip MBUS Test Automation" />
-            <USwitch v-model="JFBAutomationSkipStatusMessage" label="Skip Status Message Automation" />
-            <USwitch v-model="JFBAutomationEnterTimedConfig" label="Enter Timed Config Automation" />
-            <USwitch v-model="JFBAutomationFlashOldFirmware" label="Flash When Old Firmware Automation" />
-            <USwitch v-model="JFBAutomationSkipSetMeterType" label="Skip Set Meter Type Automation" />
+            <USwitch
+              v-model="JFBAutomationEnabled"
+              label="All Automation"
+            />
+            <USwitch
+              v-model="JFBAutomationConfirmMbusFlash"
+              label="Confirm MBUS Flash Automation"
+            />
+            <USwitch
+              v-model="JFBAutomationSkipMBUSTest"
+              label="Skip MBUS Test Automation"
+            />
+            <USwitch
+              v-model="JFBAutomationSkipStatusMessage"
+              label="Skip Status Message Automation"
+            />
+            <USwitch
+              v-model="JFBAutomationEnterTimedConfig"
+              label="Enter Timed Config Automation"
+            />
+            <USwitch
+              v-model="JFBAutomationFlashOldFirmware"
+              label="Flash When Old Firmware Automation"
+            />
+            <USwitch
+              v-model="JFBAutomationSkipSetMeterType"
+              label="Skip Set Meter Type Automation"
+            />
           </SettingsTab>
         </template>
         <template #serial>
@@ -162,7 +194,10 @@ watch(localEcho, (newValue) => {
             <UButton @click="choosePort">
               Choose
             </UButton>
-            <USwitch v-model="localEcho" label="Local Echo" />
+            <USwitch
+              v-model="localEcho"
+              label="Local Echo"
+            />
           </SettingsTab>
         </template>
         <template #printer>
@@ -183,7 +218,10 @@ watch(localEcho, (newValue) => {
               Import from spreadsheet
             </UButton>
             <USelectMenu
-              v-model="selectedSourceItem" value-key="id" label-key="label" :items="configSourcesItems"
+              v-model="selectedSourceItem"
+              value-key="id"
+              label-key="label"
+              :items="configSourcesItems"
               class="w-48"
             />
             <!-- <UButton color="error" @click="configuratorStore.configClear()">

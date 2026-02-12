@@ -54,11 +54,14 @@ const columns: TableColumn<AppliedConfiguration>[] = [
       </div>
     </template>
     <template #default>
-      <UTable sticky :columns="columns" :data="props.configurations" class="w-full h-full" />
+      <UTable
+        sticky
+        :columns="columns"
+        :data="props.configurations"
+        class="w-full h-full"
+      />
     </template>
   </TableCard>
 </template>
 
-<style>
-
-</style>
+<style></style>

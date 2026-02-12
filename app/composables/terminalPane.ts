@@ -89,5 +89,16 @@ export function useTerminalPane() {
     }
   }
 
-  return { updatePanePercent, bodyPaneSize, toggleTerminalPane, terminalPaneVisible, terminalPaneSize, isTerminalMaximised, closeTerminalPane, toggleMaximisePane, toggleMountPane, terminalPaneMount }
+  return {
+    updatePanePercent,
+    bodyPaneSize,
+    toggleTerminalPane,
+    terminalPaneVisible,
+    terminalPaneSize,
+    isTerminalMaximised,
+    closeTerminalPane,
+    toggleMaximisePane,
+    toggleMountPane,
+    terminalPaneMount,
+  }
 }

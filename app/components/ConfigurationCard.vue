@@ -10,18 +10,33 @@ const props = defineProps<{
 <template>
   <ClientOnly>
     <template #fallback>
-      <CommonCard title="Configuration" status="error" />
+      <CommonCard
+        title="Configuration"
+        status="error"
+      />
     </template>
-    <CommonCard :status="!props.source || !props.size ? 'error' : 'ok'" title="Configuration">
-      <div v-if="!props.source || !props.size" class="flex justify-center items-center w-full">
+    <CommonCard
+      :status="!props.source || !props.size ? 'error' : 'ok'"
+      title="Configuration"
+    >
+      <div
+        v-if="!props.source || !props.size"
+        class="flex justify-center items-center w-full"
+      >
         <div class="flex flex-col grow items-center justify-center gap-1 w-full">
-          <UIcon name="i-lucide-triangle-alert" class="size-6" />
+          <UIcon
+            name="i-lucide-triangle-alert"
+            class="size-6"
+          />
           <div>
             Not configured
           </div>
         </div>
       </div>
-      <div v-else class="flex gap-3">
+      <div
+        v-else
+        class="flex gap-3"
+      >
         <div class="flex gap-2">
           <div class="flex flex-col gap-1 ">
             <div class="font-bold">
@@ -46,6 +61,4 @@ const props = defineProps<{
   </ClientOnly>
 </template>
 
-<style>
-
-</style>
+<style></style>

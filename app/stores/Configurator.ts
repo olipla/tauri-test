@@ -283,7 +283,21 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   }
 }, {
   persist: {
-    pick: ['serialPortOptions', 'printerConfiguredName', 'configCurrentSourceId', 'configAvailable', 'configImportedSize', 'configApplied', 'configFilename', 'serialLocalEcho', 'JFBVersionTarget', 'JFBAutomationEnabled', 'JFBAutomationConfirmMbusFlash', 'JFBAutomationSkipMBUSTest', 'JFBAutomationSkipStatusMessage'],
+    pick: [
+      'serialPortOptions',
+      'printerConfiguredName',
+      'configCurrentSourceId',
+      'configAvailable',
+      'configImportedSize',
+      'configApplied',
+      'configFilename',
+      'serialLocalEcho',
+      'JFBVersionTarget',
+      'JFBAutomationEnabled',
+      'JFBAutomationConfirmMbusFlash',
+      'JFBAutomationSkipMBUSTest',
+      'JFBAutomationSkipStatusMessage',
+    ],
     storage: piniaPluginPersistedstate.localStorage(),
   },
 })
