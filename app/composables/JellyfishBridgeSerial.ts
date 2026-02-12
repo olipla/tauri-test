@@ -103,9 +103,22 @@ export function useJellyfishBridgeSerial(
   const unknownDeviceHistory = ref<TimestampedLine[]>([])
   const unknownDeviceStart = ref<Date | undefined>()
 
-  async function queryDevice() {
+  async function queryDevice(attempt = 0) {
     await sendSerial('?\n')
     await sleep(1000)
+    const firstMetadata = JSON.stringify(currentDeviceMetadata.value)
+    currentDeviceMetadata.value = newDeviceMetadata()
+    await sendSerial('?\n')
+    await sleep(1000)
+    const secondMetadata = JSON.stringify(currentDeviceMetadata.value)
+    if (firstMetadata !== secondMetadata) {
+      if (attempt < 10) {
+        await queryDevice(attempt + 1)
+      }
+    }
+    else {
+      console.log(`Device query success (attempt ${attempt + 1})`)
+    }
   }
 
   function resetDevice(existingHistory?: string | string[], force = false) {
@@ -736,6 +749,7 @@ export function useJellyfishBridgeSerial(
   }
 
   return {
+    queryDevice,
     serialLineCallback,
     serialPartialLineCallback,
     currentDeviceMetadata,

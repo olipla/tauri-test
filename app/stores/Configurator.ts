@@ -177,6 +177,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     automationEnterTimedConfig: JFBAutomationEnterTimedConfig,
     automationFlashOldFirmware: JFBAutomationFlashOldFirmware,
     automationSkipSetMeterType: JFBAutomationSkipSetMeterType,
+    queryDevice: JFBQueryDevice,
   } = useJellyfishBridgeSerial(stringToSerial, configCurrentSourceAvailableConfigurations, applyConfiguration, upsertHistory, printerPrintData, BSLFlasherFlash)
 
   const serialListeners = new Set<SerialCallback>()
@@ -267,6 +268,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     JFBAutomationEnterTimedConfig,
     JFBAutomationFlashOldFirmware,
     JFBAutomationSkipSetMeterType,
+    JFBQueryDevice,
     configImport,
     configUnusedConfigurations,
     configConfiguredDevices,

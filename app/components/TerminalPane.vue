@@ -102,8 +102,7 @@ const currentDayMinutes = computed(() => {
 })
 
 async function unlockDevice() {
-  terminalDataIn('?\n')
-  await sleep(500)
+  await configuratorStore.JFBQueryDevice()
   if (!JFBCurrentDeviceMetadata.value.deviceAltId) {
     return
   }
