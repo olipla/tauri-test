@@ -231,14 +231,13 @@ export function useJellyfishBridgeSerial(
       for (const asset of nextConfig.assets) {
         commands.push(`M=${asset.radioIdFull},${asset.wmbusKey}`)
       }
-      commands.push('?')
 
       for (const command of commands) {
         await sendSerial(`${command}\n`)
         await sleep(100)
       }
 
-      await sleep(400)
+      await queryDevice()
 
       const currentMeters = Array.from(currentDeviceConfiguration.value.meters.values())
 
@@ -250,7 +249,7 @@ export function useJellyfishBridgeSerial(
 
       if (!assetsMatch) {
         console.log('Meters don\'t match!')
-        if (attempt < 10) {
+        if (attempt < 15) {
           return await attemptApply(nextConfig, attempt + 1)
         }
         else {
@@ -260,7 +259,7 @@ export function useJellyfishBridgeSerial(
 
       if (currentDeviceConfiguration.value.listeningCycle !== 60) {
         console.log('Listening cycle is wrong!')
-        if (attempt < 10) {
+        if (attempt < 15) {
           return await attemptApply(nextConfig, attempt + 1)
         }
         else {
@@ -270,7 +269,7 @@ export function useJellyfishBridgeSerial(
 
       if (currentDeviceConfiguration.value.meterType !== '_NONE_') {
         console.log('Meter type is wrong!')
-        if (attempt < 10) {
+        if (attempt < 15) {
           return await attemptApply(nextConfig, attempt + 1)
         }
         else {
