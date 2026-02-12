@@ -32,6 +32,9 @@ function newDeviceState(): DeviceState {
     mbusEnabled: false,
     transmitting: null,
     needsFlash: false,
+    lastConfigAttempt: 0,
+    lastConfigInnerAttempt: 0,
+    lastQueryAttempt: 0,
   }
 }
 
@@ -104,6 +107,7 @@ export function useJellyfishBridgeSerial(
   const unknownDeviceStart = ref<Date | undefined>()
 
   async function queryDevice(attempt = 0) {
+    currentDeviceState.value.lastQueryAttempt = attempt
     await sendSerial('?\n')
     await sleep(1000)
     const firstMetadata = JSON.stringify(currentDeviceMetadata.value)
@@ -196,6 +200,7 @@ export function useJellyfishBridgeSerial(
   const recentLineHistory: string[] = []
 
   async function applyNextConfig(mainAttempt = 0): Promise<boolean> {
+    currentDeviceState.value.lastConfigAttempt = mainAttempt
     if (!currentDeviceMetadata.value.deviceId) {
       return false
     }
@@ -215,6 +220,7 @@ export function useJellyfishBridgeSerial(
     }
 
     async function attemptApply(nextConfig: DBConfiguration, attempt = 0) {
+      currentDeviceState.value.lastConfigInnerAttempt = attempt
       const date = new Date()
       const hours = date.getUTCHours()
       const minutes = date.getUTCMinutes()

@@ -73,36 +73,59 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
 
 <template>
   <div class="w-full h-full">
-    <Splitpanes :horizontal="terminalPaneMount === 'bottom'" @resize="updatePanePercent">
+    <Splitpanes
+      :horizontal="terminalPaneMount === 'bottom'"
+      @resize="updatePanePercent"
+    >
       <Pane :size="bodyPaneSize">
         <div class="w-full h-full flex gap-4 p-4">
           <div class="flex flex-col gap-4 w-132">
             <div class="grid grid-cols-2 gap-4 w-full">
-              <UButton icon="i-lucide-settings" @click="() => openSettings()">
+              <UButton
+                icon="i-lucide-settings"
+                @click="() => openSettings()"
+              >
                 Settings
               </UButton>
-              <UButton icon="i-lucide-terminal" variant="outline" @click="toggleTerminalPane">
+              <UButton
+                icon="i-lucide-terminal"
+                variant="outline"
+                @click="toggleTerminalPane"
+              >
                 {{ terminalPaneVisible ? 'Close' : 'Open' }} Terminal
               </UButton>
               <SerialCard
-                :status="serialIsConnected ? 'ok' : 'error'" :serial-details="serialIsOpen ? {
+                :status="serialIsConnected ? 'ok' : 'error'"
+                :serial-details="serialIsOpen ? {
                   baudRate: serialPortOptions?.baudRate ?? 0,
                   id: serialSanitisedSerialNumber ?? '',
                   name: serialSanitisedProduct ?? '',
                   port: serialPortOptions?.path ?? '',
-                } : undefined" :transmitting="serialTransmitting" :receiving="serialReceiving"
-                :is-connected="serialIsConnected" @click.stop="() => openSettings('serial')"
+                } : undefined"
+                :transmitting="serialTransmitting"
+                :receiving="serialReceiving"
+                :is-connected="serialIsConnected"
+                @click.stop="() => openSettings('serial')"
               />
-              <PrinterCard :status="printerConfiguredStatus" @click.stop="() => openSettings('printer')" />
+              <PrinterCard
+                :status="printerConfiguredStatus"
+                @click.stop="() => openSettings('printer')"
+              />
               <ConfigurationCard
                 :size="configCurrentSourceAllConfigurations?.length"
-                :filter="configCurrentSource?.name" :source="configCurrentSource?.type"
+                :filter="configCurrentSource?.name"
+                :source="configCurrentSource?.type"
                 :configured="configCurrentSourceConfiguredDevicesWithConfiguration?.length ?? 0"
                 @click.stop="() => openSettings('configuration')"
               />
               <StatusCard :issues="statusIssues" />
             </div>
-            <CommonCard title="Current Device (W.I.P)" :show-settings="false" status="error" class="w-full grow">
+            <CommonCard
+              title="Current Device (W.I.P)"
+              :show-settings="false"
+              status="error"
+              class="w-full grow"
+            >
               <div class="w-full flex h-full overflow-auto  ">
                 <div class="flex flex-col gap-4 h-full">
                   <UButton @click.stop="configuratorStore.BSLFlasherFlash()">
@@ -138,6 +161,21 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
                   </table>
                   <table class="table">
                     <tbody>
+                      <tr>
+                        <td class="pr-4">
+                          Query Attempt
+                        </td>
+                        <td>{{ JFBCurrentDeviceState.lastQueryAttempt }}</td>
+                      </tr>
+                      <tr>
+                        <td class="pr-4">
+                          Config Attempt
+                        </td>
+                        <td>
+                          {{ JFBCurrentDeviceState.lastConfigAttempt }} ({{
+                            JFBCurrentDeviceState.lastConfigInnerAttempt }})
+                        </td>
+                      </tr>
                       <tr>
                         <td class="pr-4">
                           Runmode
@@ -206,7 +244,10 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
                   </table>
                   <table class="table">
                     <tbody>
-                      <tr v-for="([key, meter]) in JFBCurrentDeviceConfiguration.meters" :key="key">
+                      <tr
+                        v-for="([key, meter]) in JFBCurrentDeviceConfiguration.meters"
+                        :key="key"
+                      >
                         <td class="pr-4">
                           Meter {{ key }}
                         </td>
@@ -231,10 +272,17 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
           </div>
         </div>
       </Pane>
-      <Pane v-if="terminalPaneVisible" :size="terminalPaneSize">
+      <Pane
+        v-if="terminalPaneVisible"
+        :size="terminalPaneSize"
+      >
         <TerminalPane
-          :mounted="terminalPaneMount" :maximised="isTerminalMaximised" class="w-full h-full"
-          :local-echo="serialLocalEcho" @close="closeTerminalPane" @maximise="toggleMaximisePane"
+          :mounted="terminalPaneMount"
+          :maximised="isTerminalMaximised"
+          class="w-full h-full"
+          :local-echo="serialLocalEcho"
+          @close="closeTerminalPane"
+          @maximise="toggleMaximisePane"
           @mount="toggleMountPane"
         />
       </Pane>

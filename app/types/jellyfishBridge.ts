@@ -36,6 +36,9 @@ export interface DeviceState {
   mbusEnabled: boolean
   transmitting: null | string
   needsFlash: boolean
+  lastQueryAttempt: number
+  lastConfigAttempt: number
+  lastConfigInnerAttempt: number
 }
 
 export interface DeviceRegexs {
