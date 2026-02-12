@@ -7,6 +7,16 @@ const props = defineProps<{
   title: string
 }>()
 
+const tableElement = useTemplateRef('table')
+
+watch(() => props.configurations, async () => {
+  const el = tableElement.value?.$el
+  if (el instanceof HTMLElement) {
+    await sleep(500)
+    el.scrollTop = el.scrollHeight
+  }
+})
+
 const columns: TableColumn<AppliedConfiguration>[] = [
   {
     accessorKey: 'timestamp',
@@ -19,6 +29,10 @@ const columns: TableColumn<AppliedConfiguration>[] = [
   {
     accessorKey: 'deviceId',
     header: 'Device ID',
+  },
+  {
+    accessorKey: 'deviceAltId',
+    header: 'Alt ID',
   },
   {
     accessorKey: 'sFurnitureId',
@@ -55,6 +69,7 @@ const columns: TableColumn<AppliedConfiguration>[] = [
     </template>
     <template #default>
       <UTable
+        ref="table"
         sticky
         :columns="columns"
         :data="props.configurations"
