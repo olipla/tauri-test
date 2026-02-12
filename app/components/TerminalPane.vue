@@ -172,6 +172,12 @@ async function unlockDevice() {
       >
         Unlock
       </UButton>
+      <UButton
+        color="secondary"
+        @click.stop="configuratorStore.JFBApplyNextConfig()"
+      >
+        Apply Next Config
+      </UButton>
       <UButton @click.stop="terminalDataIn('?\n')">
         ?
       </UButton>

@@ -195,7 +195,7 @@ export function useJellyfishBridgeSerial(
 
   const recentLineHistory: string[] = []
 
-  async function applyNextConfig(): Promise<boolean> {
+  async function applyNextConfig(mainAttempt = 0): Promise<boolean> {
     if (!currentDeviceMetadata.value.deviceId) {
       return false
     }
@@ -214,51 +214,76 @@ export function useJellyfishBridgeSerial(
       return false
     }
 
-    const date = new Date()
-    const hours = date.getUTCHours()
-    const minutes = date.getUTCMinutes()
-    const minutesOfDay = (hours * 60) + minutes
+    async function attemptApply(nextConfig: DBConfiguration, attempt = 0) {
+      const date = new Date()
+      const hours = date.getUTCHours()
+      const minutes = date.getUTCMinutes()
+      const minutesOfDay = (hours * 60) + minutes
 
-    const commands = [
-      `O=${currentDeviceMetadata.value.deviceAltId}`,
-      'S=60',
-      'T=7',
-      'C=*',
-      `I=${minutesOfDay}`,
-    ]
+      const commands = [
+        `O=${currentDeviceMetadata.value.deviceAltId}`,
+        'S=60',
+        'T=7',
+        'C=*',
+        `I=${minutesOfDay}`,
+      ]
 
-    for (const asset of nextConfig.assets) {
-      commands.push(`M=${asset.radioIdFull},${asset.wmbusKey}`)
+      for (const asset of nextConfig.assets) {
+        commands.push(`M=${asset.radioIdFull},${asset.wmbusKey}`)
+      }
+      commands.push('?')
+
+      for (const command of commands) {
+        await sendSerial(`${command}\n`)
+        await sleep(100)
+      }
+
+      await sleep(400)
+
+      const currentMeters = Array.from(currentDeviceConfiguration.value.meters.values())
+
+      const assetsMatch = currentMeters.length === nextConfig.assets.length
+        && currentMeters.every((meter, index) =>
+          meter.id === nextConfig.assets[index]?.radioIdFull
+          && meter.key === nextConfig.assets[index].wmbusKey,
+        )
+
+      if (!assetsMatch) {
+        console.log('Meters don\'t match!')
+        if (attempt < 10) {
+          return await attemptApply(nextConfig, attempt + 1)
+        }
+        else {
+          return false
+        }
+      }
+
+      if (currentDeviceConfiguration.value.listeningCycle !== 60) {
+        console.log('Listening cycle is wrong!')
+        if (attempt < 10) {
+          return await attemptApply(nextConfig, attempt + 1)
+        }
+        else {
+          return false
+        }
+      }
+
+      if (currentDeviceConfiguration.value.meterType !== '_NONE_') {
+        console.log('Meter type is wrong!')
+        if (attempt < 10) {
+          return await attemptApply(nextConfig, attempt + 1)
+        }
+        else {
+          return false
+        }
+      }
+
+      return true
     }
-    commands.push('?')
 
-    for (const command of commands) {
-      await sendSerial(`${command}\n`)
-      await sleep(100)
-    }
+    const attemptApplySuccess = await attemptApply(nextConfig)
 
-    await sleep(400)
-
-    const currentMeters = Array.from(currentDeviceConfiguration.value.meters.values())
-
-    const assetsMatch = currentMeters.length === nextConfig.assets.length
-      && currentMeters.every((meter, index) =>
-        meter.id === nextConfig.assets[index]?.radioIdFull
-        && meter.key === nextConfig.assets[index].wmbusKey,
-      )
-
-    if (!assetsMatch) {
-      console.log('Meters don\'t match!')
-      return false
-    }
-
-    if (currentDeviceConfiguration.value.listeningCycle !== 60) {
-      console.log('Listening cycle is wrong!')
-      return false
-    }
-
-    if (currentDeviceConfiguration.value.meterType !== '_NONE_') {
-      console.log('Meter type is wrong!')
+    if (!attemptApplySuccess) {
       return false
     }
 
@@ -278,6 +303,10 @@ export function useJellyfishBridgeSerial(
         }
       }
       return true
+    }
+
+    if (mainAttempt < 10) {
+      return await applyNextConfig(mainAttempt + 1)
     }
 
     return false
@@ -750,6 +779,7 @@ export function useJellyfishBridgeSerial(
 
   return {
     queryDevice,
+    applyNextConfig,
     serialLineCallback,
     serialPartialLineCallback,
     currentDeviceMetadata,
