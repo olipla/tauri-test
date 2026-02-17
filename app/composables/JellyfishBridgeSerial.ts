@@ -221,17 +221,26 @@ export function useJellyfishBridgeSerial(
 
     async function attemptApply(nextConfig: DBConfiguration, attempt = 0) {
       currentDeviceState.value.lastConfigInnerAttempt = attempt
-      const date = new Date()
-      const hours = date.getUTCHours()
-      const minutes = date.getUTCMinutes()
-      const minutesOfDay = (hours * 60) + minutes
+      // const date = new Date()
+      // const hours = date.getUTCHours()
+      // const minutes = date.getUTCMinutes()
+      // const minutesOfDay = (hours * 60) + minutes
 
+      // const commands = [
+      //   `O=${currentDeviceMetadata.value.deviceAltId}`,
+      //   'S=60',
+      //   'T=7',
+      //   'C=*',
+      //   `I=${minutesOfDay}`,
+      // ]
+
+      const randomMinuteOfDay = Math.floor(Math.random() * 1439)
       const commands = [
         `O=${currentDeviceMetadata.value.deviceAltId}`,
-        'S=60',
+        'S=240',
         'T=7',
         'C=*',
-        `I=${minutesOfDay}`,
+        `I=${randomMinuteOfDay}`,
       ]
 
       for (const asset of nextConfig.assets) {
