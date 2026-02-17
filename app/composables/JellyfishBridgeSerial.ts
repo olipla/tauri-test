@@ -196,6 +196,7 @@ export function useJellyfishBridgeSerial(
   const automationSkipSetMeterType = ref(false)
   const automationFlashOldFirmware = ref(true)
   const automationErrorOnNot1NCE = ref(true)
+  const automationSkipSendMeterTestSuccess = ref(true)
 
   const automationSetMeterType = ref(true)
   const testMeterType = ref('3')
@@ -528,6 +529,17 @@ export function useJellyfishBridgeSerial(
       onMatch: () => {
         currentDeviceState.value.runmode = 'NORMAL'
         // showToast(`Device Entered "NORMAL" Runmode!`, 'warning')
+      },
+    },
+    testMeterSuccess: {
+      regex: /@06>>/,
+      onMatch: async () => {
+        if (automationEnabled.value) {
+          if (automationSkipSendMeterTestSuccess.value) {
+            await sleep(500)
+            await sendSerial('n')
+          }
+        }
       },
     },
     runmodeConfig: {
