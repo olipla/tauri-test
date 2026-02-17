@@ -129,6 +129,10 @@ export function useConfigurationImport(importedConfigurationsCallback: (configur
           continue
         }
 
+        if (configuration.assets[0] && assetUndefinedKeys.length === Object.entries(configuration.assets[0]).length) {
+          configuration.assets = []
+        }
+
         parsedJson.push(configuration as Configuration)
       }
       catch (e) {
