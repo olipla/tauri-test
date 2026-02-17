@@ -198,6 +198,8 @@ export function useJellyfishBridgeSerial(
   const automationErrorOnNot1NCE = ref(false)
   const automationSkipSendMeterTestSuccess = ref(true)
 
+  const automationForceFlash = ref(false)
+
   const automationSetMeterType = ref(true)
   const testMeterType = ref('3')
 
@@ -679,15 +681,17 @@ export function useJellyfishBridgeSerial(
           await sendSerial(`${testMeterType.value}\n`)
         }
 
-        // if (automationFlashOldFirmware.value) {
-        //   await queryDevice()
-        //   await sendSerial(`O=${currentDeviceMetadata.value.deviceAltId}\n`)
-        //   await sleep(500)
-        //   if (currentDeviceState.value.needsFlash) {
-        //     await sendSerial('R=250\nR=250\nR=250\n')
-        //     return
-        //   }
-        // }
+        if (automationForceFlash.value) {
+          await queryDevice()
+          await sendSerial(`O=${currentDeviceMetadata.value.deviceAltId}\n`)
+          await sleep(500)
+          await sendSerial(`O=${currentDeviceMetadata.value.deviceAltId}\n`)
+          await sleep(500)
+          await sendSerial(`O=${currentDeviceMetadata.value.deviceAltId}\n`)
+          await sleep(500)
+          await sendSerial('R=250\nR=250\nR=250\n')
+          return
+        }
 
         console.log('AUTOMATION SKIP MBUS TEST', automationSkipMBUSTest.value)
 
@@ -855,5 +859,6 @@ export function useJellyfishBridgeSerial(
     automationEnterTimedConfig,
     automationFlashOldFirmware,
     automationSkipSetMeterType,
+    automationForceFlash,
   }
 }

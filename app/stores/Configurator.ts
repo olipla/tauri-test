@@ -177,6 +177,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     automationEnterTimedConfig: JFBAutomationEnterTimedConfig,
     automationFlashOldFirmware: JFBAutomationFlashOldFirmware,
     automationSkipSetMeterType: JFBAutomationSkipSetMeterType,
+    automationForceFlash: JFBAutomationForceFlash,
     queryDevice: JFBQueryDevice,
     applyNextConfig: JFBApplyNextConfig,
   } = useJellyfishBridgeSerial(stringToSerial, configCurrentSourceAvailableConfigurations, applyConfiguration, upsertHistory, printerPrintData, BSLFlasherFlash)
@@ -269,6 +270,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     JFBAutomationEnterTimedConfig,
     JFBAutomationFlashOldFirmware,
     JFBAutomationSkipSetMeterType,
+    JFBAutomationForceFlash,
     JFBQueryDevice,
     JFBApplyNextConfig,
     configImport,

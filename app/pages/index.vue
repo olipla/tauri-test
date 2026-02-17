@@ -31,6 +31,7 @@ const {
   configCurrentSourceAllConfigurations,
   configSources,
   BSLFlasherFlashing,
+  JFBAutomationForceFlash,
 } = storeToRefs(configuratorStore)
 
 onMounted(async () => {
@@ -131,6 +132,13 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
                   <UButton @click.stop="configuratorStore.BSLFlasherFlash()">
                     Flash
                   </UButton>
+                  <div
+                    v-if="JFBAutomationForceFlash"
+                    class="font-bold p-4 bg-secondary text-xl"
+                  >
+                    FORCE FLASH MODE ENABLED
+                  </div>
+
                   <table class="table">
                     <tbody>
                       <tr>

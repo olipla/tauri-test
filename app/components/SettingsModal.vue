@@ -60,6 +60,7 @@ const {
   JFBAutomationEnterTimedConfig,
   JFBAutomationFlashOldFirmware,
   JFBAutomationSkipSetMeterType,
+  JFBAutomationForceFlash,
   configCurrentSource,
   configSources,
   configCurrentSourceId,
@@ -161,6 +162,10 @@ watch(localEcho, (newValue) => {
             <USwitch
               v-model="JFBAutomationEnabled"
               label="All Automation"
+            />
+            <USwitch
+              v-model="JFBAutomationForceFlash"
+              label="Force Flash Automation"
             />
             <USwitch
               v-model="JFBAutomationConfirmMbusFlash"
