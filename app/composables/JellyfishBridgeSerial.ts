@@ -535,6 +535,16 @@ export function useJellyfishBridgeSerial(
         currentDeviceState.value.runmode = 'CONFIG'
         // Ready to accept commands
         if (automationEnabled.value) {
+          if (automationFlashOldFirmware.value) {
+            // await queryDevice()
+            await sendSerial(`O=${currentDeviceMetadata.value.deviceAltId}\n`)
+            await sleep(500)
+            if (currentDeviceState.value.needsFlash) {
+              await sendSerial('R=250\nR=250\nR=250\n')
+              return
+            }
+          }
+
           try {
             const success = await applyNextConfig()
             // await sleep(500)
@@ -644,15 +654,22 @@ export function useJellyfishBridgeSerial(
           await sendSerial(' \n')
         }
 
-        if (automationFlashOldFirmware.value) {
-          await queryDevice()
-          await sendSerial(`O=${currentDeviceMetadata.value.deviceAltId}\n`)
+        if (automationSetMeterType.value && testMeterType.value) {
           await sleep(500)
-          if (currentDeviceState.value.needsFlash) {
-            await sendSerial('R=250\n')
-            return
-          }
+          await sendSerial(`${testMeterType.value}\n`)
         }
+
+        // if (automationFlashOldFirmware.value) {
+        //   await queryDevice()
+        //   await sendSerial(`O=${currentDeviceMetadata.value.deviceAltId}\n`)
+        //   await sleep(500)
+        //   if (currentDeviceState.value.needsFlash) {
+        //     await sendSerial('R=250\nR=250\nR=250\n')
+        //     return
+        //   }
+        // }
+
+        console.log('AUTOMATION SKIP MBUS TEST', automationSkipMBUSTest.value)
 
         if (!automationSkipMBUSTest.value) {
           return
