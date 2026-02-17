@@ -317,14 +317,14 @@ export function useJellyfishBridgeSerial(
 
       console.log(nextConfig)
 
-      const nearestPostcode = nextConfig.assets.sort((a, b) => Number(a.distance) - Number(b.distance))[0]?.meterPostcode
-      if (nearestPostcode) {
-        const labelData = getLabel(nextConfig.sFurnitureW3W, nextConfig.sFurnitureAddress, nearestPostcode)
-        console.log(labelData)
-        if (labelData) {
-          await printData(labelData)
-        }
+      // const nearestPostcode = nextConfig.assets.sort((a, b) => Number(a.distance) - Number(b.distance))[0]?.meterPostcode
+      // if (nearestPostcode) {
+      const labelData = getLabel(nextConfig.sFurnitureW3W, nextConfig.sFurnitureAddress, "_")
+      console.log(labelData)
+      if (labelData) {
+        await printData(labelData)
       }
+      // }
       return true
     }
 
