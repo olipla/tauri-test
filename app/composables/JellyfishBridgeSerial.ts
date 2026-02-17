@@ -189,13 +189,16 @@ export function useJellyfishBridgeSerial(
 
   const automationEnabled = ref(true)
 
-  const automationSkipMBUSTest = ref(true)
+  const automationSkipMBUSTest = ref(false)
   const automationSkipStatusMessage = ref(true)
   const automationConfirmMbusFlash = ref(true)
   const automationEnterTimedConfig = ref(true)
-  const automationSkipSetMeterType = ref(true)
+  const automationSkipSetMeterType = ref(false)
   const automationFlashOldFirmware = ref(true)
   const automationErrorOnNot1NCE = ref(true)
+
+  const automationSetMeterType = ref(true)
+  const testMeterType = ref('3')
 
   const recentLineHistory: string[] = []
 
@@ -604,12 +607,19 @@ export function useJellyfishBridgeSerial(
         // Any other to skip - will go to test but won't listen - need to then send unlock and R=1
         // No action will hibernate after a few seconds
 
-        if (!automationEnabled.value || !automationSkipSetMeterType.value) {
+        if (!automationEnabled.value) {
           return
         }
 
         await sleep(800)
-        await sendSerial(' \n')
+
+        if (automationSkipSetMeterType.value) {
+          await sendSerial(' \n')
+        }
+
+        if (automationSetMeterType.value && testMeterType.value) {
+          await sendSerial(`${testMeterType.value}\n`)
+        }
       },
     },
     magnetTapped: {
