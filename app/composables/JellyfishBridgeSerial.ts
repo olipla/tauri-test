@@ -195,7 +195,7 @@ export function useJellyfishBridgeSerial(
   const automationEnterTimedConfig = ref(true)
   const automationSkipSetMeterType = ref(false)
   const automationFlashOldFirmware = ref(true)
-  const automationErrorOnNot1NCE = ref(true)
+  const automationErrorOnNot1NCE = ref(false)
   const automationSkipSendMeterTestSuccess = ref(true)
 
   const automationSetMeterType = ref(true)
@@ -553,6 +553,12 @@ export function useJellyfishBridgeSerial(
             // await queryDevice()
             await sendSerial(`O=${currentDeviceMetadata.value.deviceAltId}\n`)
             await sleep(500)
+            if (!currentDeviceMetadata.value.deviceAltId?.startsWith('8988239')) {
+              // Not Vodaphone
+              await sendSerial('R=0\nR=0\nR=0\n')
+              showToast('Not Voda, Hibernating!', 'error')
+              return
+            }
             if (currentDeviceState.value.needsFlash) {
               await sendSerial('R=250\nR=250\nR=250\n')
               return
