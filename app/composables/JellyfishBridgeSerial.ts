@@ -244,6 +244,7 @@ export function useJellyfishBridgeSerial(
         'T=7',
         'C=*',
         `I=${randomMinuteOfDay}`,
+        'I=-2',
       ]
 
       for (const asset of nextConfig.assets) {
