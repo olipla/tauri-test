@@ -259,6 +259,8 @@ export function useJellyfishBridgeSerial(
       await queryDevice()
 
       const currentMeters = Array.from(currentDeviceConfiguration.value.meters.values())
+      console.log('CURRENT METERS', currentMeters.length)
+      console.log('NEXT CONFIG ASSETS', nextConfig.assets.length)
 
       const assetsMatch = currentMeters.length === nextConfig.assets.length
         && currentMeters.every((meter, index) =>
@@ -276,7 +278,7 @@ export function useJellyfishBridgeSerial(
         }
       }
 
-      if (currentDeviceConfiguration.value.listeningCycle !== 60) {
+      if (currentDeviceConfiguration.value.listeningCycle !== 0) {
         console.log('Listening cycle is wrong!')
         if (attempt < 15) {
           return await attemptApply(nextConfig, attempt + 1)
