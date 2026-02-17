@@ -26,7 +26,7 @@ impl AppData {
 fn configure_window(window: &tauri::WebviewWindow, version: &str) -> Result<()> {
     window
         .set_title(&format!(
-            "Jellyfish Configurator {version} [GW_v4_Nb_2_1_6]"
+            "Jellyfish Configurator {version} [GW_v4_Nb_2_1_7_ses]"
         ))
         .context("Failed to set window title")?;
 
