@@ -3,6 +3,18 @@ import { useCustomToast } from './CustomToast'
 
 const RECENT_HISTORY_LENGTH = 10
 
+enum DeviceStage {
+  ENTERING_BOOTLOADER,
+  FLASHING,
+  FLASH_SUCCESS,
+  FLASH_FAIL,
+  WAITING_FOR_TESTS,
+  TESTS_FAIL,
+  CONFIGURING,
+  CONFIGURE_SUCCESS,
+  CONFIGURE_FAIL,
+}
+
 function newDeviceMetadata(): DeviceMetadata {
   return {
     deviceId: undefined,
@@ -319,7 +331,7 @@ export function useJellyfishBridgeSerial(
 
       // const nearestPostcode = nextConfig.assets.sort((a, b) => Number(a.distance) - Number(b.distance))[0]?.meterPostcode
       // if (nearestPostcode) {
-      const labelData = getLabel(nextConfig.sFurnitureW3W, nextConfig.sFurnitureAddress, "_")
+      const labelData = getLabel(nextConfig.sFurnitureW3W, nextConfig.sFurnitureAddress, '_')
       console.log(labelData)
       if (labelData) {
         await printData(labelData)
