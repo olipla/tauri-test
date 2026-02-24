@@ -1,4 +1,5 @@
 import type { DeviceRegexs } from '~/types/jellyfishBridge'
+import { ResponseTimeoutError, ValidationError } from '~/lib/errors'
 
 enum STAGE {
   IDLE,
@@ -19,11 +20,30 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
 
   const serial = useSerialMachine(sendSerial)
 
-  async function unlockDevice() {
+  async function sendUnlockCommand() {
     if (lastSeenAltID.value === undefined) {
-      throw new Error('Alt ID not available')
+      throw new ValidationError('Alt ID not available')
     }
     await serial.sendCommand(`O=${lastSeenAltID.value}`, { expectedResponse: ENDS_OK_RESPONSE })
+  }
+
+  async function sendQueryCommand() {
+    await serial.sendCommand('?', { expectedResponse: /S=.*/, timeout: 1000 })
+  }
+
+  async function unlockDevice() {
+    try {
+      await sendUnlockCommand()
+    }
+    catch (error) {
+      if (error instanceof ValidationError || error instanceof ResponseTimeoutError) {
+        await sendQueryCommand()
+        await sendUnlockCommand()
+      }
+      else {
+        throw error
+      }
+    }
   }
 
   const lineRegexs: DeviceRegexs = {
@@ -67,18 +87,18 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
         lastSeenAltID.value = groups.simId
       },
     },
-    registerPreDefinedPrompt: {
-      regex: /@05>>/,
-      onMatch: async () => {
-        await sleep(500)
-        await sendSerial('0\n')
-      },
-    },
+    // registerPreDefinedPrompt: {
+    //   regex: /@05>>/,
+    //   onMatch: async () => {
+    //     // await sleep(500)
+    //     // await sendSerial('0\n')
+    //   },
+    // },
     listening: {
       regex: /Listening/,
       onMatch: async () => {
         await sleep(500)
-        await sendSerial('0\n')
+        // await sendSerial('0\n')
       },
     },
   }
@@ -104,5 +124,8 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
     lastSeenID,
     lastSeenAltID,
     serialLineCallback,
+    sendQueryCommand,
+    sendUnlockCommand,
+    unlockDevice,
   }
 }

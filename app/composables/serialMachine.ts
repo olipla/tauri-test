@@ -1,5 +1,6 @@
 import type { CommandOptions, DeviceState, PendingCommand } from '~/types/serial'
 import { ref, shallowRef } from 'vue'
+import { DeviceBusyError, ResponseTimeoutError } from '~/lib/errors'
 
 export function useSerialMachine(sendFn: (line: string) => Promise<void> | void) {
   const state = ref<DeviceState>('IDLE')
@@ -33,29 +34,26 @@ export function useSerialMachine(sendFn: (line: string) => Promise<void> | void)
   }
 
   /**
-   * Sends a command to the device and waits for the expected response.
+   * Sends a command to the device and optionally waits for a response.
    *
    * @param cmd - The command string to send to the device
-   * @param options - Optional configuration for the command execution
-   * @param options.timeout - Maximum time in milliseconds to wait for a response (default: 5000)
-   * @param options.expectedResponse - The expected response string to wait for (default: 'OK')
+   * @param options - Configuration options for the command execution
+   * @param options.timeout - Maximum time in milliseconds to wait for the expected response (default: 5000)
+   * @param options.expectedResponse - The response string to wait for; if undefined, the command is fire-and-forget
    * @param options.delayBefore - Delay in milliseconds before sending the command (default: 0)
-   *
-   * @returns A promise that resolves with the device response when the expected response is received
-   *
-   * @throws {Error} If the device is currently busy processing another command
-   * @throws {Error} If a timeout occurs while waiting for the expected response
-   * @throws {Error} If an error occurs while sending the command
+   * @returns A promise that resolves with the response string, or an empty string if no response is expected
+   * @throws {DeviceBusyError} If the device is currently processing another command
+   * @throws {ResponseTimeoutError} If the expected response is not received within the timeout period
    */
   const sendCommand = async (
     cmd: string,
     options: CommandOptions = {},
   ): Promise<string> => {
     if (state.value === 'BUSY') {
-      throw new Error('Device is currently busy processing another command')
+      throw new DeviceBusyError('Device is currently busy processing another command')
     }
 
-    const { timeout = 5000, expectedResponse = undefined, delayBefore = 0 } = options
+    const { timeout = 500, expectedResponse = undefined, delayBefore = 0 } = options
 
     // Optional delay for devices that need "breathing room"
     if (delayBefore > 0) {
@@ -72,7 +70,7 @@ export function useSerialMachine(sendFn: (line: string) => Promise<void> | void)
           pendingCommand.value = null
           state.value = 'ERROR'
           lastError.value = `Timeout waiting for: ${expectedResponse}`
-          reject(new Error(lastError.value))
+          reject(new ResponseTimeoutError(lastError.value))
         }, timeout)
 
         pendingCommand.value = { resolve, reject, expectedResponse, timer }
