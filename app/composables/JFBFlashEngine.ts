@@ -1,7 +1,7 @@
 import type { DeviceRegexs } from '~/types/jellyfishBridge'
 import { ResponseTimeoutError, ValidationError } from '~/lib/errors'
 
-enum STAGE {
+export enum STAGE {
   IDLE,
   ENTERING_BOOTLOADER,
   DEVICE_RESTARTING,
@@ -31,6 +31,14 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
     await serial.sendCommand('?', { expectedResponse: /S=.*/, timeout: 1000 })
   }
 
+  async function sendSetTestMeterTypeResponse(testMeterType = 0) {
+    await serial.sendCommand(`${testMeterType}`, { expectedResponse: /Setting.*/ })
+  }
+
+  async function sendRegisterPreDefinedTestMeterResponse() {
+    await serial.sendCommand('y', { expectedResponse: /Setting.*/ })
+  }
+
   async function unlockDevice() {
     try {
       await sendUnlockCommand()
@@ -47,7 +55,7 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
   }
 
   const lineRegexs: DeviceRegexs = {
-    registerPreDefinedPrompt: {
+    magnetTapped: {
       regex: /Magnet/,
       onMatch: async () => {
         engineStage.value = STAGE.DEVICE_WAKING
@@ -87,36 +95,44 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
         lastSeenAltID.value = groups.simId
       },
     },
-    // registerPreDefinedPrompt: {
-    //   regex: /@05>>/,
-    //   onMatch: async () => {
-    //     // await sleep(500)
-    //     // await sendSerial('0\n')
-    //   },
-    // },
+    runmodeHibernate: {
+      regex: /@04>>/,
+      onMatch: () => {
+        // Fires whenever the device goes into low power
+        engineStage.value = STAGE.IDLE
+      },
+    },
+    selectPreDefinedPrompt: {
+      regex: /@05>>Select/,
+      onMatch: async () => {
+        await sleep(500)
+        await sendSetTestMeterTypeResponse()
+      },
+    },
     listening: {
       regex: /Listening/,
       onMatch: async () => {
         await sleep(500)
-        // await sendSerial('0\n')
+        await unlockDevice()
       },
     },
   }
 
-  function matchLine(line: string, lineRegexs: DeviceRegexs) {
-    for (const [name, value] of Object.entries(lineRegexs)) {
-      const match = value.regex.exec(line)
-      if (match && match.length) {
-        console.log('Matched ', name)
-        value.onMatch(line, match)
-        break
-      }
-    }
+  const partialLineRegexs: DeviceRegexs = {
+    registerPreDefinedPrompt: {
+      regex: /@05>>Register.*:/,
+      onMatch: async () => {
+        await sleep(500)
+        await sendRegisterPreDefinedTestMeterResponse()
+      },
+    },
   }
 
+  const { serialLineCallback: regexSerialLineCallback, serialPartialLineCallback } = useSerialRegexMatcher(lineRegexs, partialLineRegexs)
+
   async function serialLineCallback(line: string) {
-    matchLine(line, lineRegexs)
     serial.receiveLine(line)
+    await regexSerialLineCallback(line)
   }
 
   return {
@@ -124,6 +140,7 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
     lastSeenID,
     lastSeenAltID,
     serialLineCallback,
+    serialPartialLineCallback,
     sendQueryCommand,
     sendUnlockCommand,
     unlockDevice,

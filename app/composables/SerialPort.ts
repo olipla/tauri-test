@@ -173,6 +173,10 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
     }
   }
 
+  async function writeLn(line: string, newLine = true) {
+    await write(new TextEncoder().encode(`${line}${newLine ? '\n' : ''}`))
+  }
+
   onScopeDispose(() => {
     pauseAutoReconnect()
     close()
@@ -217,6 +221,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
   return {
     open,
     write,
+    writeLn,
     getHistory,
     close,
     receiving,
