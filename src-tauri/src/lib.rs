@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+
 use anyhow::{Context, Result};
 use tauri::{async_runtime::Mutex, window::Color, Manager};
 use tauri_plugin_shell::process::CommandChild;
@@ -8,16 +10,15 @@ mod printer;
 /// Global Tauri application state
 #[derive(Default)]
 pub struct AppData {
-    /// Flag to prevent multiple flashers running at the same time
-    bsl_flasher_running: bool,
-    bsl_flasher_child: Option<CommandChild>,
+    pub active_ports: HashSet<String>,
+    pub bsl_children: HashMap<String, CommandChild>,
 }
 
 impl AppData {
     fn new() -> Self {
         Self {
-            bsl_flasher_running: false,
-            bsl_flasher_child: None,
+            active_ports: HashSet::new(),
+            bsl_children: HashMap::new(),
         }
     }
 }
@@ -102,9 +103,14 @@ pub fn run() {
                 let app = app_handle.clone();
                 if let Some(state) = app.try_state::<Mutex<AppData>>() {
                     let mut state = state.blocking_lock();
-                    if let Some(child) = state.bsl_flasher_child.take() {
+                    // if let Some(child) = state.bsl_flasher_child.take() {
+                    //     if let Err(e) = child.kill() {
+                    //         log::error!("Failed to kill BSL scripter: {}", e);
+                    //     }
+                    // }
+                    for (port, child) in state.bsl_children.drain() {
                         if let Err(e) = child.kill() {
-                            log::error!("Failed to kill BSL scripter: {}", e);
+                            log::error!("Failed to kill BSL scripter for port {}: {}", port, e);
                         }
                     }
                 } else {

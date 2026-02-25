@@ -1,20 +1,26 @@
 use anyhow::{Context, Result};
+// use std::path::BufReader;
 use std::path::PathBuf;
 use std::time::Duration;
 
 use indoc::formatdoc;
+use serde::Serialize;
 use tauri::async_runtime::{Mutex, Receiver};
 use tauri::{Emitter, Manager, State};
-use tauri_plugin_shell::process::{CommandChild, CommandEvent};
+use tauri_plugin_shell::process::CommandEvent;
 use tauri_plugin_shell::ShellExt;
 use tempfile::TempDir;
 
 use crate::AppData;
 
-/// Embedded firmware and password files
+#[derive(Clone, Serialize)]
+struct FlashEvent<T> {
+    port: String,
+    data: T,
+}
+
 const FIRMWARE: &[u8] = include_bytes!("../firmware.txt");
 const PASSWORD: &[u8] = include_bytes!("../password.txt");
-
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(20);
 const MAX_CONSECUTIVE_ACK_ERRORS: i32 = 5;
 
@@ -26,7 +32,6 @@ struct FlashConfig {
 impl FlashConfig {
     fn create(port: &str) -> Result<Self> {
         let temp_dir = TempDir::new().context("Failed to create temporary directory")?;
-
         let base_path = temp_dir.path();
 
         let firmware_path = base_path.join("firmware.txt");
@@ -38,8 +43,6 @@ impl FlashConfig {
         let script_path = base_path.join("script.txt");
         let script_content = Self::generate_script(port, &firmware_path, &password_path)?;
         std::fs::write(&script_path, script_content).context("Failed to write script file")?;
-
-        log::info!("Created BSL files in: {}", base_path.display());
 
         Ok(Self {
             _temp_dir: temp_dir,
@@ -53,7 +56,6 @@ impl FlashConfig {
         password_path: &PathBuf,
     ) -> Result<String> {
         let firmware_str = firmware_path.to_str().context("Invalid firmware path")?;
-
         let password_str = password_path.to_str().context("Invalid password path")?;
 
         Ok(formatdoc! {"
@@ -67,32 +69,24 @@ impl FlashConfig {
     }
 }
 
-async fn acquire_flasher_lock(state: &State<'_, Mutex<AppData>>) -> Result<()> {
+// --- Lock Management ---
+
+async fn acquire_port_lock(state: &State<'_, Mutex<AppData>>, port: &str) -> Result<()> {
     let mut state = state.lock().await;
-
-    if state.bsl_flasher_running {
-        anyhow::bail!("Flasher is already running");
+    if state.active_ports.contains(port) {
+        anyhow::bail!("Port {} is already being flashed", port);
     }
-
-    state.bsl_flasher_running = true;
+    state.active_ports.insert(port.to_string());
     Ok(())
 }
 
-async fn release_flasher_lock(state: &State<'_, Mutex<AppData>>) {
+async fn release_port_lock(state: &State<'_, Mutex<AppData>>, port: &str) {
     let mut state = state.lock().await;
-    state.bsl_flasher_running = false;
+    state.active_ports.remove(port);
+    state.bsl_children.remove(port);
 }
 
-fn release_flasher_lock_with_app(app: &tauri::AppHandle) {
-    let app = app.clone();
-    tauri::async_runtime::spawn(async move {
-        if let Some(state) = app.try_state::<Mutex<AppData>>() {
-            release_flasher_lock(&state).await;
-        } else {
-            log::error!("Failed to access app state to release flasher lock");
-        }
-    });
-}
+// --- Process Management ---
 
 #[derive(Debug)]
 struct FlashResult {
@@ -103,23 +97,20 @@ struct FlashResult {
 
 async fn handle_bsl_scripter_output(
     app: &tauri::AppHandle,
+    port: String,
     mut rx: Receiver<CommandEvent>,
-    _config: FlashConfig, // Keep config alive while processing events
+    _config: FlashConfig,
 ) -> FlashResult {
     let mut consecutive_ack_errors = 0;
+
     while let Some(event) = rx.recv().await {
         match event {
             CommandEvent::Stdout(line_bytes) => {
-                let line = String::from_utf8_lossy(&line_bytes);
-                log::info!("BSL Scripter: {}", line);
+                let line = String::from_utf8_lossy(&line_bytes).to_string();
 
                 if line.contains("[ACK_ERROR_MESSAGE]") {
                     consecutive_ack_errors += 1;
                     if consecutive_ack_errors >= MAX_CONSECUTIVE_ACK_ERRORS {
-                        log::error!(
-                            "BSL Scripter returned too many ack errors: {}",
-                            consecutive_ack_errors
-                        );
                         return FlashResult {
                             success: false,
                             exit_code: Some(1000),
@@ -130,27 +121,27 @@ async fn handle_bsl_scripter_output(
                     consecutive_ack_errors = 0;
                 }
 
-                if let Err(e) = app.emit("bsl-stdout", line.to_string()) {
-                    log::error!("Failed to emit bsl-stdout event: {}", e);
-                }
+                let _ = app.emit(
+                    "bsl-stdout",
+                    FlashEvent {
+                        port: port.clone(),
+                        data: line,
+                    },
+                );
             }
             CommandEvent::Stderr(line_bytes) => {
-                let line = String::from_utf8_lossy(&line_bytes);
-                log::error!("BSL Error: {}", line);
-
-                if let Err(e) = app.emit("bsl-stderr", line.to_string()) {
-                    log::error!("Failed to emit bsl-stderr event: {}", e);
-                }
-            }
-            CommandEvent::Error(err) => {
-                log::error!("BSL Scripter process error: {}", err);
+                let line = String::from_utf8_lossy(&line_bytes).to_string();
+                let _ = app.emit(
+                    "bsl-stderr",
+                    FlashEvent {
+                        port: port.clone(),
+                        data: line,
+                    },
+                );
             }
             CommandEvent::Terminated(payload) => {
-                log::info!("BSL process terminated with code: {:?}", payload.code);
-
-                let success = payload.code.map_or(false, |code| code == 0);
                 return FlashResult {
-                    success,
+                    success: payload.code.map_or(false, |c| c == 0),
                     exit_code: payload.code,
                     timed_out: false,
                 };
@@ -158,10 +149,6 @@ async fn handle_bsl_scripter_output(
             _ => {}
         }
     }
-
-    // A terminate event should always occur before the loop finishing
-    // If something goes wrong and it doesn't, return a 'None' exit code
-    log::error!("BSL Scripter process ended without termination event");
     FlashResult {
         success: false,
         exit_code: None,
@@ -169,126 +156,81 @@ async fn handle_bsl_scripter_output(
     }
 }
 
-async fn cleanup_flash(app: &tauri::AppHandle, result: FlashResult, child: Option<CommandChild>) {
-    if result.success {
-        log::info!("BSL Scripter finished successfully");
-        if let Err(e) = app.emit("bsl-finished", ()) {
-            log::error!("Failed to emit bsl-finished event: {}", e);
-        }
-    } else if result.timed_out {
-        log::error!("BSL Scripter timed out");
-        if let Err(e) = app.emit("bsl-timeout", ()) {
-            log::error!("Failed to emit bsl-timeout event: {}", e);
-        }
-    } else {
-        log::error!("BSL Scripter failed with exit code: {:?}", result.exit_code);
-        if let Err(e) = app.emit("bsl-failed", result.exit_code) {
-            log::error!("Failed to emit bsl-failed event: {}", e);
-        }
-    }
-
-    // Ensure BSL scripter is always killed
-    if let Some(child) = child {
-        if let Err(e) = child.kill() {
-            log::error!("Failed to kill BSL scripter: {}", e);
-        }
-    }
-
-    // Release the lock
-    if let Some(state) = app.try_state::<Mutex<AppData>>() {
-        release_flasher_lock(&state).await;
-    } else {
-        log::error!("Failed to access app state to release flasher lock");
-    }
-}
-
-fn store_child(app: &tauri::AppHandle, child: CommandChild) {
-    let app = app.clone();
-    tauri::async_runtime::spawn(async move {
-        if let Some(state) = app.try_state::<Mutex<AppData>>() {
-            let mut state = state.lock().await;
-            state.bsl_flasher_child = Some(child);
-        } else {
-            log::error!("Failed to access app state to store BSL Flasher process");
-        }
-    });
-}
-
-async fn get_child(app: &tauri::AppHandle) -> Option<CommandChild> {
-    let app = app.clone();
-    if let Some(state) = app.try_state::<Mutex<AppData>>() {
-        let mut state = state.lock().await;
-        return state.bsl_flasher_child.take();
-    } else {
-        log::error!("Failed to access app state to get BSL Flasher process");
-    }
-
-    None
-}
 #[tauri::command]
 pub async fn flash(
     app: tauri::AppHandle,
     state: State<'_, Mutex<AppData>>,
-    port: &str,
+    port: String,
 ) -> Result<(), String> {
-    acquire_flasher_lock(&state)
+    // 1. Lock this specific port
+    acquire_port_lock(&state, &port)
         .await
         .map_err(|e| e.to_string())?;
 
-    let config = FlashConfig::create(port).map_err(|e| {
-        // Release lock on error
-        release_flasher_lock_with_app(&app);
+    // 2. Setup config
+    let config = FlashConfig::create(&port).map_err(|e| {
+        let _ = tauri::async_runtime::block_on(async { release_port_lock(&state, &port).await });
         e.to_string()
     })?;
 
-    let sidecar_command = app
+    // 3. Spawn Sidecar
+    let (rx, child) = app
         .shell()
         .sidecar("bsl-scripter")
-        .map_err(|e| format!("Failed to create sidecar command: {}", e))?
-        .arg(&config.script_path);
+        .map_err(|e| e.to_string())?
+        .arg(&config.script_path)
+        .spawn()
+        .map_err(|e| e.to_string())?;
 
-    let (rx, child) = sidecar_command.spawn().map_err(|e| {
-        // Release lock on error
-        release_flasher_lock_with_app(&app);
-        format!("Failed to spawn BSL scripter: {}", e)
-    })?;
+    // 4. Store child in the map so we can kill it later if needed
+    {
+        let mut s = state.lock().await;
+        s.bsl_children.insert(port.clone(), child);
+    }
 
-    store_child(&app, child);
+    // 5. Run process monitor in background
+    let app_inner = app.clone();
+    let port_inner = port.clone();
 
-    let app_clone = app.clone();
     tauri::async_runtime::spawn(async move {
+        let state_inner = app_inner.state::<Mutex<AppData>>();
         let result = tokio::time::timeout(
             DEFAULT_TIMEOUT,
-            handle_bsl_scripter_output(&app_clone, rx, config),
+            handle_bsl_scripter_output(&app_inner, port_inner.clone(), rx, config),
         )
         .await;
 
-        let child = get_child(&app).await;
+        let final_result = match result {
+            Ok(res) => res,
+            Err(_) => FlashResult {
+                success: false,
+                exit_code: None,
+                timed_out: true,
+            },
+        };
 
-        match result {
-            Ok(flash_result) => {
-                // Process completed within timeout
-                cleanup_flash(&app_clone, flash_result, child).await;
-            }
-            Err(_) => {
-                // Timeout occurred - kill the process
-                log::error!(
-                    "Flash operation timed out after {} seconds",
-                    DEFAULT_TIMEOUT.as_secs()
-                );
+        // Emit final status
+        let event_name = if final_result.success {
+            "bsl-finished"
+        } else if final_result.timed_out {
+            "bsl-timeout"
+        } else {
+            "bsl-failed"
+        };
+        let _ = app_inner.emit(
+            event_name,
+            FlashEvent {
+                port: port_inner.clone(),
+                data: final_result.exit_code,
+            },
+        );
 
-                cleanup_flash(
-                    &app_clone,
-                    FlashResult {
-                        success: false,
-                        exit_code: None,
-                        timed_out: true,
-                    },
-                    child,
-                )
-                .await;
-            }
+        // Cleanup: Kill process if still alive and remove from AppData
+        let mut s = state_inner.lock().await;
+        if let Some(child) = s.bsl_children.remove(&port_inner) {
+            let _ = child.kill();
         }
+        s.active_ports.remove(&port_inner);
     });
 
     Ok(())

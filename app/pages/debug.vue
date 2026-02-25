@@ -11,8 +11,22 @@ function serialPartialLineCallback(line: string) {
   JFBFlashEngine?.serialPartialLineCallback(line)
 }
 
-const { open, writeLn, close } = useSerialPort(() => { }, () => { }, serialLineCallback, serialPartialLineCallback)
-JFBFlashEngine = useJFBFlashEngine(writeLn)
+const { open, writeLn, close, autoReconnect } = useSerialPort(() => { }, () => { }, serialLineCallback, serialPartialLineCallback)
+JFBFlashEngine = useJFBFlashEngine(writeLn, () => flash('COM8'))
+
+function flashFinish(reason: FlashFinishReason) {
+  open()
+  console.log('FLASH FINISH CALLBACK', reason)
+  JFBFlashEngine?.flashFinish(reason === FlashFinishReason.SUCCESS)
+}
+
+const flasher = useBSLFlasher(flashFinish, false)
+
+async function flash(port: string) {
+  await close(false)
+  autoReconnect.value = false
+  await flasher.flash(port)
+}
 
 onMounted(async () => {
   console.log(await SerialPort.available_ports())

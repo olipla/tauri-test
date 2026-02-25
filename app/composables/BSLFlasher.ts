@@ -12,7 +12,7 @@ export enum FlashFinishReason {
   ACK_ERROR,
 }
 
-export function useBSLFlasher(finishedCallback: (reason: FlashFinishReason) => void) {
+export function useBSLFlasher(finishedCallback: (reason: FlashFinishReason) => void, showOverlay = true) {
   const overlay = useOverlay()
   const flashingModal = overlay.create(FlashingModal)
 
@@ -53,16 +53,17 @@ export function useBSLFlasher(finishedCallback: (reason: FlashFinishReason) => v
     flashing.value = true
     // serialAutoReconnect.value = false
     // await configuratorStore.serialClose(false)
-
-    flashingModal.open()
+    if (showOverlay) {
+      flashingModal.open()
+    }
     await flashDevice(serialPath).catch(() => {
       cleanup(FlashFinishReason.INIT_ERROR)
     })
   }
 
   onMounted(async () => {
-    unlistens.push(await listen('bsl-finished', async () => {
-      console.log('BSL FINISHED')
+    unlistens.push(await listen('bsl-finished', async (evt) => {
+      console.log('BSL FINISHED', evt)
       cleanup(FlashFinishReason.SUCCESS)
       // serialAutoReconnect.value = true
       // await configuratorStore.serialOpen()
@@ -78,8 +79,8 @@ export function useBSLFlasher(finishedCallback: (reason: FlashFinishReason) => v
       }
     }))
 
-    unlistens.push(await listen('bsl-timeout', async () => {
-      console.log('BSL TIMED OUT')
+    unlistens.push(await listen('bsl-timeout', async (evt) => {
+      console.log('BSL TIMED OUT', evt)
       cleanup(FlashFinishReason.TIMEOUT)
     }))
   })

@@ -14,7 +14,7 @@ export enum STAGE {
 
 const ENDS_OK_RESPONSE = /.*OK/
 
-export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
+export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, flash: () => Promise<void>) {
   const engineStage = ref(STAGE.IDLE)
   const lastSeenID = ref<string | undefined>()
   const lastSeenAltID = ref<string | undefined>()
@@ -32,12 +32,24 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
     await serial.sendCommand('?', { expectedResponse: /S=.*/, timeout: 1000 })
   }
 
+  async function sendInvokeBootloaderCommand() {
+    await serial.sendCommand('R=250', { expectedResponse: /Invo.*/ })
+  }
+
   async function sendSetTestMeterTypeResponse(testMeterType = 0) {
     await serial.sendCommand(`${testMeterType}`, { expectedResponse: /Setting.*/ })
   }
 
   async function sendRegisterPreDefinedTestMeterResponse() {
     await serial.sendCommand('y', { expectedResponse: /Setting.*/ })
+  }
+
+  async function sendConfirmMBUSFlashResponse() {
+    await serial.sendCommand('y')
+  }
+
+  async function sendXWhenDoneResponse() {
+    await serial.sendCommand('x', { expectedResponse: /MBUS d.*/, timeout: 1000, retries: 10, retryDelay: 100 })
   }
 
   async function unlockDevice() {
@@ -126,11 +138,29 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
           await sleep(500)
           try {
             await unlockDevice()
+            await sendInvokeBootloaderCommand()
             engineStage.value = STAGE.FLASHING
+            await flash()
           }
           catch (err) {
             console.error(err)
             engineStage.value = STAGE.BOOTLOADER_FAIL
+          }
+        }
+      },
+    },
+    pressXWhenDone: {
+      regex: /Press 'X'/,
+      onMatch: async () => {
+        if (engineStage.value === STAGE.FLASHING) {
+          await sleep(500)
+          try {
+            await sendXWhenDoneResponse()
+            engineStage.value = STAGE.FLASH_SUCCESS
+          }
+          catch (err) {
+            console.error(err)
+            engineStage.value = STAGE.FLASH_FAIL
           }
         }
       },
@@ -154,6 +184,20 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
         }
       },
     },
+    // confirmMBUSFlashedPrompt: {
+    //   regex: /Confirm M.*:/,
+    //   onMatch: async () => {
+    //     if (engineStage.value === STAGE.FLASHING) {
+    //       try {
+    //         await sendConfirmMBUSFlashResponse()
+    //       }
+    //       catch (err) {
+    //         console.error(err)
+    //         engineStage.value = STAGE.FLASH_FAIL
+    //       }
+    //     }
+    //   },
+    // },
   }
 
   const { serialLineCallback: regexSerialLineCallback, serialPartialLineCallback } = useSerialRegexMatcher(lineRegexs, partialLineRegexs)
@@ -161,6 +205,26 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
   async function serialLineCallback(line: string) {
     serial.receiveLine(line)
     await regexSerialLineCallback(line)
+  }
+
+  async function flashFinish(success: boolean) {
+    if (!success) {
+      engineStage.value = STAGE.FLASH_FAIL
+      return
+    }
+
+    await sleep(10000)
+
+    if (engineStage.value === STAGE.FLASHING) {
+      try {
+        await sendXWhenDoneResponse()
+        engineStage.value = STAGE.FLASH_SUCCESS
+      }
+      catch (err) {
+        console.error(err)
+        engineStage.value = STAGE.FLASH_FAIL
+      }
+    }
   }
 
   return {
@@ -172,5 +236,6 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
     sendQueryCommand,
     sendUnlockCommand,
     unlockDevice,
+    flashFinish,
   }
 }
