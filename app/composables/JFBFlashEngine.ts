@@ -11,7 +11,7 @@ export enum STAGE {
   FLASH_SUCCESS,
 }
 
-const ENDS_OK_RESPONSE = /.*OK/
+const ENDS_OK_RESPONSE = /.*OKB/
 
 export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
   const engineStage = ref(STAGE.IDLE)
@@ -24,7 +24,7 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
     if (lastSeenAltID.value === undefined) {
       throw new ValidationError('Alt ID not available')
     }
-    await serial.sendCommand(`O=${lastSeenAltID.value}`, { expectedResponse: ENDS_OK_RESPONSE })
+    await serial.sendCommand(`O=${lastSeenAltID.value}`, { expectedResponse: ENDS_OK_RESPONSE, retries: 3 })
   }
 
   async function sendQueryCommand() {

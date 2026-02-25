@@ -25,6 +25,8 @@ export function useSerialMachine(sendFn: (line: string) => Promise<void> | void)
       ? expectedResponse.test(cleanLine)
       : cleanLine.includes(expectedResponse || 'OK')
 
+    console.log('Checking for response:', line, expectedResponse, isMatch)
+
     if (isMatch) {
       clearTimeout(timer)
       pendingCommand.value = null
@@ -53,42 +55,69 @@ export function useSerialMachine(sendFn: (line: string) => Promise<void> | void)
       throw new DeviceBusyError('Device is currently busy processing another command')
     }
 
-    const { timeout = 500, expectedResponse = undefined, delayBefore = 0 } = options
+    const { timeout = 500, expectedResponse = undefined, delayBefore = 0, retries = 3, retryDelay = 250 } = options
 
     // Optional delay for devices that need "breathing room"
     if (delayBefore > 0) {
       await new Promise(resolve => setTimeout(resolve, delayBefore))
     }
 
-    return new Promise((resolve, reject) => {
-      let timer
+    async function attemptCommand(): Promise<string> {
+      return new Promise((resolve, reject) => {
+        let timer
 
-      if (expectedResponse !== undefined) {
-        state.value = 'BUSY'
+        if (expectedResponse !== undefined) {
+          state.value = 'BUSY'
 
-        timer = setTimeout(() => {
-          pendingCommand.value = null
-          state.value = 'ERROR'
-          lastError.value = `Timeout waiting for: ${expectedResponse}`
-          reject(new ResponseTimeoutError(lastError.value))
-        }, timeout)
+          timer = setTimeout(() => {
+            pendingCommand.value = null
+            state.value = 'ERROR'
+            lastError.value = `Timeout waiting for: ${expectedResponse}`
+            reject(new ResponseTimeoutError(lastError.value))
+          }, timeout)
 
-        pendingCommand.value = { resolve, reject, expectedResponse, timer }
-      }
-
-      try {
-        sendFn(cmd)
-
-        if (expectedResponse === undefined) {
-          resolve('')
+          pendingCommand.value = { resolve, reject, expectedResponse, timer }
         }
+
+        try {
+          sendFn(cmd)
+
+          if (expectedResponse === undefined) {
+            resolve('')
+          }
+        }
+        catch (err) {
+          clearTimeout(timer)
+          state.value = 'ERROR'
+          reject(err)
+        }
+      })
+    }
+
+    for (let i = 0; i <= retries; i++) {
+      try {
+        return await attemptCommand()
       }
       catch (err) {
-        clearTimeout(timer)
-        state.value = 'ERROR'
-        reject(err)
+        const isLastAttempt = i === retries
+        // Only retry if the error is specifically a Timeout
+        const isTimeout = err instanceof ResponseTimeoutError
+
+        // If it's the last try OR it's a non-timeout error (like Busy), fail now
+        if (isLastAttempt || !isTimeout) {
+          throw err
+        }
+
+        // If we got here, it's a timeout and we have retries left
+        if (retryDelay > 0) {
+          await new Promise(resolve => setTimeout(resolve, retryDelay))
+        }
+
+        console.warn(`Timeout waiting for: ${expectedResponse} after sending: ${cmd}. Retrying (${i + 1}/${retries})...`)
       }
-    })
+    }
+
+    throw new ResponseTimeoutError('Command failed after maximum retries')
   }
 
   return {

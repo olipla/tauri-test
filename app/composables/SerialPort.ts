@@ -160,7 +160,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
     try {
       if (port) {
         transmitting.value = true
-        console.log('SENDING SERIAL:', new TextDecoder().decode(bytes))
+        console.warn('SENDING SERIAL:', new TextDecoder().decode(bytes))
         await port.writeBinary(bytes)
         serialSentCallback(bytes)
       }

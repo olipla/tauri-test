@@ -4,6 +4,8 @@ export interface CommandOptions {
   timeout?: number
   expectedResponse?: string | RegExp | undefined
   delayBefore?: number
+  retries?: number
+  retryDelay?: number
 }
 
 export interface PendingCommand {
