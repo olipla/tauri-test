@@ -3,15 +3,16 @@ import { ResponseTimeoutError, ValidationError } from '~/lib/errors'
 
 export enum STAGE {
   IDLE,
-  ENTERING_BOOTLOADER,
   DEVICE_RESTARTING,
   DEVICE_WAKING,
+  ENTERING_BOOTLOADER,
+  BOOTLOADER_FAIL,
   FLASHING,
   FLASH_FAIL,
   FLASH_SUCCESS,
 }
 
-const ENDS_OK_RESPONSE = /.*OKB/
+const ENDS_OK_RESPONSE = /.*OK/
 
 export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
   const engineStage = ref(STAGE.IDLE)
@@ -24,7 +25,7 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
     if (lastSeenAltID.value === undefined) {
       throw new ValidationError('Alt ID not available')
     }
-    await serial.sendCommand(`O=${lastSeenAltID.value}`, { expectedResponse: ENDS_OK_RESPONSE, retries: 3 })
+    await serial.sendCommand(`O=${lastSeenAltID.value}`, { expectedResponse: ENDS_OK_RESPONSE })
   }
 
   async function sendQueryCommand() {
@@ -105,15 +106,33 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
     selectPreDefinedPrompt: {
       regex: /@05>>Select/,
       onMatch: async () => {
-        await sleep(500)
-        await sendSetTestMeterTypeResponse()
+        if (engineStage.value === STAGE.DEVICE_WAKING) {
+          engineStage.value = STAGE.ENTERING_BOOTLOADER
+          await sleep(500)
+          try {
+            await sendSetTestMeterTypeResponse()
+          }
+          catch (err) {
+            console.error(err)
+            engineStage.value = STAGE.BOOTLOADER_FAIL
+          }
+        }
       },
     },
     listening: {
       regex: /Listening/,
       onMatch: async () => {
-        await sleep(500)
-        await unlockDevice()
+        if (engineStage.value === STAGE.ENTERING_BOOTLOADER) {
+          await sleep(500)
+          try {
+            await unlockDevice()
+            engineStage.value = STAGE.FLASHING
+          }
+          catch (err) {
+            console.error(err)
+            engineStage.value = STAGE.BOOTLOADER_FAIL
+          }
+        }
       },
     },
   }
@@ -122,8 +141,17 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>) {
     registerPreDefinedPrompt: {
       regex: /@05>>Register.*:/,
       onMatch: async () => {
-        await sleep(500)
-        await sendRegisterPreDefinedTestMeterResponse()
+        if (engineStage.value === STAGE.DEVICE_WAKING) {
+          engineStage.value = STAGE.ENTERING_BOOTLOADER
+          await sleep(500)
+          try {
+            await sendRegisterPreDefinedTestMeterResponse()
+          }
+          catch (err) {
+            console.error(err)
+            engineStage.value = STAGE.BOOTLOADER_FAIL
+          }
+        }
       },
     },
   }
