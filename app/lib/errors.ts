@@ -12,3 +12,5 @@ export class ResponseError extends AppError { }
 export class ResponseTimeoutError extends ResponseError { }
 
 export class DeviceBusyError extends AppError { }
+
+export class FlashError extends AppError { }

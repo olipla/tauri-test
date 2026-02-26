@@ -160,7 +160,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
     try {
       if (port) {
         transmitting.value = true
-        console.warn('SENDING SERIAL:', new TextDecoder().decode(bytes))
+        console.warn(portOptions.value?.path, 'SENDING SERIAL:', new TextDecoder().decode(bytes))
         await port.writeBinary(bytes)
         serialSentCallback(bytes)
       }
@@ -185,7 +185,7 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
   let strBuffer: string = ''
 
   function serialLineCallbackWrapper(line: string) {
-    console.log('SERIAL LINE:', line)
+    console.log(portOptions.value?.path, 'SERIAL LINE:', line)
     if (serialLineCallback) {
       serialLineCallback(line)
     }

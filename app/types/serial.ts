@@ -14,3 +14,8 @@ export interface PendingCommand {
   expectedResponse?: string | RegExp
   timer: ReturnType<typeof setTimeout>
 }
+
+export interface FlashPayload<T> {
+  port: string
+  data: T
+}

@@ -107,6 +107,15 @@ async fn handle_bsl_scripter_output(
         match event {
             CommandEvent::Stdout(line_bytes) => {
                 let line = String::from_utf8_lossy(&line_bytes).to_string();
+                println!("[SIDECAR STDOUT - {}] {}", port, line.trim());
+
+                if line.contains("Access is denied") {
+                    return FlashResult {
+                        success: false,
+                        exit_code: Some(1001),
+                        timed_out: false,
+                    };
+                }
 
                 if line.contains("[ACK_ERROR_MESSAGE]") {
                     consecutive_ack_errors += 1;
@@ -131,6 +140,7 @@ async fn handle_bsl_scripter_output(
             }
             CommandEvent::Stderr(line_bytes) => {
                 let line = String::from_utf8_lossy(&line_bytes).to_string();
+                println!("[SIDECAR STDERR - {}] {}", port, line.trim());
                 let _ = app.emit(
                     "bsl-stderr",
                     FlashEvent {
@@ -162,16 +172,37 @@ pub async fn flash(
     state: State<'_, Mutex<AppData>>,
     port: String,
 ) -> Result<(), String> {
+    println!(
+        "\n[DIAGNOSTIC] === Starting flash sequence for {} ===",
+        port
+    );
+
     // 1. Lock this specific port
-    acquire_port_lock(&state, &port)
-        .await
-        .map_err(|e| e.to_string())?;
+    acquire_port_lock(&state, &port).await.map_err(|e| {
+        println!("[DIAGNOSTIC] Lock failed for {}: {}", port, e);
+        e.to_string()
+    })?;
 
     // 2. Setup config
     let config = FlashConfig::create(&port).map_err(|e| {
+        println!("[DIAGNOSTIC] Config creation failed for {}: {}", port, e);
         let _ = tauri::async_runtime::block_on(async { release_port_lock(&state, &port).await });
         e.to_string()
     })?;
+
+    println!(
+        "[DIAGNOSTIC] Temp dir created at: {:?}",
+        config._temp_dir.path()
+    );
+    println!("[DIAGNOSTIC] Script content path: {:?}", config.script_path);
+
+    // Log the actual script content to verify no weird formatting issues
+    if let Ok(content) = std::fs::read_to_string(&config.script_path) {
+        println!(
+            "[DIAGNOSTIC] Script Content:\n---BEGIN---\n{}\n---END---",
+            content
+        );
+    }
 
     // 3. Spawn Sidecar
     let (rx, child) = app
@@ -179,8 +210,20 @@ pub async fn flash(
         .sidecar("bsl-scripter")
         .map_err(|e| e.to_string())?
         .arg(&config.script_path)
+        .current_dir(config._temp_dir.path().to_path_buf())
         .spawn()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            println!("[DIAGNOSTIC] Sidecar spawn failed for {}: {}", port, e);
+            let _ =
+                tauri::async_runtime::block_on(async { release_port_lock(&state, &port).await });
+            e.to_string()
+        })?;
+
+    println!(
+        "[DIAGNOSTIC] Sidecar spawned successfully for {} with PID: {:?}",
+        port,
+        child.pid()
+    );
 
     // 4. Store child in the map so we can kill it later if needed
     {
@@ -193,6 +236,7 @@ pub async fn flash(
     let port_inner = port.clone();
 
     tauri::async_runtime::spawn(async move {
+        println!("[DIAGNOSTIC] Monitoring thread started for {}", port_inner);
         let state_inner = app_inner.state::<Mutex<AppData>>();
         let result = tokio::time::timeout(
             DEFAULT_TIMEOUT,
@@ -201,13 +245,37 @@ pub async fn flash(
         .await;
 
         let final_result = match result {
-            Ok(res) => res,
-            Err(_) => FlashResult {
-                success: false,
-                exit_code: None,
-                timed_out: true,
-            },
+            Ok(res) => {
+                println!(
+                    "[DIAGNOSTIC] Process for {} terminated naturally. Success: {}, Code: {:?}",
+                    port_inner, res.success, res.exit_code
+                );
+                res
+            }
+            Err(_) => {
+                println!(
+                    "[DIAGNOSTIC] Process for {} TIMED OUT after {:?}",
+                    port_inner, DEFAULT_TIMEOUT
+                );
+                FlashResult {
+                    success: false,
+                    exit_code: None,
+                    timed_out: true,
+                }
+            }
         };
+
+        // Cleanup: Kill process if still alive and remove from AppData
+        let mut s = state_inner.lock().await;
+        if let Some(child) = s.bsl_children.remove(&port_inner) {
+            let _ = child.kill();
+        }
+        s.active_ports.remove(&port_inner);
+
+        println!(
+            "[DIAGNOSTIC] Cleanup complete for {}. Mutex released.\n",
+            port_inner
+        );
 
         // Emit final status
         let event_name = if final_result.success {
@@ -217,6 +285,12 @@ pub async fn flash(
         } else {
             "bsl-failed"
         };
+
+        println!(
+            "[DIAGNOSTIC] Emitting event '{}' for port {}",
+            event_name, port_inner
+        );
+
         let _ = app_inner.emit(
             event_name,
             FlashEvent {
@@ -224,13 +298,6 @@ pub async fn flash(
                 data: final_result.exit_code,
             },
         );
-
-        // Cleanup: Kill process if still alive and remove from AppData
-        let mut s = state_inner.lock().await;
-        if let Some(child) = s.bsl_children.remove(&port_inner) {
-            let _ = child.kill();
-        }
-        s.active_ports.remove(&port_inner);
     });
 
     Ok(())

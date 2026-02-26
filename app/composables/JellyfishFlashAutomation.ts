@@ -1,5 +1,4 @@
-import type { SerialportOptions } from 'tauri-plugin-serialplugin-api'
-import { SerialPort } from 'tauri-plugin-serialplugin-api'
+import { FlashError } from '~/lib/errors'
 
 export function useJellyfishFlashAutomation() {
   let JFBFlashEngine: ReturnType<typeof useJFBFlashEngine>
@@ -12,12 +11,33 @@ export function useJellyfishFlashAutomation() {
     JFBFlashEngine?.serialPartialLineCallback(line)
   }
 
-  const { open, writeLn, close, autoReconnect } = useSerialPort(() => { }, () => { }, serialLineCallback, serialPartialLineCallback)
-  JFBFlashEngine = useJFBFlashEngine(writeLn, () => flash('COM8'))
+  const { open, writeLn, close, autoReconnect, portOptions } = useSerialPort(() => { }, () => { }, serialLineCallback, serialPartialLineCallback)
 
-  function flashFinish(reason: FlashFinishReason) {
+  async function flashCurrentDevice() {
+    const currentPort = portOptions.value?.path
+
+    if (!currentPort) {
+      throw new FlashError('No port set')
+    }
+
+    await flash(currentPort)
+  }
+
+  JFBFlashEngine = useJFBFlashEngine(writeLn, flashCurrentDevice)
+
+  const flashAttempt = ref(0)
+
+  async function flashFinish(reason: FlashFinishReason, port: string) {
+    if (flashAttempt.value < 3 && reason === FlashFinishReason.PERMISSION_ERROR) {
+      flashAttempt.value++
+      await sleep(1000)
+      flashCurrentDevice()
+      return
+    }
+
+    flashAttempt.value = 0
     open()
-    console.log('FLASH FINISH CALLBACK', reason)
+    console.log(port, 'FLASH FINISH CALLBACK', reason)
     JFBFlashEngine?.flashFinish(reason === FlashFinishReason.SUCCESS)
   }
 
@@ -26,6 +46,7 @@ export function useJellyfishFlashAutomation() {
   async function flash(port: string) {
     await close(false)
     autoReconnect.value = false
+    await sleep(1000)
     await flasher.flash(port)
   }
 
