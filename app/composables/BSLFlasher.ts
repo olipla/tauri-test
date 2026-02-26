@@ -51,6 +51,7 @@ export function useBSLFlasher(finishedCallback: (reason: FlashFinishReason) => v
 
   async function flash(serialPath: string) {
     flashing.value = true
+    console.log('FLASH BEGIN', serialPath)
     // serialAutoReconnect.value = false
     // await configuratorStore.serialClose(false)
     if (showOverlay) {

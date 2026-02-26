@@ -44,9 +44,9 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
     await serial.sendCommand('y', { expectedResponse: /Setting.*/ })
   }
 
-  async function sendConfirmMBUSFlashResponse() {
-    await serial.sendCommand('y')
-  }
+  // async function sendConfirmMBUSFlashResponse() {
+  //   await serial.sendCommand('y')
+  // }
 
   async function sendXWhenDoneResponse() {
     await serial.sendCommand('x', { expectedResponse: /MBUS d.*/, timeout: 1000, retries: 10, retryDelay: 100 })
@@ -112,7 +112,7 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
       regex: /@04>>/,
       onMatch: () => {
         // Fires whenever the device goes into low power
-        engineStage.value = STAGE.IDLE
+        // engineStage.value = STAGE.IDLE
       },
     },
     selectPreDefinedPrompt: {
@@ -169,7 +169,7 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
 
   const partialLineRegexs: DeviceRegexs = {
     registerPreDefinedPrompt: {
-      regex: /@05>>Register.*:/,
+      regex: /@05>>Register.*:$/,
       onMatch: async () => {
         if (engineStage.value === STAGE.DEVICE_WAKING) {
           engineStage.value = STAGE.ENTERING_BOOTLOADER
@@ -182,6 +182,15 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
             engineStage.value = STAGE.BOOTLOADER_FAIL
           }
         }
+      },
+    },
+    skipSendStatusMessagePrompt: {
+      regex: /Skip send Status message \? Press 'y':$/,
+      onMatch: async () => {
+        // if (engineStage.value === STAGE.DEVICE_WAKING) {
+        await sleep(500)
+        await serial.sendCommand('y')
+        // }
       },
     },
     // confirmMBUSFlashedPrompt: {
