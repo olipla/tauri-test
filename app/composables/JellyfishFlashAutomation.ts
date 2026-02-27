@@ -11,7 +11,7 @@ export function useJellyfishFlashAutomation() {
     JFBFlashEngine?.serialPartialLineCallback(line)
   }
 
-  const { open, writeLn, close, autoReconnect, portOptions } = useSerialPort(() => { }, () => { }, serialLineCallback, serialPartialLineCallback)
+  const { open, writeLn, close, autoReconnect, portOptions, portInfo } = useSerialPort(() => { }, () => { }, serialLineCallback, serialPartialLineCallback)
 
   async function flashCurrentDevice() {
     const currentPort = portOptions.value?.path
@@ -30,15 +30,15 @@ export function useJellyfishFlashAutomation() {
   async function flashFinish(reason: FlashFinishReason, port: string) {
     if (flashAttempt.value < 3 && reason === FlashFinishReason.PERMISSION_ERROR) {
       flashAttempt.value++
-      await sleep(1000)
+      await sleep(5000)
       flashCurrentDevice()
       return
     }
 
     flashAttempt.value = 0
-    open()
+    await open()
     console.log(port, 'FLASH FINISH CALLBACK', reason)
-    JFBFlashEngine?.flashFinish(reason === FlashFinishReason.SUCCESS)
+    await JFBFlashEngine?.flashFinish(reason === FlashFinishReason.SUCCESS)
   }
 
   const flasher = useBSLFlasher(flashFinish, false)
@@ -68,5 +68,14 @@ export function useJellyfishFlashAutomation() {
     await close()
   })
 
-  return { stage: JFBFlashEngine.engineStage, serialOpen: open, serialClose: close, serialAutoReconnect: autoReconnect }
+  return {
+    stage: JFBFlashEngine.engineStage,
+    currentDeviceId: JFBFlashEngine.lastSeenID,
+    currentDeviceAltId: JFBFlashEngine.lastSeenAltID,
+    serialOpen: open,
+    serialClose: close,
+    serialAutoReconnect: autoReconnect,
+    serialPortOptions: portOptions,
+    serialPortInfo: portInfo,
+  }
 }

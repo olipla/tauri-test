@@ -1,29 +1,19 @@
 <script lang="ts" setup>
-import { SerialPort } from 'tauri-plugin-serialplugin-api'
 
-const jellyfishFlashAutomation1 = useJellyfishFlashAutomation()
-const jellyfishFlashAutomation2 = useJellyfishFlashAutomation()
-
-onMounted(async () => {
-  console.log(await SerialPort.available_ports())
-  jellyfishFlashAutomation1.serialOpen({
-    path: 'COM8',
-    baudRate: 9600,
-  })
-  jellyfishFlashAutomation2.serialOpen({
-    path: 'COM7',
-    baudRate: 9600,
-  })
-})
 </script>
 
 <template>
-  <div class="p-8">
-    <ul>
-      <li>{{ STAGE[jellyfishFlashAutomation1.stage.value] }}</li>
-      <li>{{ STAGE[jellyfishFlashAutomation2.stage.value] }}</li>
-    </ul>
-    <!-- <UProgress ></UProgress> -->
+  <div class="p-8 flex gap-4 h-full">
+    <DeviceColumn
+      name="CABLE 1"
+      colour="oklch(76.9% 0.188 70.08)"
+      port="COM7"
+    />
+    <DeviceColumn
+      name="CABLE 2"
+      colour="oklch(62.3% 0.214 259.815)"
+      port="COM8"
+    />
   </div>
 </template>
 

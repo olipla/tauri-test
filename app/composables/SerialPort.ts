@@ -146,6 +146,8 @@ export function useSerialPort(serialCallback: (bytes: Uint8Array) => void, seria
       // await port.enableAutoReconnect({
       //   interval: 2500,
       // })
+
+      console.log('OPENING PORT', portOptions)
       portInfo.value = await getPortInfo(serialPortOptions.path)
       portOptions.value = serialPortOptions
       await port.open()
