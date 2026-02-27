@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { SerialportOptions } from 'tauri-plugin-serialplugin-api'
+import PortChooserModal from './PortChooserModal.vue'
 
 const props = defineProps<{
   name: string
@@ -9,6 +10,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   remove: []
+  updateSerialConfig: [SerialportOptions | undefined]
 }>()
 
 const jellyfishFlashAutomation = useJellyfishFlashAutomation()
@@ -33,6 +35,27 @@ function getInstruction(stage: STAGE) {
       return 'Could not apply firmware upgrade. Detach and quarantine under "FLASH FAIL".'
     case STAGE.FLASH_SUCCESS:
       return 'Device firmware upgraded. Detach and move to flashed area.'
+  }
+}
+
+const overlay = useOverlay()
+
+const modalPort = overlay.create(PortChooserModal)
+
+async function choosePort() {
+  const instance = modalPort.open()
+  const result = await instance.result
+  if (result !== undefined) {
+    // console.log(result)
+    jellyfishFlashAutomation.serialOpen({
+      baudRate: 9600,
+      path: result,
+    })
+
+    emit('updateSerialConfig', {
+      baudRate: 9600,
+      path: result,
+    })
   }
 }
 </script>
@@ -64,6 +87,7 @@ function getInstruction(stage: STAGE) {
       :transmitting="jellyfishFlashAutomation.serialTransmitting.value"
       :receiving="jellyfishFlashAutomation.serialReceiving.value"
       :is-connected="jellyfishFlashAutomation.serialIsConnected.value"
+      @click.stop="choosePort()"
     />
     <div
       class="h-full rounded-xl flex flex-col justify-center items-center text-gray-900"

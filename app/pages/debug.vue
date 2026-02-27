@@ -26,6 +26,12 @@ const { devicePorts } = storeToRefs(flasherStore)
         :colour="devicePort.colour"
         :port-options="devicePort.serialPortOptions"
         @remove="() => devicePorts.splice(index, 1)"
+        @update-serial-config="(options) => {
+          const devicePort = devicePorts[index]
+          if (devicePort) {
+            devicePort.serialPortOptions = options
+          }
+        }"
       />
     </div>
   </div>
