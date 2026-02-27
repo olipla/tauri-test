@@ -95,6 +95,14 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
               >
                 {{ terminalPaneVisible ? 'Close' : 'Open' }} Terminal
               </UButton>
+              <UButton
+                icon="i-lucide-flashlight"
+                href="flash"
+                class="col-span-2"
+                color="secondary"
+              >
+                Flash Mode
+              </UButton>
               <SerialCard
                 :status="serialIsConnected ? 'ok' : 'error'"
                 :serial-details="serialIsOpen ? {

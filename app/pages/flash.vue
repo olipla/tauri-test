@@ -17,6 +17,16 @@ const { devicePorts } = storeToRefs(flasherStore)
       >
         Add port
       </UButton>
+      <div class="grow flex justify-end">
+        <UButton
+          icon="i-lucide-arrow-left"
+          color="secondary"
+          class="ml-4"
+          href="/"
+        >
+          Back to Config
+        </UButton>
+      </div>
     </div>
     <div class="p-8 pt-2 flex gap-4 h-full w-full overflow-y-auto">
       <DeviceColumn
