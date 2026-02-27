@@ -11,7 +11,21 @@ export function useJellyfishFlashAutomation() {
     JFBFlashEngine?.serialPartialLineCallback(line)
   }
 
-  const { open, writeLn, close, autoReconnect, portOptions, portInfo } = useSerialPort(() => { }, () => { }, serialLineCallback, serialPartialLineCallback)
+  const {
+    open,
+    writeLn,
+    close,
+    autoReconnect,
+    portOptions,
+    portInfo,
+    isOpen,
+    isConnected,
+    sanitisedManufacturer,
+    sanitisedProduct,
+    sanitisedSerialNumber,
+    transmitting,
+    receiving,
+  } = useSerialPort(() => { }, () => { }, serialLineCallback, serialPartialLineCallback)
 
   async function flashCurrentDevice() {
     const currentPort = portOptions.value?.path
@@ -77,5 +91,12 @@ export function useJellyfishFlashAutomation() {
     serialAutoReconnect: autoReconnect,
     serialPortOptions: portOptions,
     serialPortInfo: portInfo,
+    serialIsOpen: isOpen,
+    serialIsConnected: isConnected,
+    serialSanitisedManufacturer: sanitisedManufacturer,
+    serialSanitisedProduct: sanitisedProduct,
+    serialSanitisedSerialNumber: sanitisedSerialNumber,
+    serialTransmitting: transmitting,
+    serialReceiving: receiving,
   }
 }

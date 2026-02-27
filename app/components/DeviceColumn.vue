@@ -42,7 +42,18 @@ function getInstruction(stage: STAGE) {
     <div class="text-center text-4xl font-bold">
       {{ props.name }}
     </div>
-    <SerialCard status="error" />
+    <SerialCard
+      :status="jellyfishFlashAutomation.serialIsConnected.value ? 'ok' : 'error'"
+      :serial-details="jellyfishFlashAutomation.serialIsOpen.value ? {
+        baudRate: jellyfishFlashAutomation.serialPortOptions.value?.baudRate ?? 0,
+        id: jellyfishFlashAutomation.serialSanitisedSerialNumber.value ?? '',
+        name: jellyfishFlashAutomation.serialSanitisedProduct.value ?? '',
+        port: jellyfishFlashAutomation.serialPortOptions.value?.path ?? '',
+      } : undefined"
+      :transmitting="jellyfishFlashAutomation.serialTransmitting.value"
+      :receiving="jellyfishFlashAutomation.serialReceiving.value"
+      :is-connected="jellyfishFlashAutomation.serialIsConnected.value"
+    />
     <div
       class="h-full rounded-xl flex flex-col justify-center items-center text-gray-900"
       :class="{
