@@ -1,19 +1,33 @@
 <script lang="ts" setup>
+const flasherStore = useFlasherStore()
 
+const { devicePorts } = storeToRefs(flasherStore)
 </script>
 
 <template>
-  <div class="p-8 flex gap-4 h-full">
-    <DeviceColumn
-      name="CABLE 1"
-      colour="oklch(76.9% 0.188 70.08)"
-      port="COM7"
-    />
-    <DeviceColumn
-      name="CABLE 2"
-      colour="oklch(62.3% 0.214 259.815)"
-      port="COM8"
-    />
+  <div class="flex flex-col gap-2 h-full">
+    <div class="flex gap-2 p-4 items-center">
+      <h1 class="text-2xl font-semibold">
+        Device Flasher
+      </h1>
+      <UButton
+        icon="i-lucide-plus"
+        class="ml-4"
+        @click.stop="() => { devicePorts.push({}) }"
+      >
+        Add port
+      </UButton>
+    </div>
+    <div class="p-8 pt-2 flex gap-4 h-full w-full overflow-y-auto">
+      <DeviceColumn
+        v-for="(devicePort, index) in devicePorts"
+        :key="index"
+        :name="`CABLE ${index + 1}`"
+        :colour="devicePort.colour"
+        :port-options="devicePort.serialPortOptions"
+        @remove="() => devicePorts.splice(index, 1)"
+      />
+    </div>
   </div>
 </template>
 

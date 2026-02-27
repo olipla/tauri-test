@@ -1,17 +1,20 @@
 <script lang="ts" setup>
+import type { SerialportOptions } from 'tauri-plugin-serialplugin-api'
+
 const props = defineProps<{
   name: string
-  colour: string
-  port: string
+  colour?: string
+  portOptions?: SerialportOptions
+}>()
+
+const emit = defineEmits<{
+  remove: []
 }>()
 
 const jellyfishFlashAutomation = useJellyfishFlashAutomation()
 
 onMounted(async () => {
-  jellyfishFlashAutomation.serialOpen({
-    path: props.port,
-    baudRate: 9600,
-  })
+  jellyfishFlashAutomation.serialOpen(props.portOptions)
 })
 
 function getInstruction(stage: STAGE) {
@@ -36,11 +39,19 @@ function getInstruction(stage: STAGE) {
 
 <template>
   <div
-    class="flex flex-col gap-4 p-4 border-4 rounded-xl w-75"
+    class="flex flex-col gap-4 p-4 border-4 rounded-2xl w-75"
     :style="{ borderColor: props.colour }"
   >
-    <div class="text-center text-4xl font-bold">
-      {{ props.name }}
+    <div class="text-center text-4xl font-bold flex justify-between items-center">
+      <div>
+        {{ props.name }}
+      </div>
+      <UButton
+        icon="i-lucide-x"
+        variant="soft"
+        color="neutral"
+        @click.stop="emit('remove')"
+      />
     </div>
     <SerialCard
       :status="jellyfishFlashAutomation.serialIsConnected.value ? 'ok' : 'error'"
