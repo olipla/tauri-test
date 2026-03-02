@@ -69,6 +69,10 @@ const {
   terminalPaneMount,
 } = useTerminalPane()
 
+function goToFlash() {
+  document.location = 'flash'
+}
+
 const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The selected printer is offline' }, { title: 'Serial Error', description: 'COM 4 does not exist!' }])
 </script>
 
@@ -97,9 +101,9 @@ const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The s
               </UButton>
               <UButton
                 icon="i-lucide-flashlight"
-                href="flash"
                 class="col-span-2"
                 color="secondary"
+                @click.stop="goToFlash()"
               >
                 Flash Mode
               </UButton>

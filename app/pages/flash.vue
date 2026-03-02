@@ -2,6 +2,10 @@
 const flasherStore = useFlasherStore()
 
 const { devicePorts } = storeToRefs(flasherStore)
+
+function goToHome() {
+  document.location = '/'
+}
 </script>
 
 <template>
@@ -22,27 +26,29 @@ const { devicePorts } = storeToRefs(flasherStore)
           icon="i-lucide-arrow-left"
           color="secondary"
           class="ml-4"
-          href="/"
+          @click.stop="goToHome()"
         >
           Back to Config
         </UButton>
       </div>
     </div>
     <div class="p-8 pt-2 flex gap-4 h-full w-full overflow-y-auto">
-      <DeviceColumn
-        v-for="(devicePort, index) in devicePorts"
-        :key="index"
-        :name="`CABLE ${index + 1}`"
-        :colour="devicePort.colour"
-        :port-options="devicePort.serialPortOptions"
-        @remove="() => devicePorts.splice(index, 1)"
-        @update-serial-config="(options) => {
-          const devicePort = devicePorts[index]
-          if (devicePort) {
-            devicePort.serialPortOptions = options
-          }
-        }"
-      />
+      <ClientOnly>
+        <DeviceColumn
+          v-for="(devicePort, index) in devicePorts"
+          :key="index"
+          :name="`CABLE ${index + 1}`"
+          :colour="devicePort.colour"
+          :port-options="devicePort.serialPortOptions"
+          @remove="() => devicePorts.splice(index, 1)"
+          @update-serial-config="(options) => {
+            const devicePort = devicePorts[index]
+            if (devicePort) {
+              devicePort.serialPortOptions = options
+            }
+          }"
+        />
+      </ClientOnly>
     </div>
   </div>
 </template>
