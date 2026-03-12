@@ -3,14 +3,18 @@ import { ResponseTimeoutError, ValidationError } from '~/lib/errors'
 
 export enum STAGE {
   IDLE,
-  DEVICE_RESTARTING,
-  DEVICE_WAKING,
-  ENTERING_BOOTLOADER,
-  BOOTLOADER_FAIL,
-  FLASHING,
-  FLASH_FAIL,
-  FLASH_SUCCESS,
+  DEVICE_RESTARTING, // Unused
+  DEVICE_WAKING, // Begins on magnet tap or FTDI interrupt
+  ENTERING_BOOTLOADER, // Begins on @05 pre defined if DEVICE_WAKING
+  BOOTLOADER_FAIL, // Begins if error on set test meter type, unlocking, invoking bootloader mode
+  FLASHING, // Begins if invoke bootloader command succeeds
+  FLASH_FAIL, // Begins if flash callback returns error or send x response fails
+  FLASH_SUCCESS, // Begins if send x response succeeds after flash
+  DEVICE_INITIALISING, // Begins on @02 peripherals init - for after flash
+  DEVICE_SELF_TEST, // Begins on @05 pre defined if DEVICE_INITIALISING
 }
+
+// Device will send ftdi wake if hibernate while DEVICE_INITIALISING
 
 const ENDS_OK_RESPONSE = /.*OK/
 
@@ -67,9 +71,19 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
     }
   }
 
+  async function sendFTDIWake() {
+    await serial.sendCommand('?', { expectedResponse: /Initialising/ })
+  }
+
   const lineRegexs: DeviceRegexs = {
     magnetTapped: {
       regex: /Magnet/,
+      onMatch: async () => {
+        engineStage.value = STAGE.DEVICE_WAKING
+      },
+    },
+    ftdiInterrupt: {
+      regex: /FTDI/,
       onMatch: async () => {
         engineStage.value = STAGE.DEVICE_WAKING
       },
@@ -108,11 +122,21 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
         lastSeenAltID.value = groups.simId
       },
     },
+    peripheralsInitialisationStarted: {
+      regex: /@02>>/,
+      onMatch: () => {
+        engineStage.value = STAGE.DEVICE_INITIALISING
+      },
+    },
     runmodeHibernate: {
       regex: /@04>>/,
-      onMatch: () => {
+      onMatch: async () => {
         // Fires whenever the device goes into low power
         // engineStage.value = STAGE.IDLE
+        if (engineStage.value === STAGE.DEVICE_INITIALISING) {
+          await sleep(2000)
+          await sendFTDIWake()
+        }
       },
     },
     selectPreDefinedPrompt: {
@@ -128,6 +152,9 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
             console.error(err)
             engineStage.value = STAGE.BOOTLOADER_FAIL
           }
+        }
+        else if (engineStage.value === STAGE.DEVICE_INITIALISING) {
+          engineStage.value = STAGE.DEVICE_SELF_TEST
         }
       },
     },
@@ -181,6 +208,9 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
             console.error(err)
             engineStage.value = STAGE.BOOTLOADER_FAIL
           }
+        }
+        else if (engineStage.value === STAGE.DEVICE_INITIALISING) {
+          engineStage.value = STAGE.DEVICE_SELF_TEST
         }
       },
     },
