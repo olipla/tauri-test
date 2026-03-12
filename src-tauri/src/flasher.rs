@@ -19,8 +19,15 @@ struct FlashEvent<T> {
     data: T,
 }
 
-const FIRMWARE: &[u8] = include_bytes!("../firmware.txt");
-const PASSWORD: &[u8] = include_bytes!("../password.txt");
+macro_rules! firmware {
+    () => {
+        "GW_v4_Nb_2_1_7"
+    };
+}
+
+pub const FIRMWARE_NAME: &str = firmware!();
+const FIRMWARE: &[u8] = include_bytes!(concat!("../firmware/", firmware!(), ".txt"));
+const PASSWORD: &[u8] = include_bytes!("../firmware/password.txt");
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(20);
 const MAX_CONSECUTIVE_ACK_ERRORS: i32 = 5;
 
@@ -57,6 +64,9 @@ impl FlashConfig {
     ) -> Result<String> {
         let firmware_str = firmware_path.to_str().context("Invalid firmware path")?;
         let password_str = password_path.to_str().context("Invalid password path")?;
+
+        // pre 2.1.9 PC = 0x6586
+        // post PC = 0x6592
 
         Ok(formatdoc! {"
             MODE FRxx UART {port} BAUD 9600 PARITY E

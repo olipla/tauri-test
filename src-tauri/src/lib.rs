@@ -4,6 +4,8 @@ use anyhow::{Context, Result};
 use tauri::{async_runtime::Mutex, window::Color, Manager};
 use tauri_plugin_shell::process::CommandChild;
 
+use crate::flasher::FIRMWARE_NAME;
+
 mod flasher;
 mod printer;
 
@@ -27,7 +29,7 @@ impl AppData {
 fn configure_window(window: &tauri::WebviewWindow, version: &str) -> Result<()> {
     window
         .set_title(&format!(
-            "Jellyfish Configurator {version} [GW_v4_Nb_2_1_7_ses]"
+            "Jellyfish Configurator {version} [{FIRMWARE_NAME}]"
         ))
         .context("Failed to set window title")?;
 
