@@ -1,9 +1,9 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 // use std::path::BufReader;
 use std::path::PathBuf;
 use std::time::Duration;
 
-use indoc::formatdoc;
+use indoc::{formatdoc, indoc};
 use serde::Serialize;
 use tauri::async_runtime::{Mutex, Receiver};
 use tauri::{Emitter, Manager, State};
@@ -25,11 +25,43 @@ macro_rules! firmware {
     };
 }
 
+const PASSWORD_INCORRECT_CONTENTS: &str = indoc! {"
+        @FFE0
+        00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+        00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+        q
+    "};
+
+const PASSWORD_BLANK_CONTENTS: &str = indoc! {"
+        @FFE0
+        FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+        FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+        q
+    "};
+
 pub const FIRMWARE_NAME: &str = firmware!();
 const FIRMWARE: &[u8] = include_bytes!(concat!("../firmware/", firmware!(), ".txt"));
-const PASSWORD: &[u8] = include_bytes!("../firmware/password.txt");
-const DEFAULT_TIMEOUT: Duration = Duration::from_secs(20);
+const DEFAULT_TIMEOUT: Duration = Duration::from_secs(25);
 const MAX_CONSECUTIVE_ACK_ERRORS: i32 = 5;
+
+fn extract_entrypoint(firmware: &[u8]) -> Result<String, anyhow::Error> {
+    let firmware_str = String::from_utf8_lossy(firmware).to_string();
+    println!("Firmware: {}", firmware_str);
+
+    for (i, line) in firmware_str.lines().enumerate() {
+        if line.contains("@ffd0") {
+            if let Some(target_line) = firmware_str.lines().nth(i + 3) {
+                let parts: Vec<&str> = target_line.split_whitespace().collect();
+                if parts.len() > 14 {
+                    let result = format!("{}{}", parts[13], parts[14]);
+                    return Ok(result);
+                }
+            }
+            break;
+        }
+    }
+    Err(anyhow!("Failed to extract entrypoint"))
+}
 
 struct FlashConfig {
     _temp_dir: TempDir,
@@ -44,11 +76,24 @@ impl FlashConfig {
         let firmware_path = base_path.join("firmware.txt");
         std::fs::write(&firmware_path, FIRMWARE).context("Failed to write firmware file")?;
 
-        let password_path = base_path.join("password.txt");
-        std::fs::write(&password_path, PASSWORD).context("Failed to write password file")?;
+        let password_incorrect_path = base_path.join("password_incorrect.txt");
+        std::fs::write(&password_incorrect_path, PASSWORD_INCORRECT_CONTENTS)
+            .context("Failed to write incorrect password file")?;
+
+        let password_blank_path = base_path.join("password_blank.txt");
+        std::fs::write(&password_blank_path, PASSWORD_BLANK_CONTENTS)
+            .context("Failed to write incorrect password file")?;
 
         let script_path = base_path.join("script.txt");
-        let script_content = Self::generate_script(port, &firmware_path, &password_path)?;
+
+        let entrypoint = extract_entrypoint(FIRMWARE)?;
+        let script_content = Self::generate_script(
+            port,
+            &firmware_path,
+            &password_incorrect_path,
+            &password_blank_path,
+            &entrypoint,
+        )?;
         std::fs::write(&script_path, script_content).context("Failed to write script file")?;
 
         Ok(Self {
@@ -60,21 +105,32 @@ impl FlashConfig {
     fn generate_script(
         port: &str,
         firmware_path: &PathBuf,
-        password_path: &PathBuf,
+        password_incorrect_path: &PathBuf,
+        password_blank_path: &PathBuf,
+        entrypoint: &str,
     ) -> Result<String> {
         let firmware_str = firmware_path.to_str().context("Invalid firmware path")?;
-        let password_str = password_path.to_str().context("Invalid password path")?;
+        let password_incorrect_str = password_incorrect_path
+            .to_str()
+            .context("Invalid incorrect password path")?;
+        let password_blank_str = password_blank_path
+            .to_str()
+            .context("Invalid blank password path")?;
 
         // pre 2.1.9 PC = 0x6586
         // post PC = 0x6592
 
         Ok(formatdoc! {"
             MODE FRxx UART {port} BAUD 9600 PARITY E
-            DELAY 1000
             CHANGE_BAUD_RATE 115200
-            RX_PASSWORD {password_str}
+            RX_PASSWORD {password_incorrect_str}
             RX_DATA_BLOCK {firmware_str}
-            SET_PC 0x6586
+            REBOOT_RESET
+            MODE FRxx UART {port} BAUD 9600 PARITY E
+            CHANGE_BAUD_RATE 115200
+            RX_PASSWORD {password_blank_str}
+            RX_DATA_BLOCK {firmware_str}
+            SET_PC 0x{entrypoint}
         "})
     }
 }
