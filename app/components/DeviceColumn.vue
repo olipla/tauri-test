@@ -35,6 +35,18 @@ function getInstruction(stage: STAGE) {
       return 'Could not apply firmware upgrade. Detach and quarantine under "FLASH FAIL".'
     case STAGE.FLASH_SUCCESS:
       return 'Device firmware upgraded. Detach and move to flashed area.'
+    case STAGE.DEVICE_INITIALISING:
+      return 'Please wait while the device is prepared for configuration.'
+    case STAGE.DEVICE_WAKE_FAIL:
+      return 'Could not wake device after hibernate. Detach and quarantine under "WAKE FAIL".'
+    case STAGE.DEVICE_CONFIG_SUCCESS:
+      return 'Device is configured and in pre-run hibernate mode. Detach and move to configured area.'
+    case STAGE.DEVICE_SELF_TEST:
+      return 'Please wait while the WMBUS module is being tested.'
+    case STAGE.DEVICE_SELF_TEST_FAIL:
+      return 'Could not verify functionality of WMBUS module. Detach and quarantine under "WMBUS FAIL".'
+    case STAGE.DEVICE_CONFIGURING:
+      return 'Please wait while a generic configuration is applied to the device.'
   }
 }
 
@@ -90,13 +102,12 @@ async function choosePort() {
       @click.stop="choosePort()"
     />
     <div
-      class="h-full rounded-xl flex flex-col justify-center items-center text-gray-900"
+      class="h-full rounded-xl flex flex-col justify-center items-center text-gray-900 bg-gray-400"
       :class="{
-        'bg-gray-400': jellyfishFlashAutomation.stage.value === STAGE.IDLE,
         'bg-blue-400': jellyfishFlashAutomation.stage.value === STAGE.DEVICE_WAKING || jellyfishFlashAutomation.stage.value === STAGE.ENTERING_BOOTLOADER,
         'bg-purple-400': jellyfishFlashAutomation.stage.value === STAGE.FLASHING,
-        'bg-green-400': jellyfishFlashAutomation.stage.value === STAGE.FLASH_SUCCESS,
-        'bg-red-400': jellyfishFlashAutomation.stage.value === STAGE.BOOTLOADER_FAIL || jellyfishFlashAutomation.stage.value === STAGE.FLASH_FAIL,
+        'bg-green-400': jellyfishFlashAutomation.stage.value === STAGE.FLASH_SUCCESS || jellyfishFlashAutomation.stage.value === STAGE.DEVICE_CONFIG_SUCCESS,
+        'bg-red-400': jellyfishFlashAutomation.stage.value === STAGE.BOOTLOADER_FAIL || jellyfishFlashAutomation.stage.value === STAGE.FLASH_FAIL || jellyfishFlashAutomation.stage.value === STAGE.DEVICE_WAKE_FAIL || jellyfishFlashAutomation.stage.value === STAGE.DEVICE_CONFIG_FAIL,
       }"
     >
       <div class="flex flex-col gap-4 h-full justify-center items-center">

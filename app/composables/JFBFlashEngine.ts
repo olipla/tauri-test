@@ -11,7 +11,12 @@ export enum STAGE {
   FLASH_FAIL, // Begins if flash callback returns error or send x response fails
   FLASH_SUCCESS, // Begins if send x response succeeds after flash
   DEVICE_INITIALISING, // Begins on @02 peripherals init - for after flash
+  DEVICE_WAKE_FAIL, // Begins if ? after hibernate fails
   DEVICE_SELF_TEST, // Begins on @05 pre defined if DEVICE_INITIALISING
+  DEVICE_SELF_TEST_FAIL, // Begins if setting pre defined fails if DEVICE_INITIALISING or WMBUS test fails,
+  DEVICE_CONFIGURING, // Begins on @06 self test success
+  DEVICE_CONFIG_SUCCESS, // Begins when set desired mode succeeds
+  DEVICE_CONFIG_FAIL, // Begins when set desired mode fails
 }
 
 // Device will send ftdi wake if hibernate while DEVICE_INITIALISING
@@ -44,8 +49,21 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
     await serial.sendCommand(`${testMeterType}`, { expectedResponse: /Setting.*/ })
   }
 
+  async function sendChangePreDefinedResponse(testMeterType = 0) {
+    await serial.sendCommand(`${testMeterType}`, { expectedResponse: /- .*/ })
+  }
+
   async function sendRegisterPreDefinedTestMeterResponse() {
     await serial.sendCommand('y', { expectedResponse: /Setting.*/ })
+  }
+
+  async function sendSelectDesiredModeResponse(mode: 0 | 1 | 2 | 3 = 2) {
+    if (mode === 2) {
+      await serial.sendCommand('2', { expectedResponse: /@04>>.*/, retryDelay: 100, retries: 3, timeout: 500 })
+    }
+    else {
+      await serial.sendCommand(`${mode}`)
+    }
   }
 
   // async function sendConfirmMBUSFlashResponse() {
@@ -72,20 +90,24 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
   }
 
   async function sendFTDIWake() {
-    await serial.sendCommand('?', { expectedResponse: /Initialising/ })
+    await serial.sendCommand('?', { expectedResponse: /.*Initialising.*/, timeout: 1000 })
   }
 
   const lineRegexs: DeviceRegexs = {
     magnetTapped: {
       regex: /Magnet/,
       onMatch: async () => {
-        engineStage.value = STAGE.DEVICE_WAKING
+        if (engineStage.value !== STAGE.DEVICE_INITIALISING) {
+          engineStage.value = STAGE.DEVICE_WAKING
+        }
       },
     },
     ftdiInterrupt: {
       regex: /FTDI/,
       onMatch: async () => {
-        engineStage.value = STAGE.DEVICE_WAKING
+        if (engineStage.value !== STAGE.DEVICE_INITIALISING) {
+          engineStage.value = STAGE.DEVICE_WAKING
+        }
       },
     },
     deviceIdNBIoT: {
@@ -135,7 +157,13 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
         // engineStage.value = STAGE.IDLE
         if (engineStage.value === STAGE.DEVICE_INITIALISING) {
           await sleep(2000)
-          await sendFTDIWake()
+          try {
+            await sendFTDIWake()
+          }
+          catch (err) {
+            console.error(err)
+            engineStage.value = STAGE.DEVICE_WAKE_FAIL
+          }
         }
       },
     },
@@ -158,16 +186,62 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
         }
       },
     },
+    changePreDefinedPrompt: {
+      regex: /@05>>Change/,
+      onMatch: async () => {
+        if (engineStage.value === STAGE.DEVICE_WAKING) {
+          engineStage.value = STAGE.ENTERING_BOOTLOADER
+          await sleep(500)
+          try {
+            await sendChangePreDefinedResponse(7)
+          }
+          catch (err) {
+            console.error(err)
+            engineStage.value = STAGE.BOOTLOADER_FAIL
+          }
+        }
+        else if (engineStage.value === STAGE.DEVICE_INITIALISING) {
+          engineStage.value = STAGE.DEVICE_SELF_TEST
+          try {
+            await sendChangePreDefinedResponse(7)
+          }
+          catch (err) {
+            console.error(err)
+            engineStage.value = STAGE.DEVICE_SELF_TEST_FAIL
+          }
+        }
+      },
+    },
+    testMetersSuccess: {
+      regex: /@06>>/,
+      onMatch: async () => {
+        if (engineStage.value === STAGE.DEVICE_SELF_TEST) {
+          engineStage.value = STAGE.DEVICE_CONFIGURING
+        }
+      },
+    },
     listening: {
       regex: /Listening/,
       onMatch: async () => {
         if (engineStage.value === STAGE.ENTERING_BOOTLOADER) {
           await sleep(500)
           try {
-            await unlockDevice()
-            await sendInvokeBootloaderCommand()
-            engineStage.value = STAGE.FLASHING
-            await flash()
+            try {
+              await sendInvokeBootloaderCommand()
+              engineStage.value = STAGE.FLASHING
+              await flash()
+            }
+            catch (error) {
+              if (error instanceof ValidationError || error instanceof ResponseTimeoutError) {
+                await unlockDevice()
+                await sendInvokeBootloaderCommand()
+                engineStage.value = STAGE.FLASHING
+                await flash()
+              }
+              else {
+                throw error
+              }
+            }
           }
           catch (err) {
             console.error(err)
@@ -192,6 +266,39 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
         }
       },
     },
+    selectDesiredModePrompt: {
+      regex: /Select desired mode/,
+      onMatch: async () => {
+        if (engineStage.value === STAGE.DEVICE_CONFIGURING) {
+          await sleep(500)
+          try {
+            await sendSelectDesiredModeResponse()
+            engineStage.value = STAGE.DEVICE_CONFIG_SUCCESS
+          }
+          catch (err) {
+            console.error(err)
+            engineStage.value = STAGE.DEVICE_CONFIG_FAIL
+          }
+        }
+      },
+    },
+    // sendCommandToExitTestPrompt: {
+    //   regex: /Send.*exit TEST/,
+    //   onMatch: async () => {
+    //     if (engineStage.value === STAGE.ENTERING_BOOTLOADER) {
+    //       await sleep(500)
+    //       try {
+    //         await sendInvokeBootloaderCommand()
+    //         engineStage.value = STAGE.FLASHING
+    //         await flash()
+    //       }
+    //       catch (err) {
+    //         console.error(err)
+    //         engineStage.value = STAGE.BOOTLOADER_FAIL
+    //       }
+    //     }
+    //   },
+    // },
   }
 
   const partialLineRegexs: DeviceRegexs = {
@@ -216,6 +323,24 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
     },
     skipSendStatusMessagePrompt: {
       regex: /Skip send Status message \? Press 'y':$/,
+      onMatch: async () => {
+        // if (engineStage.value === STAGE.DEVICE_WAKING) {
+        await sleep(500)
+        await serial.sendCommand('y')
+        // }
+      },
+    },
+    skipRegisterTestMetersPrompt: {
+      regex: /Skip Registration of TEST.*:$/,
+      onMatch: async () => {
+        // if (engineStage.value === STAGE.DEVICE_WAKING) {
+        await sleep(500)
+        await serial.sendCommand('n')
+        // }
+      },
+    },
+    skipSendTestMeterDataMessagePrompt: {
+      regex: /Skip send test.*:$/,
       onMatch: async () => {
         // if (engineStage.value === STAGE.DEVICE_WAKING) {
         await sleep(500)
