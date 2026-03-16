@@ -81,7 +81,7 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
     if (lastSeenAltID.value === undefined) {
       throw new ValidationError('Alt ID not available')
     }
-    await serial.sendCommand(`O=${lastSeenAltID.value}`, { expectedResponse: ENDS_OK_RESPONSE })
+    await serial.sendCommand(`O=${lastSeenAltID.value}`, { expectedResponse: ENDS_OK_RESPONSE, timeout: 250 })
   }
 
   async function sendQueryCommand() {
@@ -306,22 +306,10 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
         if (engineStage.value === STAGE.ENTERING_BOOTLOADER) {
           await sleep(500)
           try {
-            try {
-              await sendInvokeBootloaderCommand()
-              engineStage.value = STAGE.FLASHING
-              await flash()
-            }
-            catch (error) {
-              if (error instanceof ValidationError || error instanceof ResponseTimeoutError) {
-                await unlockDevice()
-                await sendInvokeBootloaderCommand()
-                engineStage.value = STAGE.FLASHING
-                await flash()
-              }
-              else {
-                throw error
-              }
-            }
+            await unlockDevice()
+            await sendInvokeBootloaderCommand()
+            engineStage.value = STAGE.FLASHING
+            await flash()
           }
           catch (err) {
             console.error(err)
