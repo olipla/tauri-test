@@ -4,6 +4,9 @@ import { ResponseTimeoutError, ValidationError } from '~/lib/errors'
 export enum STAGE {
   IDLE,
   DEVICE_RESTARTING, // Unused
+  DEVICE_FTDI_WAKE,
+  DEVICE_UNRESPONSIVE,
+  DEVICE_IN_MODE_3,
   DEVICE_WAKING, // Begins on magnet tap or FTDI interrupt
   ENTERING_BOOTLOADER, // Begins on @05 pre defined if DEVICE_WAKING
   BOOTLOADER_FAIL, // Begins if error on set test meter type, unlocking, invoking bootloader mode
@@ -28,6 +31,50 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
   const lastSeenID = ref<string | undefined>()
   const lastSeenAltID = ref<string | undefined>()
 
+  // const UNRESPONSIVE_TIMEOUT = 10000 // ms
+
+  // let unresponsiveTimer: ReturnType<typeof setTimeout> | null = null
+
+  // function isTerminalStage(stage: STAGE) {
+  //   const stageName = STAGE[stage]
+  //   return (
+  //     stage === STAGE.DEVICE_UNRESPONSIVE
+  //     || stage === STAGE.IDLE
+  //     || stageName.endsWith('_FAIL')
+  //     || stageName.endsWith('_SUCCESS')
+  //   )
+  // }
+
+  // function getUnresponsiveTimeout(stage: STAGE) {
+  //   switch (stage) {
+  //     case STAGE.FLASHING:
+  //       return 25000
+  //     case STAGE.DEVICE_FTDI_WAKE:
+  //       return 5000
+  //     default:
+  //       return UNRESPONSIVE_TIMEOUT
+  //   }
+  // }
+
+  // watch(engineStage, (newStage) => {
+  //   if (unresponsiveTimer) {
+  //     clearTimeout(unresponsiveTimer)
+  //     unresponsiveTimer = null
+  //   }
+
+  //   if (!isTerminalStage(newStage)) {
+  //     unresponsiveTimer = setTimeout(() => {
+  //       if (!isTerminalStage(engineStage.value)) {
+  //         engineStage.value = STAGE.DEVICE_UNRESPONSIVE
+  //       }
+  //     }, getUnresponsiveTimeout(newStage))
+  //   }
+  // })
+
+  watch(engineStage, (newStage, oldStage) => {
+    console.log('CHANGING STAGE FROM - TO', STAGE[oldStage], STAGE[newStage])
+  })
+
   const serial = useSerialMachine(sendSerial)
 
   async function sendUnlockCommand() {
@@ -41,8 +88,13 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
     await serial.sendCommand('?', { expectedResponse: /S=.*/, timeout: 1000 })
   }
 
-  async function sendInvokeBootloaderCommand() {
-    await serial.sendCommand('R=250', { expectedResponse: /Invo.*/ })
+  async function sendInvokeBootloaderCommand(quickConfig = false) {
+    if (quickConfig) {
+      await serial.sendCommand('F=250', { expectedResponse: /Invo.*/ })
+    }
+    else {
+      await serial.sendCommand('R=250', { expectedResponse: /Invo.*/ })
+    }
   }
 
   async function sendSetTestMeterTypeResponse(testMeterType = 0) {
@@ -93,6 +145,10 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
     await serial.sendCommand('?', { expectedResponse: /.*Initialising.*/, timeout: 1000 })
   }
 
+  async function sendEnterTimedConfig() {
+    await serial.sendCommand('y', { expectedResponse: /QUICK CONFIG.*/ })
+  }
+
   const lineRegexs: DeviceRegexs = {
     magnetTapped: {
       regex: /Magnet/,
@@ -105,8 +161,29 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
     ftdiInterrupt: {
       regex: /FTDI/,
       onMatch: async () => {
-        if (engineStage.value !== STAGE.DEVICE_INITIALISING) {
+        if (engineStage.value !== STAGE.DEVICE_INITIALISING && engineStage.value !== STAGE.DEVICE_FTDI_WAKE) {
+          engineStage.value = STAGE.DEVICE_FTDI_WAKE
+          sleep(10000).then(() => {
+            if (engineStage.value !== STAGE.DEVICE_WAKING && engineStage.value !== STAGE.DEVICE_IN_MODE_3) {
+              engineStage.value = STAGE.DEVICE_UNRESPONSIVE
+            }
+          })
+        }
+      },
+    },
+    initAfterFTDI: {
+      regex: /Initialising/,
+      onMatch: async () => {
+        if (engineStage.value === STAGE.DEVICE_FTDI_WAKE) {
           engineStage.value = STAGE.DEVICE_WAKING
+        }
+      },
+    },
+    atAfterFTDI: {
+      regex: /AT\+/,
+      onMatch: async () => {
+        if (engineStage.value === STAGE.DEVICE_FTDI_WAKE) {
+          engineStage.value = STAGE.DEVICE_IN_MODE_3
         }
       },
     },
@@ -147,7 +224,9 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
     peripheralsInitialisationStarted: {
       regex: /@02>>/,
       onMatch: () => {
-        engineStage.value = STAGE.DEVICE_INITIALISING
+        if (engineStage.value === STAGE.FLASH_SUCCESS) {
+          engineStage.value = STAGE.DEVICE_INITIALISING
+        }
       },
     },
     runmodeHibernate: {
@@ -191,7 +270,7 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
       onMatch: async () => {
         if (engineStage.value === STAGE.DEVICE_WAKING) {
           engineStage.value = STAGE.ENTERING_BOOTLOADER
-          await sleep(500)
+          await sleep(1000)
           try {
             await sendChangePreDefinedResponse(7)
           }
@@ -202,6 +281,7 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
         }
         else if (engineStage.value === STAGE.DEVICE_INITIALISING) {
           engineStage.value = STAGE.DEVICE_SELF_TEST
+          await sleep(1000)
           try {
             await sendChangePreDefinedResponse(7)
           }
@@ -346,6 +426,34 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
         await sleep(500)
         await serial.sendCommand('y')
         // }
+      },
+    },
+    enterTimedConfigPrompt: {
+      regex: /Enter timed.*:$/,
+      onMatch: async () => {
+        if (engineStage.value === STAGE.ENTERING_BOOTLOADER) {
+          await sleep(500)
+          try {
+            await sendEnterTimedConfig()
+          }
+          catch (err) {
+            console.error(err)
+            engineStage.value = STAGE.BOOTLOADER_FAIL
+          }
+
+          await sleep(500)
+          try {
+            await unlockDevice()
+            await sendInvokeBootloaderCommand(true)
+            engineStage.value = STAGE.FLASHING
+            await flash()
+          }
+          catch (err) {
+            console.error(err)
+            engineStage.value = STAGE.BOOTLOADER_FAIL
+            await serial.sendCommand('F=0')
+          }
+        }
       },
     },
     // confirmMBUSFlashedPrompt: {

@@ -21,7 +21,7 @@ struct FlashEvent<T> {
 
 macro_rules! firmware {
     () => {
-        "GW_v4_Nb_2_1_9_ses"
+        "GW_v4_Nb_2_1_10"
     };
 }
 
