@@ -101,6 +101,27 @@ async function choosePort() {
       :is-connected="jellyfishFlashAutomation.serialIsConnected.value"
       @click.stop="choosePort()"
     />
+    <div class="flex gap-2">
+      <UButton
+        color="neutral"
+        variant="soft"
+        icon="i-lucide-undo-2"
+        class="w-1/2"
+        @click="jellyfishFlashAutomation.reset()"
+      >
+        Reset State
+      </UButton>
+      <UButton
+        color="neutral"
+        variant="soft"
+        icon="i-lucide-bug-off"
+        class="w-1/2"
+        :disabled="true"
+      >
+        Debug
+      </UButton>
+    </div>
+
     <div
       class="h-full rounded-xl flex flex-col justify-center items-center text-gray-900 bg-gray-400"
       :class="{

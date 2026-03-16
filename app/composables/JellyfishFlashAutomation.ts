@@ -39,6 +39,10 @@ export function useJellyfishFlashAutomation() {
 
   JFBFlashEngine = useJFBFlashEngine(writeLn, flashCurrentDevice)
 
+  function reset() {
+    JFBFlashEngine.reset()
+  }
+
   const flashAttempt = ref(0)
 
   async function flashFinish(reason: FlashFinishReason, port: string) {
@@ -98,5 +102,6 @@ export function useJellyfishFlashAutomation() {
     serialSanitisedSerialNumber: sanitisedSerialNumber,
     serialTransmitting: transmitting,
     serialReceiving: receiving,
+    reset,
   }
 }

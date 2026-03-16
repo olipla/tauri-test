@@ -31,6 +31,12 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
   const lastSeenID = ref<string | undefined>()
   const lastSeenAltID = ref<string | undefined>()
 
+  function reset() {
+    engineStage.value = STAGE.IDLE
+    lastSeenID.value = ''
+    lastSeenAltID.value = ''
+  }
+
   // const UNRESPONSIVE_TIMEOUT = 10000 // ms
 
   // let unresponsiveTimer: ReturnType<typeof setTimeout> | null = null
@@ -164,7 +170,7 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
         if (engineStage.value !== STAGE.DEVICE_INITIALISING && engineStage.value !== STAGE.DEVICE_FTDI_WAKE) {
           engineStage.value = STAGE.DEVICE_FTDI_WAKE
           sleep(10000).then(() => {
-            if (engineStage.value !== STAGE.DEVICE_WAKING && engineStage.value !== STAGE.DEVICE_IN_MODE_3) {
+            if (engineStage.value !== STAGE.IDLE && engineStage.value !== STAGE.DEVICE_WAKING && engineStage.value !== STAGE.DEVICE_IN_MODE_3) {
               engineStage.value = STAGE.DEVICE_UNRESPONSIVE
             }
           })
@@ -497,5 +503,6 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
     sendUnlockCommand,
     unlockDevice,
     flashFinish,
+    reset,
   }
 }
