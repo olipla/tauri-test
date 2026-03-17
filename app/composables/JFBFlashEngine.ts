@@ -30,11 +30,19 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
   const engineStage = ref(STAGE.IDLE)
   const lastSeenID = ref<string | undefined>()
   const lastSeenAltID = ref<string | undefined>()
+  const lastSeenVersion = ref<string | undefined>()
+
+  const flasherStore = useFlasherStore()
+  const configuratorStore = useConfiguratorStore()
+
+  const { flashMode } = storeToRefs(flasherStore)
+  const { JFBVersionTarget } = storeToRefs(configuratorStore)
 
   function reset() {
     engineStage.value = STAGE.IDLE
     lastSeenID.value = ''
     lastSeenAltID.value = ''
+    lastSeenVersion.value = ''
   }
 
   // const UNRESPONSIVE_TIMEOUT = 10000 // ms
@@ -497,6 +505,7 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
     engineStage,
     lastSeenID,
     lastSeenAltID,
+    lastSeenVersion,
     serialLineCallback,
     serialPartialLineCallback,
     sendQueryCommand,

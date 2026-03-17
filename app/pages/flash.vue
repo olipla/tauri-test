@@ -1,10 +1,18 @@
 <script lang="ts" setup>
-const flasherStore = useFlasherStore()
+import FlashSettingsModal from '~/components/FlashSettingsModal.vue'
 
+const flasherStore = useFlasherStore()
 const { devicePorts } = storeToRefs(flasherStore)
+
+const overlay = useOverlay()
+const modalSettings = overlay.create(FlashSettingsModal)
 
 function goToHome() {
   document.location = '/'
+}
+
+function openSettings() {
+  modalSettings.open()
 }
 </script>
 
@@ -21,11 +29,18 @@ function goToHome() {
       >
         Add port
       </UButton>
-      <div class="grow flex justify-end">
+      <div class="grow flex justify-end gap-2">
+        <UButton
+          icon="i-lucide-settings"
+          variant="ghost"
+          color="neutral"
+          @click.stop="openSettings"
+        >
+          Settings
+        </UButton>
         <UButton
           icon="i-lucide-arrow-left"
           color="secondary"
-          class="ml-4"
           @click.stop="goToHome()"
         >
           Back to Config
