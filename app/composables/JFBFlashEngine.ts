@@ -100,6 +100,10 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
     await serial.sendCommand('?', { expectedResponse: /S=.*/, timeout: 1000 })
   }
 
+  async function sendConfigModeCommand() {
+    await serial.sendCommand('R=1', { expectedResponse: /.*OPM_CONFIG/ })
+  }
+
   async function sendInvokeBootloaderCommand(quickConfig = false) {
     if (quickConfig) {
       await serial.sendCommand('F=250', { expectedResponse: /Invo.*/ })
@@ -325,6 +329,8 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
       regex: /Listening/,
       onMatch: async () => {
         if (engineStage.value === STAGE.ENTERING_BOOTLOADER) {
+          await sleep(500)
+          await sendConfigModeCommand()
           await sleep(500)
           try {
             await unlockDevice()
