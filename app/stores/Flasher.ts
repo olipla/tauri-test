@@ -9,9 +9,9 @@ interface devicePort {
 export const useFlasherStore = defineStore('flasher', () => {
   const devicePorts = ref<devicePort[]>([])
 
-  const flashMode = ref<'never' | 'always' | 'auto'>('auto')
+  const flashMode = ref<'never' | 'always' | 'auto'>('always')
   const deviceConfigEnabled = ref(true)
-  const timeRandomizationEnabled = ref(true)
+  const timeRandomizationEnabled = ref(false)
   const customExtraCommands = ref('')
 
   return {

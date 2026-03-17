@@ -5,9 +5,9 @@ const flasherStore = useFlasherStore()
 const { flashMode, deviceConfigEnabled, timeRandomizationEnabled, customExtraCommands } = storeToRefs(flasherStore)
 
 const flashModeOptions = [
-  { value: 'never', label: 'Never', description: 'Disable firmware upgrading' },
+  { value: 'never', label: 'Never', description: 'Disable firmware upgrading', disabled: true },
   { value: 'always', label: 'Always', description: 'Force firmware upgrade' },
-  { value: 'auto', label: 'Auto', description: 'Upgrade incorrect firmware' },
+  { value: 'auto', label: 'Auto', description: 'Upgrade incorrect firmware', disabled: true },
 ]
 </script>
 
@@ -56,6 +56,7 @@ const flashModeOptions = [
             >
               <USwitch
                 v-model="timeRandomizationEnabled"
+                :disabled="true"
                 label="Enabled"
               />
             </UFormField>
@@ -69,6 +70,7 @@ const flashModeOptions = [
                 placeholder="Enter commands here..."
                 class="w-full"
                 :rows="3"
+                :disabled="true"
               />
             </UFormField>
           </div>

@@ -35,7 +35,7 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
   const flasherStore = useFlasherStore()
   const configuratorStore = useConfiguratorStore()
 
-  const { flashMode } = storeToRefs(flasherStore)
+  const { flashMode, deviceConfigEnabled } = storeToRefs(flasherStore)
   const { JFBVersionTarget } = storeToRefs(configuratorStore)
 
   function reset() {
@@ -238,7 +238,7 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
     peripheralsInitialisationStarted: {
       regex: /@02>>/,
       onMatch: () => {
-        if (engineStage.value === STAGE.FLASH_SUCCESS) {
+        if (engineStage.value === STAGE.FLASH_SUCCESS && deviceConfigEnabled.value) {
           engineStage.value = STAGE.DEVICE_INITIALISING
         }
       },
