@@ -19,8 +19,6 @@ struct FlashEvent<T> {
     data: T,
 }
 
-pub const FIRMWARE_NAME: &str = "Dynamic Firmware";
-
 const PASSWORD_INCORRECT_CONTENTS: &str = indoc! {"
         @FFE0
         00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
@@ -130,10 +128,7 @@ impl FlashConfig {
 
 // --- Lock Management ---
 
-async fn acquire_port_lock(
-    state: &State<'_, Mutex<AppData>>,
-    port: &str,
-) -> Result<Option<Vec<u8>>> {
+async fn acquire_port_lock(state: &State<'_, Mutex<AppData>>, port: &str) -> Result<Option<Vec<u8>>> {
     let mut state = state.lock().await;
     if state.active_ports.contains(port) {
         anyhow::bail!("Port {} is already being flashed", port);
@@ -152,13 +147,20 @@ async fn release_port_lock(state: &State<'_, Mutex<AppData>>, port: &str) {
 
 #[tauri::command]
 pub async fn set_firmware(
+    app: tauri::AppHandle,
     state: State<'_, Mutex<AppData>>,
     bytes: Vec<u8>,
-    name: String,
+    name: String
 ) -> Result<(), String> {
     let mut state = state.lock().await;
     state.firmware = Some(bytes);
-    state.firmware_name = Some(name);
+    state.firmware_name = Some(name.clone());
+
+    if let Some(window) = app.get_webview_window("main") {
+        let version = app.package_info().version.to_string();
+        let _ = window.set_title(&format!("Jellyfish Configurator {} [{}]", version, name));
+    }
+
     Ok(())
 }
 

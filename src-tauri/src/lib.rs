@@ -4,8 +4,6 @@ use anyhow::{Context, Result};
 use tauri::{async_runtime::Mutex, window::Color, Manager};
 use tauri_plugin_shell::process::CommandChild;
 
-use crate::flasher::FIRMWARE_NAME;
-
 mod flasher;
 mod printer;
 
@@ -30,10 +28,10 @@ impl AppData {
 }
 
 /// Configure appearance and title of main window
-fn configure_window(window: &tauri::WebviewWindow, version: &str) -> Result<()> {
+fn configure_window(window: &tauri::WebviewWindow, version: &str, firmware_name: &str) -> Result<()> {
     window
         .set_title(&format!(
-            "Jellyfish Configurator {version} [{FIRMWARE_NAME}]"
+            "Jellyfish Configurator {version} [{firmware_name}]"
         ))
         .context("Failed to set window title")?;
 
@@ -83,7 +81,7 @@ fn setup_app(app: &mut tauri::App) -> Result<()> {
 
     let version = app.package_info().version.to_string();
 
-    configure_window(&window, &version)?;
+    configure_window(&window, &version, "No Firmware")?;
 
     Ok(())
 }
