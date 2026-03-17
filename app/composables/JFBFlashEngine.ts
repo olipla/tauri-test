@@ -258,6 +258,12 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
             engineStage.value = STAGE.DEVICE_WAKE_FAIL
           }
         }
+        else if (engineStage.value === STAGE.DEVICE_SELF_TEST) {
+          engineStage.value = STAGE.DEVICE_SELF_TEST_FAIL
+        }
+        else if (engineStage.value === STAGE.DEVICE_WAKING) {
+          engineStage.value = STAGE.DEVICE_WAKE_FAIL
+        }
       },
     },
     selectPreDefinedPrompt: {
