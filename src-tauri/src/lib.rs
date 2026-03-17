@@ -14,6 +14,8 @@ mod printer;
 pub struct AppData {
     pub active_ports: HashSet<String>,
     pub bsl_children: HashMap<String, CommandChild>,
+    pub firmware: Option<Vec<u8>>,
+    pub firmware_name: Option<String>,
 }
 
 impl AppData {
@@ -21,6 +23,8 @@ impl AppData {
         Self {
             active_ports: HashSet::new(),
             bsl_children: HashMap::new(),
+            firmware: None,
+            firmware_name: None,
         }
     }
 }
@@ -94,6 +98,7 @@ pub fn run() {
             printer::print_data,
             printer::get_printer,
             flasher::flash,
+            flasher::set_firmware,
         ])
         .setup(|app| setup_app(app).map_err(Into::into))
         .build(tauri::generate_context!())

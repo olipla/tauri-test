@@ -1,3 +1,13 @@
+<script lang="ts" setup>
+import { useFirmwareStore } from '~/stores/Firmware'
+
+const firmwareStore = useFirmwareStore()
+
+onMounted(() => {
+  firmwareStore.syncToBackend()
+})
+</script>
+
 <template>
   <UApp
     :toaster="{

@@ -1,8 +1,16 @@
 <script lang="ts" setup>
 import { useFlasherStore } from '~/stores/Flasher'
+import { useFirmwareStore } from '~/stores/Firmware'
+import FirmwareSelectorModal from './FirmwareSelectorModal.vue'
 
 const flasherStore = useFlasherStore()
 const { flashMode, deviceConfigEnabled, timeRandomizationEnabled, customExtraCommands } = storeToRefs(flasherStore)
+
+const firmwareStore = useFirmwareStore()
+const { firmwareName } = storeToRefs(firmwareStore)
+
+const overlay = useOverlay()
+const modalFirmware = overlay.create(FirmwareSelectorModal)
 
 const flashModeOptions = [
   { value: 'never', label: 'Never', description: 'Disable firmware upgrading', disabled: true },
@@ -15,6 +23,17 @@ const flashModeOptions = [
   <UModal title="Flash Settings">
     <template #body>
       <div class="flex flex-col gap-6 p-4">
+        <UFormField label="Firmware">
+          <div class="flex items-center gap-4">
+            <UButton @click="modalFirmware.open">
+              Choose Firmware
+            </UButton>
+            <span v-if="firmwareName" class="text-sm font-medium text-neutral-500">
+              {{ firmwareName }}
+            </span>
+          </div>
+        </UFormField>
+
         <UFormField
           label="Flashing Mode"
           description="Choose when the device should be flashed."

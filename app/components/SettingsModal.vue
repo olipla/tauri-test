@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 import type { SelectMenuItem, TabsItem } from '@nuxt/ui'
 import { PortChooserModal, UModal } from '#components'
+import FirmwareSelectorModal from './FirmwareSelectorModal.vue'
 import PrinterChooserModal from './PrinterChooserModal.vue'
 import SettingsTab from './SettingsTab.vue'
+import { useFirmwareStore } from '~/stores/Firmware'
 
 const props = withDefaults(defineProps<{
   tab?: 'general' | 'serial' | 'printer' | 'configuration'
@@ -47,6 +49,7 @@ const activeItem = computed(() => {
 })
 
 const configuratorStore = useConfiguratorStore()
+const firmwareStore = useFirmwareStore()
 
 const {
   settingsIsOpen,
@@ -65,6 +68,8 @@ const {
   configSources,
   configCurrentSourceId,
 } = storeToRefs(configuratorStore)
+
+const { firmwareName } = storeToRefs(firmwareStore)
 
 const configSourcesItems = computed<SelectMenuItem[]>(() => {
   return configSources.value?.map((value) => {
@@ -100,6 +105,7 @@ onUnmounted(() => {
 const overlay = useOverlay()
 
 const modalPort = overlay.create(PortChooserModal)
+const modalFirmware = overlay.create(FirmwareSelectorModal)
 
 async function choosePort() {
   const instance = modalPort.open()
@@ -153,6 +159,16 @@ watch(localEcho, (newValue) => {
       >
         <template #general>
           <SettingsTab>
+            <UFormField label="Firmware">
+              <div class="flex items-center gap-4">
+                <UButton @click="modalFirmware.open">
+                  Choose Firmware
+                </UButton>
+                <span v-if="firmwareName" class="text-sm font-medium text-neutral-500">
+                  {{ firmwareName }}
+                </span>
+              </div>
+            </UFormField>
             <UFormField label="Version Target">
               <UInput
                 v-model="JFBVersionTarget"

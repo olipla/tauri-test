@@ -19,11 +19,7 @@ struct FlashEvent<T> {
     data: T,
 }
 
-macro_rules! firmware {
-    () => {
-        "GW_v4_Nb_2_1_10+1"
-    };
-}
+pub const FIRMWARE_NAME: &str = "Dynamic Firmware";
 
 const PASSWORD_INCORRECT_CONTENTS: &str = indoc! {"
         @FFE0
@@ -39,14 +35,11 @@ const PASSWORD_BLANK_CONTENTS: &str = indoc! {"
         q
     "};
 
-pub const FIRMWARE_NAME: &str = firmware!();
-const FIRMWARE: &[u8] = include_bytes!(concat!("../firmware/", firmware!(), ".txt"));
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(25);
 const MAX_CONSECUTIVE_ACK_ERRORS: i32 = 5;
 
 fn extract_entrypoint(firmware: &[u8]) -> Result<String, anyhow::Error> {
     let firmware_str = String::from_utf8_lossy(firmware).to_string();
-    println!("Firmware: {}", firmware_str);
 
     for (i, line) in firmware_str.lines().enumerate() {
         if line.contains("@ffd0") {
@@ -69,12 +62,12 @@ struct FlashConfig {
 }
 
 impl FlashConfig {
-    fn create(port: &str) -> Result<Self> {
+    fn create(port: &str, firmware: &[u8]) -> Result<Self> {
         let temp_dir = TempDir::new().context("Failed to create temporary directory")?;
         let base_path = temp_dir.path();
 
         let firmware_path = base_path.join("firmware.txt");
-        std::fs::write(&firmware_path, FIRMWARE).context("Failed to write firmware file")?;
+        std::fs::write(&firmware_path, firmware).context("Failed to write firmware file")?;
 
         let password_incorrect_path = base_path.join("password_incorrect.txt");
         std::fs::write(&password_incorrect_path, PASSWORD_INCORRECT_CONTENTS)
@@ -86,7 +79,7 @@ impl FlashConfig {
 
         let script_path = base_path.join("script.txt");
 
-        let entrypoint = extract_entrypoint(FIRMWARE)?;
+        let entrypoint = extract_entrypoint(firmware)?;
         let script_content = Self::generate_script(
             port,
             &firmware_path,
@@ -137,19 +130,36 @@ impl FlashConfig {
 
 // --- Lock Management ---
 
-async fn acquire_port_lock(state: &State<'_, Mutex<AppData>>, port: &str) -> Result<()> {
+async fn acquire_port_lock(
+    state: &State<'_, Mutex<AppData>>,
+    port: &str,
+) -> Result<Option<Vec<u8>>> {
     let mut state = state.lock().await;
     if state.active_ports.contains(port) {
         anyhow::bail!("Port {} is already being flashed", port);
     }
     state.active_ports.insert(port.to_string());
-    Ok(())
+    Ok(state.firmware.clone())
 }
 
 async fn release_port_lock(state: &State<'_, Mutex<AppData>>, port: &str) {
     let mut state = state.lock().await;
     state.active_ports.remove(port);
     state.bsl_children.remove(port);
+}
+
+// --- Firmware Management ---
+
+#[tauri::command]
+pub async fn set_firmware(
+    state: State<'_, Mutex<AppData>>,
+    bytes: Vec<u8>,
+    name: String,
+) -> Result<(), String> {
+    let mut state = state.lock().await;
+    state.firmware = Some(bytes);
+    state.firmware_name = Some(name);
+    Ok(())
 }
 
 // --- Process Management ---
@@ -243,14 +253,19 @@ pub async fn flash(
         port
     );
 
-    // 1. Lock this specific port
-    acquire_port_lock(&state, &port).await.map_err(|e| {
+    // 1. Lock this specific port and get firmware
+    let firmware = acquire_port_lock(&state, &port).await.map_err(|e| {
         println!("[DIAGNOSTIC] Lock failed for {}: {}", port, e);
         e.to_string()
     })?;
 
+    let firmware = firmware.ok_or_else(|| {
+        let _ = tauri::async_runtime::block_on(async { release_port_lock(&state, &port).await });
+        "No firmware loaded".to_string()
+    })?;
+
     // 2. Setup config
-    let config = FlashConfig::create(&port).map_err(|e| {
+    let config = FlashConfig::create(&port, &firmware).map_err(|e| {
         println!("[DIAGNOSTIC] Config creation failed for {}: {}", port, e);
         let _ = tauri::async_runtime::block_on(async { release_port_lock(&state, &port).await });
         e.to_string()
