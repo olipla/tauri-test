@@ -70,6 +70,10 @@ async function choosePort() {
     })
   }
 }
+
+defineExpose({
+  stage: jellyfishFlashAutomation.stage,
+})
 </script>
 
 <template>

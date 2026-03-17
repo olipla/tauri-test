@@ -1,19 +1,38 @@
 <script lang="ts" setup>
+import { Window } from '@tauri-apps/api/window'
 import FlashSettingsModal from '~/components/FlashSettingsModal.vue'
+import QuitWhileFlashingModal from '~/components/QuitWhileFlashingModal.vue'
+import { STAGE } from '~/composables/JFBFlashEngine'
 
 const flasherStore = useFlasherStore()
 const { devicePorts } = storeToRefs(flasherStore)
 
+const deviceColumnRefs = ref<any[]>([])
+
 const overlay = useOverlay()
 const modalSettings = overlay.create(FlashSettingsModal)
+const quitWhileFlashingModal = overlay.create(QuitWhileFlashingModal)
 
 function goToHome() {
-  document.location = '/'
+  window.location.href = '/'
 }
 
 function openSettings() {
   modalSettings.open()
 }
+
+onMounted(async () => {
+  if (window.__TAURI__) {
+    const appWindow = new Window('main')
+    appWindow.onCloseRequested((event) => {
+      const isAnyFlashing = deviceColumnRefs.value.some(col => unref(col?.stage) === STAGE.FLASHING)
+      if (isAnyFlashing) {
+        event.preventDefault()
+        quitWhileFlashingModal.open()
+      }
+    })
+  }
+})
 </script>
 
 <template>
@@ -52,6 +71,7 @@ function openSettings() {
         <DeviceColumn
           v-for="(devicePort, index) in devicePorts"
           :key="index"
+          ref="deviceColumnRefs"
           :name="`CABLE ${index + 1}`"
           :colour="devicePort.colour"
           :port-options="devicePort.serialPortOptions"

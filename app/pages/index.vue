@@ -36,7 +36,9 @@ const {
 
 onMounted(async () => {
   if (window.__TAURI__) {
-    configuratorStore.serialOpen()
+    if (window.location.pathname === '/') {
+      configuratorStore.serialOpen()
+    }
 
     const appWindow = new Window('main')
     appWindow.onCloseRequested((event) => {
@@ -46,6 +48,14 @@ onMounted(async () => {
       }
     })
   }
+})
+
+onBeforeUnmount(async () => {
+  configuratorStore.serialClose()
+})
+
+onBeforeRouteLeave(async () => {
+  configuratorStore.serialClose()
 })
 
 watch(configSources, newValue => console.log(newValue), { immediate: true })
@@ -70,7 +80,7 @@ const {
 } = useTerminalPane()
 
 function goToFlash() {
-  document.location = 'flash'
+  window.location.href = '/flash'
 }
 
 const statusIssues = ref<Issue[]>([{ title: 'Printer Error', description: 'The selected printer is offline' }, { title: 'Serial Error', description: 'COM 4 does not exist!' }])

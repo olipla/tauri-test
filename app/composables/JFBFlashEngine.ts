@@ -33,10 +33,8 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
   const lastSeenVersion = ref<string | undefined>()
 
   const flasherStore = useFlasherStore()
-  const configuratorStore = useConfiguratorStore()
 
   const { flashMode, deviceConfigEnabled } = storeToRefs(flasherStore)
-  const { JFBVersionTarget } = storeToRefs(configuratorStore)
 
   function reset() {
     engineStage.value = STAGE.IDLE
@@ -188,7 +186,10 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
     initAfterFTDI: {
       regex: /Initialising/,
       onMatch: async () => {
-        if (engineStage.value === STAGE.DEVICE_FTDI_WAKE) {
+        if (engineStage.value === STAGE.IDLE || engineStage.value === STAGE.DEVICE_FTDI_WAKE || engineStage.value === STAGE.DEVICE_CONFIG_FAIL || engineStage.value === STAGE.BOOTLOADER_FAIL || engineStage.value === STAGE.DEVICE_CONFIG_SUCCESS || engineStage.value === STAGE.DEVICE_SELF_TEST_FAIL || engineStage.value === STAGE.DEVICE_UNRESPONSIVE || engineStage.value === STAGE.DEVICE_WAKE_FAIL || engineStage.value === STAGE.FLASH_FAIL) {
+          engineStage.value = STAGE.DEVICE_WAKING
+        }
+        if (!deviceConfigEnabled && engineStage.value === STAGE.FLASH_SUCCESS) {
           engineStage.value = STAGE.DEVICE_WAKING
         }
       },
