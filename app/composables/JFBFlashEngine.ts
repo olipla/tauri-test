@@ -34,7 +34,7 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
 
   const flasherStore = useFlasherStore()
 
-  const { skipStatusMessage, deviceConfigEnabled } = storeToRefs(flasherStore)
+  const { skipStatusMessage, skipTestMeterDataMessage, deviceConfigEnabled } = storeToRefs(flasherStore)
 
   function reset() {
     engineStage.value = STAGE.IDLE
@@ -445,8 +445,10 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
       regex: /Skip send test.*:$/,
       onMatch: async () => {
         // if (engineStage.value === STAGE.DEVICE_WAKING) {
-        await sleep(500)
-        await serial.sendCommand('y')
+        if (skipTestMeterDataMessage.value) {
+          await sleep(500)
+          await serial.sendCommand('y')
+        }
         // }
       },
     },

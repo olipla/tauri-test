@@ -12,6 +12,7 @@ const {
   timeRandomizationEnabled,
   customExtraCommands,
   skipStatusMessage,
+  skipTestMeterDataMessage,
 } = storeToRefs(flasherStore)
 
 const firmwareStore = useFirmwareStore()
@@ -169,15 +170,26 @@ const flashModeOptions = [
             mode="out-in"
           >
             <SettingsTab :key="active">
-              <UFormField
-                label="Status Message"
-                description="Choose whether to skip the status message after flashing."
-              >
-                <USwitch
-                  v-model="skipStatusMessage"
-                  label="Skip Status Message"
-                />
-              </UFormField>
+              <div class="flex flex-col gap-4">
+                <UFormField
+                  label="Status Message"
+                  description="Choose whether to skip the status message."
+                >
+                  <USwitch
+                    v-model="skipStatusMessage"
+                    label="Skip Status Message"
+                  />
+                </UFormField>
+                <UFormField
+                  label="Test Meter Data Message"
+                  description="Choose whether to skip the test meter data message."
+                >
+                  <USwitch
+                    v-model="skipTestMeterDataMessage"
+                    label="Skip Test Meter Data Message"
+                  />
+                </UFormField>
+              </div>
             </SettingsTab>
           </Transition>
         </template>
