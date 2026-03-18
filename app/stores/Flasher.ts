@@ -13,6 +13,7 @@ export const useFlasherStore = defineStore('flasher', () => {
   const deviceConfigEnabled = ref(true)
   const timeRandomizationEnabled = ref(false)
   const customExtraCommands = ref('')
+  const skipStatusMessage = ref(false)
 
   return {
     devicePorts,
@@ -20,6 +21,7 @@ export const useFlasherStore = defineStore('flasher', () => {
     deviceConfigEnabled,
     timeRandomizationEnabled,
     customExtraCommands,
+    skipStatusMessage,
   }
 }, {
   persist: {
@@ -29,6 +31,7 @@ export const useFlasherStore = defineStore('flasher', () => {
       'deviceConfigEnabled',
       'timeRandomizationEnabled',
       'customExtraCommands',
+      'skipStatusMessage',
     ],
     storage: piniaPluginPersistedstate.localStorage(),
   },

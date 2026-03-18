@@ -6,7 +6,13 @@ import FirmwareSelectorModal from './FirmwareSelectorModal.vue'
 import SettingsTab from './SettingsTab.vue'
 
 const flasherStore = useFlasherStore()
-const { flashMode, deviceConfigEnabled, timeRandomizationEnabled, customExtraCommands } = storeToRefs(flasherStore)
+const {
+  flashMode,
+  deviceConfigEnabled,
+  timeRandomizationEnabled,
+  customExtraCommands,
+  skipStatusMessage,
+} = storeToRefs(flasherStore)
 
 const firmwareStore = useFirmwareStore()
 const { firmwareName } = storeToRefs(firmwareStore)
@@ -28,6 +34,13 @@ const items = [
     icon: 'i-lucide-wrench',
     slot: 'configuration' as const,
     value: 'configuration',
+  },
+  {
+    label: 'Automations',
+    title: 'Automation Settings',
+    icon: 'i-lucide-cpu',
+    slot: 'automations' as const,
+    value: 'automations',
   },
 ] satisfies TabsItem[]
 
@@ -100,7 +113,10 @@ const flashModeOptions = [
             name="expand"
             mode="out-in"
           >
-            <SettingsTab :key="active">
+            <SettingsTab
+              :key="active"
+              class="expand-content"
+            >
               <UFormField
                 label="Device Configuration"
                 description="Enable or disable post-flash configuration."
@@ -143,6 +159,25 @@ const flashModeOptions = [
                   </div>
                 </div>
               </div>
+            </SettingsTab>
+          </Transition>
+        </template>
+
+        <template #automations>
+          <Transition
+            name="expand"
+            mode="out-in"
+          >
+            <SettingsTab :key="active">
+              <UFormField
+                label="Status Message"
+                description="Choose whether to skip the status message after flashing."
+              >
+                <USwitch
+                  v-model="skipStatusMessage"
+                  label="Skip Status Message"
+                />
+              </UFormField>
             </SettingsTab>
           </Transition>
         </template>
