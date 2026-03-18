@@ -114,7 +114,7 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
   }
 
   async function sendSetTestMeterTypeResponse(testMeterType = 0) {
-    await serial.sendCommand(`${testMeterType}`, { expectedResponse: /Setting.*/ })
+    await serial.sendCommand(`${testMeterType}`, { expectedResponse: /Setting.*/, timeout: 250 })
   }
 
   async function sendChangePreDefinedResponse(testMeterType = 0) {
@@ -330,7 +330,12 @@ export function useJFBFlashEngine(sendSerial: (data: string) => Promise<void>, f
       onMatch: async () => {
         if (engineStage.value === STAGE.ENTERING_BOOTLOADER) {
           await sleep(500)
-          await sendConfigModeCommand()
+          try {
+            await sendConfigModeCommand()
+          }
+          catch (err) {
+            console.warn(err)
+          }
           await sleep(500)
           try {
             await unlockDevice()

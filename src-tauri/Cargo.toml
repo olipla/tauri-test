@@ -1,6 +1,6 @@
 [package]
 name = "jellyfish-configurator"
-version = "0.2.0-beta+003"
+version = "0.2.0-beta+005"
 description = "Configure Jellyfish devices"
 authors = [ "Ollie Platt" ]
 license = ""
